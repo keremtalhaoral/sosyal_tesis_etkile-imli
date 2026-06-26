@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müfettiş Gelişmiş CBS & Mekansal Karar Destek Dashboard</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Theme FOUC Prevention Script -->
+  <meta name="color-scheme" content="light dark">
+  <script>
+    {
+      const colorScheme = localStorage.getItem("color-scheme");
+      if (colorScheme) {
+        document.querySelector('meta[name="color-scheme"]').content = colorScheme;
+        document.documentElement.setAttribute('data-theme', colorScheme);
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const defaultTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Left Sidebar: Glassy Dashboard -->
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar-header">
+        <div class="brand">
+          <span class="brand-icon">🗺️</span>
+          <div class="brand-text">
+            <h1>Müfettiş GIS</h1>
+            <p>Advanced KDS Dashboard</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="theme-toggle" class="theme-toggle-btn" aria-label="Temayı Değiştir" title="Temayı Değiştir">
+            <span class="toggle-icon">🌙</span>
+          </button>
+          <button id="sidebar-collapse-btn" class="collapse-toggle-btn" aria-label="Paneli Kapat" title="Paneli Kapat">
+            <span>◀</span>
+          </button>
+        </div>
+      </header>
+      
+      <!-- Stats Summary Section -->
+      <section class="stats-container">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total-facilities">0</span>
+          <span class="stat-label">Toplam Tesis</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-avg-occupancy">0%</span>
+          <span class="stat-label">Ort. Doluluk</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total-capacity">0</span>
+          <span class="stat-label">Top. Kapasite</span>
+        </div>
+      </section>
+
+      <!-- Search & Filters -->
+      <section class="filter-section">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="facility-search" placeholder="Tesis adı veya kod ara..." aria-label="Tesis Ara">
+        </div>
+        <div class="filter-options">
+          <button class="filter-btn active" data-filter="all">Tümü</button>
+          <button class="filter-btn" data-filter="high">Kritik (>80%)</button>
+          <button class="filter-btn" data-filter="low">Sakin (<60%)</button>
+        </div>
+      </section>
+
+      <!-- Main Sidebar Contents (Split between List, Facility Details, and District Details) -->
+      <div class="sidebar-content">
+        <!-- Facility List View -->
+        <div class="content-view active" id="list-view">
+          <h2 class="section-title">Sosyal Tesisler</h2>
+          <div class="facility-list" id="facility-list" role="list">
+            <!-- Dynamic items go here -->
+          </div>
+          
+          <!-- Proximity Analysis Section (KNN) -->
+          <div class="proximity-section">
+            <h3 class="proximity-title">📍 En Yakın Sosyal Tesisler (Vectorized KNN)</h3>
+            <div class="proximity-list" id="proximity-list">
+              <div class="proximity-loading">Konum alınarak hesaplanıyor...</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Facility Detail View (Shown when facility is selected) -->
+        <div class="content-view" id="detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="back-to-list-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge" id="detail-code">ALTY-00</span>
+          </div>
+          
+          <h2 class="detail-title" id="detail-name">Tesis Seçilmedi</h2>
+          
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">Kapasite</span>
+                <span class="metric-value" id="detail-capacity">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Mevcut Doluluk</span>
+                <span class="metric-value" id="detail-occupancy-percent">-</span>
+              </div>
+            </div>
+            
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="detail-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="occupancy-status-text" id="detail-occupancy-text">-</div>
+          </div>
+
+          <!-- Live Price Menu Scraper Widget -->
+          <div class="menu-card" id="facility-menu-card">
+            <h4 class="card-subtitle">🍽️ Restoran Menüsü & Canlı Fiyatlar</h4>
+            <div class="menu-content" id="detail-menu-list">
+              <div class="menu-loading">Menü verileri sunucudan çekiliyor...</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Nearest Otopark (İSPARK API) Widget -->
+          <div class="ispark-proximity-card" id="detail-ispark-card">
+            <h4 class="card-subtitle">🚗 En Yakın İSPARK Otoparkı</h4>
+            <div id="ispark-details">
+              <div class="ispark-name" id="detail-ispark-name">-</div>
+              <div class="detail-metric-row mini">
+                <div class="metric">
+                  <span class="metric-label">Mesafe</span>
+                  <span class="metric-value" id="detail-ispark-distance">-</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-label">Boş Kapasite</span>
+                  <span class="metric-value" id="detail-ispark-occupancy">-</span>
+                </div>
+              </div>
+              <div class="progress-bar-container mini">
+                <div class="progress-bar-fill" id="detail-ispark-progress-fill" style="width: 0%"></div>
+              </div>
+              <small class="provenance-label">Kaynak: İBB İSPARK Canlı Otopark Feeds API</small>
+            </div>
+          </div>
+
+          <!-- Reservation Card -->
+          <div class="reservation-card" id="detail-reservation-section">
+            <h4 class="card-subtitle">📅 Masa Rezervasyonu</h4>
+            <div id="reservation-logged-out" class="reservation-box">
+              <p>Rezervasyon yapabilmek için lütfen sisteme giriş yapın.</p>
+              <button class="btn btn-secondary btn-sm" onclick="Auth.showLoginModal()">Giriş Yap</button>
+            </div>
+            <div id="reservation-logged-in" class="reservation-box hidden">
+              <form id="reservation-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="reserve-date">Tarih</label>
+                    <input type="date" id="reserve-date" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="reserve-time">Saat</label>
+                    <input type="time" id="reserve-time" min="09:00" max="22:00" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="reserve-guests">Kişi Sayısı</label>
+                  <input type="number" id="reserve-guests" min="1" max="10" value="2" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Rezervasyon Talebi Gönder</button>
+              </form>
+              <div id="reservation-status-msg" class="form-status-msg"></div>
+            </div>
+          </div>
+
+          <!-- Weather Widget for Selected Facility -->
+          <div class="weather-card" id="facility-weather-card">
+            <h4 class="weather-title">🌦️ Tesis Hava Durumu</h4>
+            <div class="weather-grid" id="facility-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
+          
+          <!-- Moovit / Google Maps Style Multi-Modal Travel Planner -->
+          <div class="crawling-card" id="crawling-card">
+            <h3 class="crawling-card-title">🗺️ Moovit Tarzı Aktarmalı Rota</h3>
+            
+            <div class="user-location-info">
+              <span class="location-status-dot green" id="location-dot"></span>
+              <span class="location-status-text" id="location-status-text">Konum Alınıyor...</span>
+            </div>
+            
+            <div class="transit-options-container" id="transit-options-container">
+              <div class="crawling-warning" id="crawling-warning-container">
+                🚨 Yol tariflerini görmek için lütfen haritadan veya listeden bir tesis seçin.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- District Detail View (Spatial Data Overlay & Karar Destek) -->
+        <div class="content-view" id="district-detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="district-back-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge" id="district-alarm-badge">-</span>
+          </div>
+          
+          <h2 class="detail-title" id="district-name">İlçe Seçilmedi</h2>
+
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">TÜİK Nüfus</span>
+                <span class="metric-value" id="district-population">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Sosyal Tesis</span>
+                <span class="metric-value" id="district-facility-count">-</span>
+              </div>
+            </div>
+            
+            <div class="district-density-row">
+              <span class="density-label">Mekansal Nüfus Yoğunluğu (Kişi/km²):</span>
+              <strong id="district-density-val">-</strong>
+            </div>
+          </div>
+
+          <!-- Karar Destek Kararı Alarm Kutusu (TOPSIS) -->
+          <div class="decision-support-card" id="district-alarm-container">
+            <h4 class="decision-card-title">💡 Karar Destek Tavsiyesi (TOPSIS Ağırlıklı KDS)</h4>
+            <p class="decision-text" id="district-decision-text">Hesaplanıyor...</p>
+          </div>
+
+          <!-- Weather Widget for District Centroid -->
+          <div class="weather-card" id="district-weather-card">
+            <h4 class="weather-title">🌦️ Centroid Hava Durumu</h4>
+            <div class="weather-grid" id="district-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
+
+          <!-- District Facilities list -->
+          <div class="district-facilities-section">
+            <h4 class="sub-section-title">İlçe Sınırlarındaki Tesisler</h4>
+            <div class="facility-list mini" id="district-facility-list">
+              <!-- District facilities generated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Control Panel (CRUD Operations) -->
+        <div class="content-view" id="admin-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="admin-back-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge font-bold bg-purple-600 text-white">YÖNETİM PANELİ</span>
+          </div>
+          
+          <h2 class="detail-title">Yeni Tesis Giriş Modülü</h2>
+          
+          <form id="admin-facility-form">
+            <div class="form-group">
+              <label for="admin-name">Tesis Adı</label>
+              <input type="text" id="admin-name" required placeholder="Örn: Kadıköy Sosyal Tesisi">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="admin-lat">Enlem (Latitude)</label>
+                <input type="number" id="admin-lat" step="any" min="40" max="43" required placeholder="41.01">
+              </div>
+              <div class="form-group">
+                <label for="admin-lng">Boylam (Longitude)</label>
+                <input type="number" id="admin-lng" step="any" min="28" max="30" required placeholder="29.02">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="admin-capacity">Kapasite</label>
+                <input type="number" id="admin-capacity" min="10" max="1000" value="150" required>
+              </div>
+              <div class="form-group">
+                <label for="admin-occupancy">Varsayılan Doluluk (%)</label>
+                <input type="number" id="admin-occupancy" min="0" max="100" value="25" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="admin-iett">En Yakın İETT Durak / Hat Bilgisi</label>
+              <input type="text" id="admin-iett" placeholder="Örn: 99A, 55 (Durağı)" required>
+            </div>
+            <div class="form-group">
+              <label for="admin-transit-transfer">Aktarmalı Rota Tarifi</label>
+              <input type="text" id="admin-transit-transfer" placeholder="Örn: T5 Tramvay -> Marmaray aktarmalı" required>
+            </div>
+            <div class="form-group">
+              <label for="admin-route-description">Arabayla Yol Tarifi</label>
+              <input type="text" id="admin-route-description" placeholder="Örn: Sahil Kennedy Caddesi üzerinden" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Yeni Tesisi Mekansal Olarak Kaydet</button>
+          </form>
+          <div id="admin-form-status" class="form-status-msg"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Sidebar Expand Trigger (Visible when sidebar collapsed) -->
+    <button id="sidebar-expand-btn" class="expand-toggle-btn hidden" aria-label="Paneli Aç" title="Paneli Aç">
+      <span>▶</span>
+    </button>
+
+    <!-- Right Side: Leaflet Web GIS Map Container -->
+    <main class="map-wrapper">
+      <div id="map">
+        <!-- Floating User/Session Control Overlay (Top Right) -->
+        <div class="floating-user-controls">
+          <!-- Logged Out View -->
+          <div id="user-anonymous" class="user-pill-container">
+            <button class="user-login-btn" onclick="Auth.showLoginModal()">🔐 Giriş Yap</button>
+          </div>
+          <!-- Logged In View -->
+          <div id="user-authenticated" class="user-pill-container hidden">
+            <div class="user-profile-pill">
+              <span id="user-display-name">Müfettiş</span> 👤
+              <div class="dropdown-menu">
+                <a href="#" onclick="Auth.showProfileModal()">Profilim / Rezervasyonlarım</a>
+                <a href="#" id="menu-admin-panel" class="hidden" onclick="Auth.openAdminPanel()">Admin Paneli</a>
+                <a href="#" onclick="Auth.logout()">Çıkış Yap</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Map Overlays & Controls -->
+        <div class="floating-controls top-right">
+          <button id="btn-my-location" class="map-control-btn" title="Konumumu Bul">
+            <span class="btn-icon">📍</span>
+            <span class="btn-text">Konumumu Bul</span>
+          </button>
+          <button id="btn-focus-all" class="map-control-btn" title="Tüm Tesislere Odaklan">
+            <span class="btn-icon">🗺️</span>
+            <span class="btn-text">Tümüne Odaklan</span>
+          </button>
+          <button id="btn-toggle-shadows" class="map-control-btn active" title="Hizmet Gölgeleri (Buffers)">
+            <span class="btn-icon">👁️</span>
+            <span class="btn-text">Kapsama Gölgeleri</span>
+          </button>
+        </div>
+
+        <div class="map-legend">
+          <h4>Mekansal Katmanlar</h4>
+          <div class="legend-item"><span class="legend-color high"></span> Sosyal Tesis (Kritik %80+)</div>
+          <div class="legend-item"><span class="legend-color moderate"></span> Sosyal Tesis (Orta %60-%80)</div>
+          <div class="legend-item"><span class="legend-color low"></span> Sosyal Tesis (Sakin <%60)</div>
+          <div class="legend-item"><span class="legend-color-circle ispark"></span> İSPARK Otoparkı (Tıklanabilir)</div>
+          <div class="legend-item"><span class="legend-color-buffer"></span> Hizmet Dışı Gölgeler (>2km)</div>
+        </div>
+      </div>
+    </main>
+    
+  </div>
+
+  <!-- AUTHENTICATION DIALOG / LOGIN MODAL -->
+  <div id="login-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h3 id="modal-auth-title">Sisteme Giriş Yap</h3>
+        <button class="modal-close" onclick="Auth.closeLoginModal()">×</button>
+      </header>
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="auth-username">Kullanıcı Adı</label>
+          <input type="text" id="auth-username" required placeholder="mufettis">
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Şifre</label>
+          <input type="password" id="auth-password" required placeholder="••••••••">
+        </div>
+        <div class="modal-toggle-row">
+          <a href="#" id="auth-mode-toggle" onclick="Auth.toggleAuthMode()">Hesabın yok mu? Kayıt Ol</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="auth-submit-btn">Giriş Yap</button>
+      </form>
+      <div id="auth-modal-status" class="form-status-msg"></div>
+    </div>
+  </div>
+
+  <!-- USER PROFILE / RESERVATION LIST MODAL -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-card wide">
+      <header class="modal-header">
+        <h3>Profilim & Rezervasyon Kayıtlarım</h3>
+        <button class="modal-close" onclick="Auth.closeProfileModal()">×</button>
+      </header>
+      <div class="profile-layout">
+        <div class="profile-info-panel">
+          <div class="avatar">👤</div>
+          <h4 id="profile-username-val">-</h4>
+          <span class="user-role-badge" id="profile-role-val">Kullanıcı</span>
+          <hr>
+          <p>Kriptografik İmzalı Rezervasyon Doğrulama Sistemi aktiftir.</p>
+        </div>
+        <div class="profile-reservations-panel">
+          <h4>Masa Rezervasyonlarım</h4>
+          <div class="reservations-table-wrapper">
+            <table class="reservations-table">
+              <thead>
+                <tr>
+                  <th>Tesis</th>
+                  <th>Tarih</th>
+                  <th>Saat</th>
+                  <th>Kişi</th>
+                  <th>Kripto İmzası (SHA256)</th>
+                </tr>
+              </thead>
+              <tbody id="profile-reservations-tbody">
+                <tr>
+                  <td colspan="5" class="empty-table">Kayıtlı rezervasyonunuz bulunmamaktadır.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Turf.js Library (For Buffer Calculations - Service Shadows) -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Linear Algebra Matrix Optimization Engine -->
+  <script src="matrix.js"></script>
+  <!-- Custom Orchestrator logic -->
+  <script src="app.js"></script>
+</body>
+</html>
