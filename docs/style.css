@@ -322,6 +322,21 @@ body {
   pointer-events: none;
   transform: translateX(-20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+.content-view::-webkit-scrollbar {
+  width: 6px;
+}
+.content-view::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 10px;
+}
+.content-view::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
 }
 
 .content-view.active {

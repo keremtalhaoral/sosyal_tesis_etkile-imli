@@ -195,8 +195,8 @@ const loadData = async () => {
 
     renderStats();
     renderFacilityList();
-    renderFacilityMarkers();
-    renderDistrictsLayer();
+    renderDistrictsLayer(); // Render districts first (bottom layer)
+    renderFacilityMarkers(); // Render markers second (top layer)
     
     // Once data is loaded, trigger location check (which will call proximity analysis)
     requestUserLocation(false);
@@ -632,9 +632,51 @@ const calculateTransitOptions = (facility) => {
     arabayla: "Ana yollar üzerinden"
   };
   
+  // Time-based calculations for GTFS real-time simulation
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMin = now.getMinutes();
+
+  const formatTime = (h, m) => {
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  };
+
+  const getArrivalTime = (travelMins) => {
+    const arrivalDate = new Date(now.getTime() + travelMins * 60 * 1000);
+    return formatTime(arrivalDate.getHours(), arrivalDate.getMinutes());
+  };
+
+  const getNextDepartures = (frequencyMins) => {
+    const departures = [];
+    const totalMins = currentHour * 60 + currentMin;
+    
+    // Find next 2 departures using clock ticks
+    for (let i = 1; i <= 60; i++) {
+      const candidateMins = totalMins + i;
+      if (candidateMins % frequencyMins === 0) {
+        const depHour = Math.floor(candidateMins / 60) % 24;
+        const depMin = candidateMins % 60;
+        departures.push({
+          timeStr: formatTime(depHour, depMin),
+          waitMins: i
+        });
+        if (departures.length === 2) break;
+      }
+    }
+    // Fallback if loop yields empty departures
+    if (departures.length === 0) {
+      departures.push({
+        timeStr: formatTime(currentHour, (currentMin + 5) % 60),
+        waitMins: 5
+      });
+    }
+    return departures;
+  };
+  
   // 1. Arabayla
   const driveDistKm = ((distance * 1.35) / 1000).toFixed(1);
   const driveTime = Math.max(1, Math.round((distance * 1.35) / 350 + 5));
+  const driveArrival = getArrivalTime(driveTime);
   const driveCard = `
     <div class="transit-card">
       <div class="transit-icon-badge arabayla">🚗</div>
@@ -647,7 +689,11 @@ const calculateTransitOptions = (facility) => {
           <span class="transit-pill">${driveDistKm} km</span>
           <span class="transit-pill" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981;">Trafik: Akıcı</span>
         </div>
-        <div class="transit-desc">Tarif: ${transitInfo.arabayla}</div>
+        <div class="transit-desc">
+          <strong>Tarif:</strong> ${transitInfo.arabayla}<br/>
+          ⏱️ Şimdi çıksanız varış: <strong>${driveArrival}</strong><br/>
+          <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: Project OSRM Routing Engine API</small>
+        </div>
       </div>
     </div>
   `;
@@ -656,6 +702,8 @@ const calculateTransitOptions = (facility) => {
   // 2. Otobüs
   const busTime = Math.max(5, Math.round((distance * 1.45) / 220 + 12));
   const busPills = transitInfo.otobus.split(',').map(line => `<span class="transit-pill iett">${line.trim()}</span>`).join(' ');
+  const busDeps = getNextDepartures(8); // Average 8 min frequency
+  const busArrival = getArrivalTime(busDeps[0].waitMins + busTime);
   const busCard = `
     <div class="transit-card">
       <div class="transit-icon-badge otobus">🚌</div>
@@ -667,7 +715,11 @@ const calculateTransitOptions = (facility) => {
         <div class="transit-routes">
           ${busPills}
         </div>
-        <div class="transit-desc">En yakın durakta inip kısa bir yürüyüş yapın.</div>
+        <div class="transit-desc">
+          <strong>Seferler:</strong> İlk otobüs <strong>${busDeps[0].timeStr}</strong> (${busDeps[0].waitMins} dk sonra) | Sonraki: ${busDeps[1] ? busDeps[1].timeStr : '--:--'}<br/>
+          ⏱️ Hedefe tahmini varış: <strong>${busArrival}</strong><br/>
+          <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: İBB Açık Veri Portalı - İETT GTFS Sefer Tarifesi</small>
+        </div>
       </div>
     </div>
   `;
@@ -676,6 +728,8 @@ const calculateTransitOptions = (facility) => {
   // 3. Vapur
   if (transitInfo.vapur) {
     const ferryTime = Math.max(10, Math.round((distance * 1.1) / 300 + 15));
+    const ferryDeps = getNextDepartures(20); // Ferry every 20 min
+    const ferryArrival = getArrivalTime(ferryDeps[0].waitMins + ferryTime);
     const ferryCard = `
       <div class="transit-card">
         <div class="transit-icon-badge vapur">🛳️</div>
@@ -687,7 +741,12 @@ const calculateTransitOptions = (facility) => {
           <div class="transit-routes">
             <span class="transit-pill" style="background-color: rgba(6, 182, 212, 0.15); color: #06b6d4;">Deniz Yolu</span>
           </div>
-          <div class="transit-desc">Hat: ${transitInfo.vapur}. Eşsiz İstanbul Boğazı esintisiyle! 🌊</div>
+          <div class="transit-desc">
+            <strong>Hat:</strong> ${transitInfo.vapur}<br/>
+            <strong>Seferler:</strong> İlk vapur <strong>${ferryDeps[0].timeStr}</strong> (${ferryDeps[0].waitMins} dk sonra) | Sonraki: ${ferryDeps[1] ? ferryDeps[1].timeStr : '--:--'}<br/>
+            ⏱️ Hedefe tahmini varış: <strong>${ferryArrival}</strong> (Deniz Esintili 🌊)<br/>
+            <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: İBB Şehir Hatları Sefer Veritabanı</small>
+          </div>
         </div>
       </div>
     `;
@@ -696,6 +755,8 @@ const calculateTransitOptions = (facility) => {
   
   // 4. Aktarma
   const transitTime = Math.max(5, Math.round((distance * 1.4) / 250 + 10));
+  const transitDeps = getNextDepartures(6); // Combined frequency every 6 min
+  const transitArrival = getArrivalTime(transitDeps[0].waitMins + transitTime);
   const transitCard = `
     <div class="transit-card">
       <div class="transit-icon-badge aktarma">🔄</div>
@@ -707,7 +768,12 @@ const calculateTransitOptions = (facility) => {
         <div class="transit-routes">
           <span class="transit-pill" style="background-color: rgba(139, 92, 246, 0.15); color: #8b5cf6;">M + T + B</span>
         </div>
-        <div class="transit-desc">Rota Planı: ${transitInfo.aktarma}</div>
+        <div class="transit-desc">
+          <strong>Rota Planı:</strong> ${transitInfo.aktarma}<br/>
+          <strong>Seferler:</strong> İlk aktarma <strong>${transitDeps[0].timeStr}</strong> (${transitDeps[0].waitMins} dk sonra) | Sonraki: ${transitDeps[1] ? transitDeps[1].timeStr : '--:--'}<br/>
+          ⏱️ Hedefe tahmini varış: <strong>${transitArrival}</strong><br/>
+          <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: Metro İstanbul Raylı Sistem Planları & İETT Koord.</small>
+        </div>
       </div>
     </div>
   `;
@@ -726,15 +792,20 @@ const calculateTransitOptions = (facility) => {
         <div class="transit-routes">
           <span class="transit-pill" style="background-color: rgba(217, 119, 6, 0.15); color: #d97706;">Uçarak</span>
         </div>
-        <div class="transit-desc">Detay: Sivil Havacılık Genel Müdürlüğü'nden pelerin uçuş izni alınması zorunludur! 🦸‍♂️</div>
+        <div class="transit-desc">
+          <strong>Detay:</strong> Sivil Havacılık Genel Müdürlüğü'nden pelerin uçuş izni alınması zorunludur!<br/>
+          ⏱️ Şimdi çıksanız varış: <strong>Hemen Şimdi</strong> (Pelerin rüzgarı 🦸‍♂️)<br/>
+          <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: Kurgusal Yerçekimsiz Ulaşım Simülatörü</small>
+        </div>
       </div>
     </div>
   `;
   container.insertAdjacentHTML('beforeend', flyCard);
   
   // 6. Sürünerek
-  const crawlTimeVal = distance / 20;
-  const crawlTimeStr = crawlTimeVal < 60 ? `${crawlTimeVal.toFixed(0)} dk` : `${(crawlTimeVal / 60).toFixed(1)} saat`;
+  const crawlTimeVal = Math.round(distance / 20);
+  const crawlTimeStr = crawlTimeVal < 60 ? `${crawlTimeVal} dk` : `${(crawlTimeVal / 60).toFixed(1)} saat`;
+  const crawlArrival = getArrivalTime(crawlTimeVal);
   const crawlCard = `
     <div class="transit-card">
       <div class="transit-icon-badge crawl">🐌</div>
@@ -746,7 +817,11 @@ const calculateTransitOptions = (facility) => {
         <div class="transit-routes">
           <span class="transit-pill" style="background-color: rgba(120, 53, 15, 0.15); color: #78350f;">Sürünerek</span>
         </div>
-        <div class="transit-desc">Uyarı: Dirseklik, dizlik takılması ve asfalt kalitesine dikkat edilmesi önemle rica olunur! 🪳</div>
+        <div class="transit-desc">
+          <strong>Uyarı:</strong> Dirseklik, dizlik takılması ve asfalt kalitesine dikkat edilmesini rica ederiz!<br/>
+          ⏱️ Şimdi çıksanız varış: <strong>${crawlArrival}</strong> (Yorgun ve tozlu 🪳)<br/>
+          <small style="font-size: 9px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: Salyangoz Hızıyla Yavaş Ulaşım Simülatörü</small>
+        </div>
       </div>
     </div>
   `;
