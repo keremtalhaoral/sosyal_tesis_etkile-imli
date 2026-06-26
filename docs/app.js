@@ -613,22 +613,184 @@ const updateDetailsPanel = (facility) => {
   statusText.className = `occupancy-status-text ${status.class}`;
   statusText.textContent = `${status.label} kapasite doluluk düzeyinde`;
   
-  calculateDistanceAndCrawlingTime(koordinatlar, kod);
+  // Trigger multi-modal transit calculation
+  calculateTransitOptions(facility);
 };
 
-const calculateDistanceAndCrawlingTime = (facilityCoords, kod) => {
-  const userLatLng = L.latLng(state.userLocation.lat, state.userLocation.lng);
-  const facilityLatLng = L.latLng(facilityCoords[0], facilityCoords[1]);
-  
-  const distance = state.map.distance(userLatLng, facilityLatLng);
-  const crawlingTime = (distance / 20).toFixed(1);
-  
-  document.getElementById('crawling-distance').textContent = `${distance.toFixed(1)} m`;
-  document.getElementById('crawling-duration').textContent = `${crawlingTime} dk`;
-  
-  const warningContainer = document.getElementById('crawling-warning-container');
-  warningContainer.innerHTML = `🚨 MÜFETTİŞ UYARISI: Bu sosyal tesise (${kod}) şu anki konumundan sürünerek yaklaşık ${crawlingTime} dakika içinde varabilirsin. Yoldaki asfalt kalitesine ve dirsek koruyucularına dikkat et!`;
+// Transit routing recommendations database (Google Maps & Moovit style)
+const TRANSIT_LOOKUP = {
+  1: { otobus: "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)", vapur: "Haliç Hattı (Eyüpsultan İskelesi)", aktarma: "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)", arabayla: "Silahtarağa Cd. ve Bahariye Cd. üzerinden" },
+  2: { otobus: "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)", vapur: "Boğaz Hattı (Arnavutköy İskelesi)", aktarma: "M2 Metro (Taksim) -> 40T Otobüsü", arabayla: "Bebek Arnavutköy Cd. üzerinden" },
+  3: { otobus: "76O, 146, 76C (Denizköşkler Durağı)", vapur: null, aktarma: "Metrobüs (Şükrübey Durağı) -> 10 dk yürüyüş", arabayla: "D-100 Karayolu ve Dr. Sadık Ahmet Cd. üzerinden" },
+  4: { otobus: "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)", vapur: "İstinye - Çubuklu Vapuru veya Üsküdar - Beykoz Motoru", aktarma: "M2 Metro (Hacıosman) -> Otobüs / Vapur", arabayla: "Beykoz Sahil Yolu üzerinden" },
+  5: { otobus: "15, 15F, 15T, 15BK, 121A (Burunbahçe Durağı)", vapur: "İstinye - Çubuklu Vapuru veya Üsküdar - Beykoz Motoru", aktarma: "M2 Metro (Hacıosman) -> Otobüs / Vapur", arabayla: "Beykoz Sahil Yolu ve Burunbahçe Sk. üzerinden" },
+  6: { otobus: "336G, 36AY, 36B (Boğazköy Durağı)", vapur: null, aktarma: "M11 Metro (Arnavutköy) -> 336G Otobüsü", arabayla: "E-80 ve Erdener Sk. üzerinden" },
+  7: { otobus: "129T, 11A, 11ÜS, 14F (Kısıklı Durağı)", vapur: null, aktarma: "M5 Metro (Kısıklı İstasyonu) -> 15 dk yürüyüş", arabayla: "Turistik Çamlıca Cd. üzerinden" },
+  8: { otobus: "26, 26A, 26B, 28, 28T (Fındıklı Durağı + Yürüyüş)", vapur: "Boğaz Hattı (Kabataş İskelesi)", aktarma: "M2 Metro (Taksim) veya T1 Tramvay (Fındıklı) -> Yürüyüş", arabayla: "Meclis-i Mebusan Cd. ve Kamacı Ustası Sk. üzerinden" },
+  9: { otobus: "134YK, 16D, 17, 252 (Dragos Durağı)", vapur: null, aktarma: "M4 Metro (Hastane-Adliye) -> 134YK Otobüsü", arabayla: "Turgut Özal Bulvarı (Sahil Yolu) üzerinden" },
+  10: { otobus: "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)", vapur: "Üsküdar İskelesi (1.2 km yürüyüş)", aktarma: "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı", arabayla: "Paşalimanı Cd. ve Nacak Sk. üzerinden" },
+  11: { otobus: "73Y, 73B, 73F (Florya Sosyal Tesisler Durağı)", vapur: null, aktarma: "Marmaray (Florya Akvaryum Durağı) -> 5 dk yürüyüş", arabayla: "Florya Sahil Yolu üzerinden" },
+  12: { otobus: "38G, 49G, 36L (Gazi Barajı Durağı)", vapur: null, aktarma: "T4 Tramvayı (Mescid-i Selam) -> 38G Otobüsü", arabayla: "Zübeyde Hanım Mahallesi ve 1481. Sk. üzerinden" },
+  13: { otobus: "132G, 132V, 132P (Gözdağı Durağı)", vapur: null, aktarma: "M4 Metro (Pendik İstasyonu) -> 132G Otobüsü", arabayla: "D-100 ve Gözdağı Caddesi üzerinden" },
+  14: { otobus: "99A, 55T, 48E, 399B (Kadir Has Üniversitesi Durağı)", vapur: "Haliç Hattı (Cibali İskelesi)", aktarma: "T5 Tramvayı (Cibali İstasyonu) -> Yürüyüş", arabayla: "Abdülezelpaşa Caddesi üzerinden" },
+  15: { otobus: "22, 22RE, 25E, 40T, 42T (İstinye Devlet Hastanesi Durağı)", vapur: "İstinye - Çubuklu Arabalı Vapuru", aktarma: "M2 Metro (İTÜ Ayazağa) -> 29S Otobüsü", arabayla: "Emirgan Koru Caddesi ve İstinye Sahil Yolu üzerinden" },
+  16: { otobus: "EM1, EM2, 77, 77A, 54HT (Kasımpaşa Durağı)", vapur: "Haliç Hattı (Kasımpaşa İskelesi)", aktarma: "M2 Metro (Şişhane) -> 15 dk yürüyüş / Tünel", arabayla: "Bahriye Caddesi ve Evliya Çelebi Caddesi üzerinden" },
+  17: { otobus: "11ES, 11L, 11M, 11ÜS (Küçük Çamlıca Durağı)", vapur: null, aktarma: "M5 Metro (Kısıklı) -> 11ES Otobüsü", arabayla: "Kısıklı ve Küçük Çamlıca Oyma Sk. üzerinden" },
+  18: { otobus: "76O, 89A, 89B, 98TB (Küçükçekmece Durağı)", vapur: null, aktarma: "Metrobüs (Küçükçekmece İstasyonu) -> Marmaray Aktarması", arabayla: "D-100 ve Yalı Caddesi üzerinden" },
+  19: { otobus: "131A, 131YS, 132YM (Safa Tepesi Durağı)", vapur: null, aktarma: "M5 Metro (Çekmeköy) -> 131A Otobüsü", arabayla: "Şile Otoyolu ve Mevlana Caddesi üzerinden" },
+  20: { otobus: "131, 131H, 131Ü, 18M (Sultanbeyli Gölet Durağı)", vapur: null, aktarma: "M5 Metro (Madenler) -> 131 no'lu Otobüs hattı", arabayla: "TEM Otoyolu Sultanbeyli çıkışı ve Gölet Parkı üzerinden" },
+  21: { otobus: "458, 76Y (Yakuplu Durağı)", vapur: null, aktarma: "Metrobüs (Haramidere) -> 458 Otobüsü", arabayla: "Yakuplu Liman Yolu ve Mehmet Akif Ersoy Cd. üzerinden" },
+  22: { otobus: "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)", vapur: "İstinye - Çubuklu Vapuru veya Şehir Hatları", aktarma: "M2 Metro (Hacıosman) -> Otobüs", arabayla: "Beykoz Sahil Yolu ve Kelle İbrahim Cd. üzerinden" },
+  23: { otobus: "22, 22RE, 25E, 40T, 42T (Emirgan Durağı)", vapur: "Boğaz Hattı (Emirgan İskelesi)", aktarma: "M2 Metro (İTÜ Ayazağa) -> Emirgan otobüsleri", arabayla: "Emirgan Korusu iç yolları üzerinden" },
+  24: { otobus: "22, 22RE, 25E, 30D, 40T, 42T (Yıldız Parkı Durağı)", vapur: "Beşiktaş İskelesi (1.5 km yürüyüş)", aktarma: "M7 Metro (Beşiktaş İstasyonu) -> 5 dk yürüyüş", arabayla: "Yıldız Parkı iç yolları üzerinden" },
+  25: { otobus: "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)", vapur: "Üsküdar İskelesi (800m yürüyüş)", aktarma: "Marmaray / M5 Metro (Üsküdar İstasyonu) -> Paşalimanı sahil yürüyüşü", arabayla: "Paşalimanı Caddesi üzerinden" },
+  26: { otobus: "73Y, 73B, 73F (Basınköy Durağı)", vapur: null, aktarma: "Marmaray (Florya Durağı) -> 10 dk yürüyüş", arabayla: "Florya Sahil Yolu ve Basınköy İç Yolu üzerinden" },
+  27: { otobus: "93, 93M, 93T, MR10 (Kazlıçeşme Durağı)", vapur: null, aktarma: "Marmaray (Kazlıçeşme İstasyonu) -> 8 dk yürüyüş", arabayla: "Sahil Kennedy Caddesi ve Beşkardeşler Sk. üzerinden" },
+  28: { otobus: "93, 93M, 93T (Çırpıcı Parkı Durağı)", vapur: null, aktarma: "Metro M1 / Metrobüs (Zeytinburnu durağı) -> 2 dk yürüyüş", arabayla: "D-100 yanyol ve Koşuyolu Sokak üzerinden" },
+  29: { otobus: "76O, 146, 76C (Denizköşkler Durağı)", vapur: null, aktarma: "Metrobüs (Şükrübey Durağı) -> 12 dk yürüyüş", arabayla: "Sahil Yolu ve Kemal Sunal Caddesi üzerinden" },
+  30: { otobus: "92T, 41AT, 85T (Güngören durağı)", vapur: null, aktarma: "M1B Metro (Menderes) -> Yürüyüş veya Minibüs", arabayla: "O-3 yanyol ve Akyıldız Sokak üzerinden" }
 };
+
+const calculateTransitOptions = (facility) => {
+  if (!facility) return;
+  const userLatLng = L.latLng(state.userLocation.lat, state.userLocation.lng);
+  const facilityLatLng = L.latLng(facility.koordinatlar[0], facility.koordinatlar[1]);
+  
+  // Calculate flight distance in meters
+  const distance = state.map.distance(userLatLng, facilityLatLng);
+  
+  const container = document.getElementById('transit-options-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const transitInfo = TRANSIT_LOOKUP[facility.id] || {
+    otobus: "Mevcut Değil",
+    vapur: null,
+    aktarma: "Toplu Taşıma",
+    arabayla: "Ana yollar üzerinden"
+  };
+  
+  // 1. Arabayla
+  const driveDistKm = ((distance * 1.35) / 1000).toFixed(1);
+  const driveTime = Math.max(1, Math.round((distance * 1.35) / 350 + 5));
+  const driveCard = `
+    <div class="transit-card">
+      <div class="transit-icon-badge arabayla">🚗</div>
+      <div class="transit-details">
+        <div class="transit-header-row">
+          <span class="transit-title">Arabayla / Taksi</span>
+          <span class="transit-time-badge fast">${driveTime} dk</span>
+        </div>
+        <div class="transit-routes">
+          <span class="transit-pill">${driveDistKm} km</span>
+          <span class="transit-pill" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981;">Trafik: Akıcı</span>
+        </div>
+        <div class="transit-desc">Tarif: ${transitInfo.arabayla}</div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', driveCard);
+  
+  // 2. Otobüs
+  const busTime = Math.max(5, Math.round((distance * 1.45) / 220 + 12));
+  const busPills = transitInfo.otobus.split(',').map(line => `<span class="transit-pill iett">${line.trim()}</span>`).join(' ');
+  const busCard = `
+    <div class="transit-card">
+      <div class="transit-icon-badge otobus">🚌</div>
+      <div class="transit-details">
+        <div class="transit-header-row">
+          <span class="transit-title">İETT Otobüs Hatları</span>
+          <span class="transit-time-badge">${busTime} dk</span>
+        </div>
+        <div class="transit-routes">
+          ${busPills}
+        </div>
+        <div class="transit-desc">En yakın durakta inip kısa bir yürüyüş yapın.</div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', busCard);
+  
+  // 3. Vapur
+  if (transitInfo.vapur) {
+    const ferryTime = Math.max(10, Math.round((distance * 1.1) / 300 + 15));
+    const ferryCard = `
+      <div class="transit-card">
+        <div class="transit-icon-badge vapur">🛳️</div>
+        <div class="transit-details">
+          <div class="transit-header-row">
+            <span class="transit-title">Şehir Hatları Vapur / Motor</span>
+            <span class="transit-time-badge fast">${ferryTime} dk</span>
+          </div>
+          <div class="transit-routes">
+            <span class="transit-pill" style="background-color: rgba(6, 182, 212, 0.15); color: #06b6d4;">Deniz Yolu</span>
+          </div>
+          <div class="transit-desc">Hat: ${transitInfo.vapur}. Eşsiz İstanbul Boğazı esintisiyle! 🌊</div>
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', ferryCard);
+  }
+  
+  // 4. Aktarma
+  const transitTime = Math.max(5, Math.round((distance * 1.4) / 250 + 10));
+  const transitCard = `
+    <div class="transit-card">
+      <div class="transit-icon-badge aktarma">🔄</div>
+      <div class="transit-details">
+        <div class="transit-header-row">
+          <span class="transit-title">Aktarmalı Rota</span>
+          <span class="transit-time-badge">${transitTime} dk</span>
+        </div>
+        <div class="transit-routes">
+          <span class="transit-pill" style="background-color: rgba(139, 92, 246, 0.15); color: #8b5cf6;">M + T + B</span>
+        </div>
+        <div class="transit-desc">Rota Planı: ${transitInfo.aktarma}</div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', transitCard);
+  
+  // 5. Uçarak
+  const flyTime = (distance / 340).toFixed(1);
+  const flyCard = `
+    <div class="transit-card">
+      <div class="transit-icon-badge fly">⚡</div>
+      <div class="transit-details">
+        <div class="transit-header-row">
+          <span class="transit-title">Süper Kahraman Uçuşu (Işınlanma)</span>
+          <span class="transit-time-badge fast" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981;">${flyTime} sn</span>
+        </div>
+        <div class="transit-routes">
+          <span class="transit-pill" style="background-color: rgba(217, 119, 6, 0.15); color: #d97706;">Uçarak</span>
+        </div>
+        <div class="transit-desc">Detay: Sivil Havacılık Genel Müdürlüğü'nden pelerin uçuş izni alınması zorunludur! 🦸‍♂️</div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', flyCard);
+  
+  // 6. Sürünerek
+  const crawlTimeVal = distance / 20;
+  const crawlTimeStr = crawlTimeVal < 60 ? `${crawlTimeVal.toFixed(0)} dk` : `${(crawlTimeVal / 60).toFixed(1)} saat`;
+  const crawlCard = `
+    <div class="transit-card">
+      <div class="transit-icon-badge crawl">🐌</div>
+      <div class="transit-details">
+        <div class="transit-header-row">
+          <span class="transit-title">Müfettiş Hızıyla Sürünerek</span>
+          <span class="transit-time-badge slow" style="background-color: rgba(239, 68, 68, 0.15); color: #ef4444;">${crawlTimeStr}</span>
+        </div>
+        <div class="transit-routes">
+          <span class="transit-pill" style="background-color: rgba(120, 53, 15, 0.15); color: #78350f;">Sürünerek</span>
+        </div>
+        <div class="transit-desc">Uyarı: Dirseklik, dizlik takılması ve asfalt kalitesine dikkat edilmesini rica ederiz! 🪳</div>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', crawlCard);
+};
+
 
 const requestUserLocation = (flyToUser = true) => {
   const locationDot = document.getElementById('location-dot');
@@ -693,7 +855,7 @@ const updateUserLocationUI = (label, dotClass, flyToUser) => {
   calculateClosestFacilitiesLocal();
 
   if (state.selectedFacility) {
-    calculateDistanceAndCrawlingTime(state.selectedFacility.koordinatlar, state.selectedFacility.kod);
+    calculateTransitOptions(state.selectedFacility);
     Routing.draw(userCoords, state.selectedFacility.koordinatlar);
   }
 };
