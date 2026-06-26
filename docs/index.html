@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müfettiş Sosyal Tesis Takip Sistemi</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Custom Styling -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Theme FOUC Prevention Script -->
+  <meta name="color-scheme" content="light dark">
+  <script>
+    {
+      const colorScheme = localStorage.getItem("color-scheme");
+      if (colorScheme) {
+        document.querySelector('meta[name="color-scheme"]').content = colorScheme;
+        document.documentElement.setAttribute('data-theme', colorScheme);
+      } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const defaultTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', defaultTheme);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Left Sidebar: Glassy Dashboard -->
+    <aside class="sidebar" id="sidebar">
+      <header class="sidebar-header">
+        <div class="brand">
+          <span class="brand-icon">🗺️</span>
+          <div class="brand-text">
+            <h1>Müfettiş</h1>
+            <p>Sosyal Tesis Takip</p>
+          </div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Temayı Değiştir" title="Temayı Değiştir">
+          <span class="toggle-icon">🌙</span>
+        </button>
+      </header>
+      
+      <!-- Stats Summary Section -->
+      <section class="stats-container">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total-facilities">0</span>
+          <span class="stat-label">Toplam Tesis</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-avg-occupancy">0%</span>
+          <span class="stat-label">Ort. Doluluk</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-total-capacity">0</span>
+          <span class="stat-label">Top. Kapasite</span>
+        </div>
+      </section>
+
+      <!-- Search & Filters -->
+      <section class="filter-section">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="facility-search" placeholder="Tesis adı veya kod ara..." aria-label="Tesis Ara">
+        </div>
+        <div class="filter-options">
+          <button class="filter-btn active" data-filter="all">Tümü</button>
+          <button class="filter-btn" data-filter="high">Kritik (>80%)</button>
+          <button class="filter-btn" data-filter="low">Sakin (<60%)</button>
+        </div>
+      </section>
+
+      <!-- Main Sidebar Contents (Split between List, Facility Details, and District Details) -->
+      <div class="sidebar-content">
+        <!-- Facility List View -->
+        <div class="content-view active" id="list-view">
+          <h2 class="section-title">Sosyal Tesisler</h2>
+          <div class="facility-list" id="facility-list" role="list">
+            <!-- Dynamic items go here -->
+          </div>
+          
+          <!-- Proximity Analysis Section (Step 3) -->
+          <div class="proximity-section">
+            <h3 class="proximity-title">📍 En Yakın Sosyal Tesisler</h3>
+            <div class="proximity-list" id="proximity-list">
+              <div class="proximity-loading">Konum alınarak hesaplanıyor...</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Facility Detail View (Shown when facility is selected) -->
+        <div class="content-view" id="detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="back-to-list-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge" id="detail-code">ALTY-00</span>
+          </div>
+          
+          <h2 class="detail-title" id="detail-name">Tesis Seçilmedi</h2>
+          
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">Kapasite</span>
+                <span class="metric-value" id="detail-capacity">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Mevcut Doluluk</span>
+                <span class="metric-value" id="detail-occupancy-percent">-</span>
+              </div>
+            </div>
+            
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="detail-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="occupancy-status-text" id="detail-occupancy-text">-</div>
+          </div>
+
+          <!-- Weather Widget for Selected Facility (Step 6) -->
+          <div class="weather-card" id="facility-weather-card">
+            <h4 class="weather-title">🌦️ Tesis Hava Durumu</h4>
+            <div class="weather-grid" id="facility-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
+          
+          <!-- Crawling Speed Gamification Area -->
+          <div class="crawling-card" id="crawling-card">
+            <h3 class="crawling-card-title">🚶‍♂️ Müfettiş Ulaşım Planlayıcı</h3>
+            
+            <div class="user-location-info">
+              <span class="location-status-dot green" id="location-dot"></span>
+              <span class="location-status-text" id="location-status-text">Konum Alınıyor...</span>
+            </div>
+            
+            <div class="distance-metric-row">
+              <div class="dist-metric">
+                <span class="dist-label">Uçuş Mesafesi</span>
+                <span class="dist-value" id="crawling-distance">- m</span>
+              </div>
+              <div class="dist-metric">
+                <span class="dist-label">Sürünme Süresi</span>
+                <span class="dist-value" id="crawling-duration">- dk</span>
+              </div>
+            </div>
+            
+            <div class="crawling-warning" id="crawling-warning-container">
+              🚨 Lütfen haritadan veya listeden bir tesis seçin ve konumunuzu güncelleyin.
+            </div>
+          </div>
+        </div>
+
+        <!-- District Detail View (Step 1 & Step 5 - Spatial Data Overlay & Karar Destek) -->
+        <div class="content-view" id="district-detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="district-back-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge" id="district-alarm-badge">-</span>
+          </div>
+          
+          <h2 class="detail-title" id="district-name">İlçe Seçilmedi</h2>
+
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">TÜİK Nüfus</span>
+                <span class="metric-value" id="district-population">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Sosyal Tesis</span>
+                <span class="metric-value" id="district-facility-count">-</span>
+              </div>
+            </div>
+            
+            <div class="district-density-row">
+              <span class="density-label">100.000 Kişi Başına Düşen Tesis Yoğunluğu:</span>
+              <strong id="district-density-val">-</strong>
+            </div>
+          </div>
+
+          <!-- Karar Destek Kararı Alarm Kutusu (Step 5) -->
+          <div class="decision-support-card" id="district-alarm-container">
+            <h4 class="decision-card-title">💡 Karar Destek Tavsiyesi</h4>
+            <p class="decision-text" id="district-decision-text">Hesaplanıyor...</p>
+          </div>
+
+          <!-- Weather Widget for District Centroid (Step 6) -->
+          <div class="weather-card" id="district-weather-card">
+            <h4 class="weather-title">🌦️ İlçe Hava Durumu</h4>
+            <div class="weather-grid" id="district-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
+
+          <!-- District Facilities list -->
+          <div class="district-facilities-section">
+            <h4 class="sub-section-title">İlçedeki Tesisler</h4>
+            <div class="facility-list mini" id="district-facility-list">
+              <!-- District facilities generated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Side: Leaflet Web GIS Map Container -->
+    <main class="map-wrapper">
+      <div id="map" style="position: relative;">
+        <!-- Floating Map Overlays & Controls (Positioned Absolute relative to #map) -->
+        <div class="floating-controls top-right">
+          <button id="btn-my-location" class="map-control-btn" title="Konumumu Bul">
+            <span class="btn-icon">📍</span>
+            <span class="btn-text">Konumumu Bul</span>
+          </button>
+          <button id="btn-focus-all" class="map-control-btn" title="Tüm Tesislere Odaklan">
+            <span class="btn-icon">🗺️</span>
+            <span class="btn-text">Tümüne Odaklan</span>
+          </button>
+        </div>
+
+        <div class="map-legend">
+          <h4>Doluluk Oranları</h4>
+          <div class="legend-item"><span class="legend-color high"></span> Kritik (%80+)</div>
+          <div class="legend-item"><span class="legend-color moderate"></span> Orta (%60 - %80)</div>
+          <div class="legend-item"><span class="legend-color low"></span> Sakin (<60%)</div>
+        </div>
+      </div>
+    </main>
+    
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Custom Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
