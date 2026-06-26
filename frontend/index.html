@@ -79,7 +79,7 @@
         </div>
       </section>
 
-      <!-- Main Sidebar Contents (Split between List and Details) -->
+      <!-- Main Sidebar Contents (Split between List, Facility Details, and District Details) -->
       <div class="sidebar-content">
         <!-- Facility List View -->
         <div class="content-view active" id="list-view">
@@ -87,9 +87,17 @@
           <div class="facility-list" id="facility-list" role="list">
             <!-- Dynamic items go here -->
           </div>
+          
+          <!-- Proximity Analysis Section (Step 3) -->
+          <div class="proximity-section">
+            <h3 class="proximity-title">📍 En Yakın Sosyal Tesisler</h3>
+            <div class="proximity-list" id="proximity-list">
+              <div class="proximity-loading">Konum alınarak hesaplanıyor...</div>
+            </div>
+          </div>
         </div>
         
-        <!-- Facility Detail View (Hidden by default, shown when facility is selected) -->
+        <!-- Facility Detail View (Shown when facility is selected) -->
         <div class="content-view" id="detail-view">
           <div class="detail-header-row">
             <button class="back-btn" id="back-to-list-btn" aria-label="Listeye Dön">
@@ -117,6 +125,17 @@
             </div>
             <div class="occupancy-status-text" id="detail-occupancy-text">-</div>
           </div>
+
+          <!-- Weather Widget for Selected Facility (Step 6) -->
+          <div class="weather-card" id="facility-weather-card">
+            <h4 class="weather-title">🌦️ Tesis Hava Durumu</h4>
+            <div class="weather-grid" id="facility-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
           
           <!-- Crawling Speed Gamification Area -->
           <div class="crawling-card" id="crawling-card">
@@ -140,6 +159,61 @@
             
             <div class="crawling-warning" id="crawling-warning-container">
               🚨 Lütfen haritadan veya listeden bir tesis seçin ve konumunuzu güncelleyin.
+            </div>
+          </div>
+        </div>
+
+        <!-- District Detail View (Step 1 & Step 5 - Spatial Data Overlay & Karar Destek) -->
+        <div class="content-view" id="district-detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="district-back-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge" id="district-alarm-badge">-</span>
+          </div>
+          
+          <h2 class="detail-title" id="district-name">İlçe Seçilmedi</h2>
+
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">TÜİK Nüfus</span>
+                <span class="metric-value" id="district-population">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Sosyal Tesis</span>
+                <span class="metric-value" id="district-facility-count">-</span>
+              </div>
+            </div>
+            
+            <div class="district-density-row">
+              <span class="density-label">100.000 Kişi Başına Düşen Tesis Yoğunluğu:</span>
+              <strong id="district-density-val">-</strong>
+            </div>
+          </div>
+
+          <!-- Karar Destek Kararı Alarm Kutusu (Step 5) -->
+          <div class="decision-support-card" id="district-alarm-container">
+            <h4 class="decision-card-title">💡 Karar Destek Tavsiyesi</h4>
+            <p class="decision-text" id="district-decision-text">Hesaplanıyor...</p>
+          </div>
+
+          <!-- Weather Widget for District Centroid (Step 6) -->
+          <div class="weather-card" id="district-weather-card">
+            <h4 class="weather-title">🌦️ İlçe Hava Durumu</h4>
+            <div class="weather-grid" id="district-weather-grid">
+              <div class="weather-temp">-°C</div>
+              <div class="weather-desc">Yükleniyor...</div>
+              <div class="weather-detail">Nem: -%</div>
+              <div class="weather-detail">Rüzgar: - km/s</div>
+            </div>
+          </div>
+
+          <!-- District Facilities list -->
+          <div class="district-facilities-section">
+            <h4 class="sub-section-title">İlçedeki Tesisler</h4>
+            <div class="facility-list mini" id="district-facility-list">
+              <!-- District facilities generated dynamically -->
             </div>
           </div>
         </div>
