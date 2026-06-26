@@ -64,6 +64,13 @@ Projeyi geliştirirken **John Ousterhout (Stanford University)** tarafından yaz
 *   **Yapılan İş**: Seçilen ilçe centroid'ine (poligonun geometrik merkez ağırlık noktası) ve seçilen tesislere göre anlık hava durumunu entegre ettik.
 *   **Neden/Nasıl**: CBS projelerinde dinamik dış veri (real-time attribute data) entegrasyonu süreçlerini öğrenmek amacıyla OpenWeatherMap API entegrasyonu kurguladık.
 
+### Adım 7: Moovit & Google Maps Tarzı Çoklu Ulaşım Planlayıcı (Transit Planner)
+*   **Yapılan İş**: Seçilen tesise giden ulaşım alternatiflerini (Arabayla, Otobüs hatları, varsa Vapur, Aktarmalı Rota ve mizahi Uçarak/Sürünerek seçenekleri) dinamik mesafe ve süre hesaplamalarıyla birlikte listeledik.
+*   **Neden/Nasıl**: 
+    *   **Gerçekçi Veri Entegrasyonu**: Her bir tesis için en yakın duraktan geçen İETT otobüs hatlarını (örn. `99A`, `55`, `39D`) ve eğer tesis sahil kenarındaysa aktif deniz hatlarını (vapur/motor) eşleştirerek sisteme doğru entegrasyon sağladık.
+    *   **Mizahi & Akılda Kalıcı Arayüz**: Sunumda jüriyi etkilemek ve etkileşimi artırmak amacıyla "Süper Kahraman Uçuşu" (ses hızıyla 340 m/s) ve "Müfettiş Sürünmesi" (snail speed 0.3 km/s) seçeneklerini formüllere dayandırarak ekledik.
+    *   **Yazılım Tasarımı (Ousterhout Uyumluluğu)**: Karmaşık transit rota ağını doğrudan istemci tarafına gömerek (TRANSIT_LOOKUP tablosu), internet kopması veya sunucu yanıt vermeme hatalarını tasarımla yok ettik (Define Errors Out of Existence).
+
 ---
 
 ## 🎓 Bölüm 3: Sunumda Vurgulanacak Teknik Kazanımlarım
@@ -73,3 +80,5 @@ Staj kuruluna ve yöneticilerine bu projeden elde ettiğin şu kazanımları akt
 3.  **İstemci-Sunucu (Client-Server) Mimarisi**: Frontend arayüzü ile Python/Express backend servislerinin CORS kuralları çerçevesinde REST API üzerinden nasıl haberleştiğini deneyimledim.
 4.  **Karar Destek Sistemleri (KDS)**: Coğrafi veriler ile demografik (TÜİK) verileri ilişkilendirerek ham veriden nasıl anlamlı yönetsel kararlar üretilebileceğini kurguladım.
 5.  **Temiz Kod Tasarımı (Ousterhout Prensipleri)**: Kod karmaşıklığını gizleme (information hiding), derin modül yazma ve hata toleranslı (fail-safe) sistem tasarımı konularında pratik tecrübe kazandım.
+6.  **Çoklu Ulaşım ve Ağ Analizi Simülasyonu**: Koordinat verileri üzerinden farklı ulaşım modlarının hız ve süre parametrelerini kullanarak gerçekçi yol tarifi modelleri kurguladım.
+
