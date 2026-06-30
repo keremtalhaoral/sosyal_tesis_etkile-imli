@@ -39,36 +39,49 @@ const API_BASE = 'http://127.0.0.1:8085';
 // ==========================================
 const MOCK_FACILITIES_KEY = 'mufettis_mock_facilities';
 const MOCK_RESERVATIONS_KEY = 'mufettis_mock_reservations';
-const MOCK_USERS_KEY = 'mufettis_mock_users';
+const MOCK_USERS_KEY = 'mufettis_mock_users';const defaultFacilities = [
+  {"id": 1, "kod": "ALTY-01", "ad": "Altınboynuz Sosyal Tesisi", "koordinatlar": [41.0578458, 28.9456101], "kapasite": 120, "dolulukOrani": 75, "transit": {"otobus": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)", "aktarma": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)", "arabayla": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"}},
+  {"id": 2, "kod": "ALTY-02", "ad": "Arnavutköy Sosyal Tesisi", "koordinatlar": [41.067491, 29.0448903], "kapasite": 150, "dolulukOrani": 85, "transit": {"otobus": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)", "aktarma": "M2 Metro (Taksim) -> 40T Otobüsü", "arabayla": "Bebek Arnavutköy Cd. üzerinden"}},
+  {"id": 3, "kod": "ALTY-03", "ad": "Avcılar Sosyal Tesisi", "koordinatlar": [40.976648, 28.743912], "kapasite": 200, "dolulukOrani": 55, "transit": {"otobus": "76O, 146, 76C (Denizköşkler Durağı)", "aktarma": "Metrobüs (Şükrübey Durağı) -> 10 dk yürüyüş", "arabayla": "D-100 Karayolu ve Dr. Sadık Ahmet Cd. üzerinden"}},
+  {"id": 4, "kod": "ALTY-04", "ad": "Beykoz Koru Sosyal Tesisi", "koordinatlar": [41.1316936, 29.0942223], "kapasite": 250, "dolulukOrani": 90, "transit": {"otobus": "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)", "aktarma": "M2 Metro (Hacıosman) -> Otobüs / Vapur", "arabayla": "Beykoz Sahil Yolu üzerinden"}},
+  {"id": 5, "kod": "ALTY-05", "ad": "Beykoz Sahil Sosyal Tesisi", "koordinatlar": [41.1134095, 29.0864284], "kapasite": 180, "dolulukOrani": 65, "transit": {"otobus": "15, 15F, 15T, 15BK, 121A (Burunbahçe Durağı)", "aktarma": "M2 Metro (Hacıosman) -> Otobüs / Vapur", "arabayla": "Beykoz Sahil Yolu ve Burunbahçe Sk. üzerinden"}},
+  {"id": 6, "kod": "ALTY-06", "ad": "Boğazköy Sosyal Tesisi", "koordinatlar": [41.185797, 28.765582], "kapasite": 110, "dolulukOrani": 40, "transit": {"otobus": "336G, 36AY, 36B (Boğazköy Durağı)", "aktarma": "M11 Metro (Arnavutköy) -> 336G Otobüsü", "arabayla": "E-80 ve Erdener Sk. üzerinden"}},
+  {"id": 7, "kod": "ALTY-07", "ad": "Çamlıca Sosyal Tesisi", "koordinatlar": [41.027788, 29.069052], "kapasite": 300, "dolulukOrani": 95, "transit": {"otobus": "129T, 11A, 11ÜS, 14F (Kısıklı Durağı)", "aktarma": "M5 Metro (Kısıklı İstasyonu) -> 15 dk yürüyüş", "arabayla": "Turistik Çamlıca Cd. üzerinden"}},
+  {"id": 8, "kod": "ALTY-08", "ad": "Cihangir Sosyal Tesisi", "koordinatlar": [41.0284966, 28.9825361], "kapasite": 90, "dolulukOrani": 72, "transit": {"otobus": "26, 26A, 26B, 28, 28T (Fındıklı Durağı + Yürüyüş)", "aktarma": "M2 Metro (Taksim) veya T1 Tramvay (Fındıklı) -> Yürüyüş", "arabayla": "Meclis-i Mebusan Cd. ve Kamacı Ustası Sk. üzerinden"}},
+  {"id": 9, "kod": "ALTY-09", "ad": "Dragos Sosyal Tesisi", "koordinatlar": [40.9013477, 29.1466597], "kapasite": 220, "dolulukOrani": 83, "transit": {"otobus": "134YK, 16D, 17, 252 (Dragos Durağı)", "aktarma": "M4 Metro (Hastane-Adliye) -> 134YK Otobüsü", "arabayla": "Turgut Özal Bulvarı (Sahil Yolu) üzerinden"}},
+  {"id": 10, "kod": "ALTY-10", "ad": "Fethipaşa Sosyal Tesisi", "koordinatlar": [41.0333739, 29.0259101], "kapasite": 280, "dolulukOrani": 89, "transit": {"otobus": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)", "aktarma": "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı", "arabayla": "Paşalimanı Cd. ve Nacak Sk. üzerinden"}}
+];
 
-const storedFacilities = localStorage.getItem(MOCK_FACILITIES_KEY);
-if (!storedFacilities || storedFacilities === '[]' || storedFacilities === 'null' || storedFacilities === 'undefined') {
-  const defaultFacilities = [
-    {"id": 1, "kod": "ALTY-01", "ad": "Altınboynuz Sosyal Tesisi", "koordinatlar": [41.0578458, 28.9456101], "kapasite": 120, "dolulukOrani": 75, "transit": {"otobus": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)", "aktarma": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)", "arabayla": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"}},
-    {"id": 2, "kod": "ALTY-02", "ad": "Arnavutköy Sosyal Tesisi", "koordinatlar": [41.067491, 29.0448903], "kapasite": 150, "dolulukOrani": 85, "transit": {"otobus": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)", "aktarma": "M2 Metro (Taksim) -> 40T Otobüsü", "arabayla": "Bebek Arnavutköy Cd. üzerinden"}},
-    {"id": 3, "kod": "ALTY-03", "ad": "Avcılar Sosyal Tesisi", "koordinatlar": [40.976648, 28.743912], "kapasite": 200, "dolulukOrani": 55, "transit": {"otobus": "76O, 146, 76C (Denizköşkler Durağı)", "aktarma": "Metrobüs (Şükrübey Durağı) -> 10 dk yürüyüş", "arabayla": "D-100 Karayolu ve Dr. Sadık Ahmet Cd. üzerinden"}},
-    {"id": 4, "kod": "ALTY-04", "ad": "Beykoz Koru Sosyal Tesisi", "koordinatlar": [41.1316936, 29.0942223], "kapasite": 250, "dolulukOrani": 90, "transit": {"otobus": "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)", "aktarma": "M2 Metro (Hacıosman) -> Otobüs / Vapur", "arabayla": "Beykoz Sahil Yolu üzerinden"}},
-    {"id": 5, "kod": "ALTY-05", "ad": "Beykoz Sahil Sosyal Tesisi", "koordinatlar": [41.1134095, 29.0864284], "kapasite": 180, "dolulukOrani": 65, "transit": {"otobus": "15, 15F, 15T, 15BK, 121A (Burunbahçe Durağı)", "aktarma": "M2 Metro (Hacıosman) -> Otobüs / Vapur", "arabayla": "Beykoz Sahil Yolu ve Burunbahçe Sk. üzerinden"}},
-    {"id": 6, "kod": "ALTY-06", "ad": "Boğazköy Sosyal Tesisi", "koordinatlar": [41.185797, 28.765582], "kapasite": 110, "dolulukOrani": 40, "transit": {"otobus": "336G, 36AY, 36B (Boğazköy Durağı)", "aktarma": "M11 Metro (Arnavutköy) -> 336G Otobüsü", "arabayla": "E-80 ve Erdener Sk. üzerinden"}},
-    {"id": 7, "kod": "ALTY-07", "ad": "Çamlıca Sosyal Tesisi", "koordinatlar": [41.027788, 29.069052], "kapasite": 300, "dolulukOrani": 95, "transit": {"otobus": "129T, 11A, 11ÜS, 14F (Kısıklı Durağı)", "aktarma": "M5 Metro (Kısıklı İstasyonu) -> 15 dk yürüyüş", "arabayla": "Turistik Çamlıca Cd. üzerinden"}},
-    {"id": 8, "kod": "ALTY-08", "ad": "Cihangir Sosyal Tesisi", "koordinatlar": [41.0284966, 28.9825361], "kapasite": 90, "dolulukOrani": 72, "transit": {"otobus": "26, 26A, 26B, 28, 28T (Fındıklı Durağı + Yürüyüş)", "aktarma": "M2 Metro (Taksim) veya T1 Tramvay (Fındıklı) -> Yürüyüş", "arabayla": "Meclis-i Mebusan Cd. ve Kamacı Ustası Sk. üzerinden"}},
-    {"id": 9, "kod": "ALTY-09", "ad": "Dragos Sosyal Tesisi", "koordinatlar": [40.9013477, 29.1466597], "kapasite": 220, "dolulukOrani": 83, "transit": {"otobus": "134YK, 16D, 17, 252 (Dragos Durağı)", "aktarma": "M4 Metro (Hastane-Adliye) -> 134YK Otobüsü", "arabayla": "Turgut Özal Bulvarı (Sahil Yolu) üzerinden"}},
-    {"id": 10, "kod": "ALTY-10", "ad": "Fethipaşa Sosyal Tesisi", "koordinatlar": [41.0333739, 29.0259101], "kapasite": 280, "dolulukOrani": 89, "transit": {"otobus": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)", "aktarma": "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı", "arabayla": "Paşalimanı Cd. ve Nacak Sk. üzerinden"}}
-  ];
-  localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(defaultFacilities));
-}
+const defaultUsers = [
+  { username: 'user', password_hash: 'userpassword_mock', role: 'user' },
+  { username: 'admin', password_hash: 'adminpassword_mock', role: 'admin' }
+];
 
-const storedUsers = localStorage.getItem(MOCK_USERS_KEY);
-if (!storedUsers || storedUsers === '[]' || storedUsers === 'null' || storedUsers === 'undefined') {
-  const defaultUsers = [
-    { username: 'user', password_hash: 'userpassword_mock', role: 'user' },
-    { username: 'admin', password_hash: 'adminpassword_mock', role: 'admin' }
-  ];
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(defaultUsers));
-}
+const getMockItem = (key, defaultVal) => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw || raw === 'null' || raw === 'undefined') return defaultVal;
+    const parsed = JSON.parse(raw);
+    if (!parsed || (Array.isArray(parsed) && parsed.length === 0)) {
+      return defaultVal;
+    }
+    return parsed;
+  } catch (e) {
+    return defaultVal;
+  }
+};
 
-const storedReservations = localStorage.getItem(MOCK_RESERVATIONS_KEY);
-if (!storedReservations || storedReservations === 'null' || storedReservations === 'undefined') {
+// Auto-seed mock storage safely
+localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(getMockItem(MOCK_FACILITIES_KEY, defaultFacilities)));
+localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(getMockItem(MOCK_USERS_KEY, defaultUsers)));
+
+// Reservations seed
+try {
+  const rawRes = localStorage.getItem(MOCK_RESERVATIONS_KEY);
+  if (!rawRes || rawRes === 'null' || rawRes === 'undefined' || !Array.isArray(JSON.parse(rawRes))) {
+    localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify([]));
+  }
+} catch (e) {
   localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify([]));
 }
 
