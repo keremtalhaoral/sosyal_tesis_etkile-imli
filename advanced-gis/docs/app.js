@@ -41,7 +41,8 @@ const MOCK_FACILITIES_KEY = 'mufettis_mock_facilities';
 const MOCK_RESERVATIONS_KEY = 'mufettis_mock_reservations';
 const MOCK_USERS_KEY = 'mufettis_mock_users';
 
-if (!localStorage.getItem(MOCK_FACILITIES_KEY)) {
+const storedFacilities = localStorage.getItem(MOCK_FACILITIES_KEY);
+if (!storedFacilities || storedFacilities === '[]' || storedFacilities === 'null' || storedFacilities === 'undefined') {
   const defaultFacilities = [
     {"id": 1, "kod": "ALTY-01", "ad": "Altınboynuz Sosyal Tesisi", "koordinatlar": [41.0578458, 28.9456101], "kapasite": 120, "dolulukOrani": 75, "transit": {"otobus": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)", "aktarma": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)", "arabayla": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"}},
     {"id": 2, "kod": "ALTY-02", "ad": "Arnavutköy Sosyal Tesisi", "koordinatlar": [41.067491, 29.0448903], "kapasite": 150, "dolulukOrani": 85, "transit": {"otobus": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)", "aktarma": "M2 Metro (Taksim) -> 40T Otobüsü", "arabayla": "Bebek Arnavutköy Cd. üzerinden"}},
@@ -57,7 +58,8 @@ if (!localStorage.getItem(MOCK_FACILITIES_KEY)) {
   localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(defaultFacilities));
 }
 
-if (!localStorage.getItem(MOCK_USERS_KEY)) {
+const storedUsers = localStorage.getItem(MOCK_USERS_KEY);
+if (!storedUsers || storedUsers === '[]' || storedUsers === 'null' || storedUsers === 'undefined') {
   const defaultUsers = [
     { username: 'user', password_hash: 'userpassword_mock', role: 'user' },
     { username: 'admin', password_hash: 'adminpassword_mock', role: 'admin' }
@@ -65,7 +67,8 @@ if (!localStorage.getItem(MOCK_USERS_KEY)) {
   localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(defaultUsers));
 }
 
-if (!localStorage.getItem(MOCK_RESERVATIONS_KEY)) {
+const storedReservations = localStorage.getItem(MOCK_RESERVATIONS_KEY);
+if (!storedReservations || storedReservations === 'null' || storedReservations === 'undefined') {
   localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify([]));
 }
 
