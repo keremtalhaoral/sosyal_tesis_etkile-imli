@@ -1676,6 +1676,19 @@ const Auth = (() => {
     switchSidebarView('admin-view');
   };
 
+  // Bind Form handlers
+  document.getElementById('auth-form').addEventListener('submit', handleAuthSubmit);
+
+  return {
+    showLoginModal,
+    closeLoginModal,
+    toggleAuthMode,
+    checkSession,
+    logout,
+    showProfileModal,
+    closeProfileModal,
+    openAdminPanel,
+    loadProfile
   };
 })();
 
