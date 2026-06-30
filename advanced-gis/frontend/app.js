@@ -23,7 +23,12 @@ const state = {
     isMock: true,
     marker: null
   },
-  userSession: null
+  userSession: null,
+  shiftStartCoords: null,
+  shiftStartMarker: null,
+  shiftEndMarker: null,
+  adminPlacementMode: false,
+  adminPlacementMarker: null
 };
 
 // API Base configuration
@@ -154,31 +159,46 @@ const setupUIEvents = () => {
   const collapseBtn = document.getElementById('sidebar-collapse-btn');
   const expandBtn = document.getElementById('sidebar-expand-btn');
   
+  const invalidateMapSizeSmoothly = () => {
+    let count = 0;
+    const interval = setInterval(() => {
+      if (state.map) state.map.invalidateSize();
+      count++;
+      if (count >= 15) clearInterval(interval);
+    }, 40);
+  };
+
   collapseBtn.addEventListener('click', () => {
     sidebar.classList.add('collapsed');
     expandBtn.classList.remove('hidden');
-    setTimeout(() => state.map.invalidateSize(), 300);
+    invalidateMapSizeSmoothly();
   });
 
   expandBtn.addEventListener('click', () => {
     sidebar.classList.remove('collapsed');
     expandBtn.classList.add('hidden');
-    setTimeout(() => state.map.invalidateSize(), 300);
+    invalidateMapSizeSmoothly();
   });
 
   // Back to list controls
   document.getElementById('back-to-list-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
     Routing.clear();
+    clearShiftMarkers();
   });
 
   document.getElementById('district-back-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
     Routing.clear();
+    clearShiftMarkers();
   });
 
   document.getElementById('admin-back-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
+    if (state.adminPlacementMarker) {
+      state.map.removeLayer(state.adminPlacementMarker);
+      state.adminPlacementMarker = null;
+    }
   });
 
   // Search input filtering
@@ -231,6 +251,78 @@ const setupUIEvents = () => {
     e.preventDefault();
     submitAdminFacility();
   });
+
+  // Admin select map location button
+  document.getElementById('admin-select-map-btn').addEventListener('click', () => {
+    state.adminPlacementMode = true;
+    document.getElementById('admin-form-status').className = 'form-status-msg info';
+    document.getElementById('admin-form-status').textContent = 'Haritada tesis eklemek istediğiniz noktaya tıklayın...';
+  });
+
+  // Admin delete facility button
+  document.getElementById('admin-delete-facility-btn').addEventListener('click', () => {
+    const f = state.selectedFacility;
+    if (!f) return;
+    const conf1 = confirm(`Bu sosyal tesisi silmek istediğinize emin misiniz?\n\nKOD: ${f.kod}\nAD: ${f.ad}\nKAPASİTE: ${f.kapasite}`);
+    if (conf1) {
+      const conf2 = confirm(`DİKKAT: Bu işlem geri alınamaz! "${f.ad}" tesisi ve bu tesise ait tüm rezervasyonlar kalıcı olarak silinecektir.\n\nDevam etmek istediğinize emin misiniz?`);
+      if (conf2) {
+        deleteSelectedFacility(f.id);
+      }
+    }
+  });
+
+  // Map Click Handler for Shift-Click Routing & Admin Placement
+  if (state.map) {
+    state.map.on('click', (e) => {
+      // 1. Admin placement mode check
+      if (state.adminPlacementMode) {
+        state.adminPlacementMode = false;
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        document.getElementById('admin-lat').value = lat.toFixed(6);
+        document.getElementById('admin-lng').value = lng.toFixed(6);
+        document.getElementById('admin-form-status').className = 'form-status-msg success';
+        document.getElementById('admin-form-status').textContent = 'Haritadan konum seçildi. Yol tarifleri otomatik hesaplanıyor...';
+
+        if (state.adminPlacementMarker) state.map.removeLayer(state.adminPlacementMarker);
+        state.adminPlacementMarker = L.marker(e.latlng, { draggable: true }).addTo(state.map);
+        state.adminPlacementMarker.bindTooltip('Yeni Tesis Konumu (Sürükleyebilirsiniz)').openTooltip();
+        
+        state.adminPlacementMarker.on('dragend', (de) => {
+          const newPos = de.target.getLatLng();
+          document.getElementById('admin-lat').value = newPos.lat.toFixed(6);
+          document.getElementById('admin-lng').value = newPos.lng.toFixed(6);
+          autoFillTransitDetails(newPos.lat, newPos.lng);
+        });
+
+        autoFillTransitDetails(lat, lng);
+        return;
+      }
+
+      // 2. Shift-click custom route check
+      if (e.originalEvent.shiftKey) {
+        handleShiftClick(e.latlng);
+        return;
+      }
+
+      // Normal click: close dropdown
+      const dropdown = document.querySelector('.dropdown-menu');
+      if (dropdown) dropdown.classList.remove('show');
+    });
+  }
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    const profilePill = document.querySelector('.user-profile-pill');
+    const dropdown = document.querySelector('.dropdown-menu');
+    if (profilePill && dropdown && !profilePill.contains(e.target)) {
+      dropdown.classList.remove('show');
+    }
+  });
+
+  initDropdownBehavior();
 };
 
 const getActiveFilter = () => {
@@ -420,6 +512,11 @@ const selectDistrict = (feature, layer) => {
     fillOpacity: state.theme === 'dark' ? 0.4 : 0.5
   });
 
+  // Fit map view to district bounds
+  if (state.map && layer.getBounds) {
+    state.map.fitBounds(layer.getBounds(), { padding: [20, 20], maxZoom: 13, animate: true, duration: 1.0 });
+  }
+
   const name = feature.properties.name;
   const pop = feature.properties.population || 100000;
   const count = feature.properties.facilityCount || 0;
@@ -498,6 +595,18 @@ const renderFacilityMarkers = () => {
       offset: [0, -10]
     });
 
+    // Hover Scaling effect
+    marker.on('mouseover', () => {
+      if (!state.selectedFacility || state.selectedFacility.id !== f.id) {
+        marker.setStyle({ radius: 13, weight: 2.5 });
+      }
+    });
+    marker.on('mouseout', () => {
+      if (!state.selectedFacility || state.selectedFacility.id !== f.id) {
+        marker.setStyle({ radius: 10, weight: 2 });
+      }
+    });
+
     // Click displays details
     marker.on('click', (e) => {
       L.DomEvent.stopPropagation(e);
@@ -537,6 +646,10 @@ const renderIsparkMarkers = () => {
         <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: İBB İSPARK Otopark Feed</small>
       </div>
     `);
+
+    marker.on('click', () => {
+      state.map.flyTo(p.koordinatlar, 15, { animate: true, duration: 1.0 });
+    });
 
     state.isparkMarkers.push(marker);
   });
@@ -688,11 +801,8 @@ const calculateTransitOptions = (facility) => {
 
   const origin = [state.userLocation.lat, state.userLocation.lng];
   const dest = facility.koordinatlar;
-  
-  // Calculate geodesic distance via simple coordinate calculations
   const distance = state.map.distance(L.latLng(origin), L.latLng(dest));
   
-  // Calculate schedules
   const now = new Date();
   const currentHour = now.getHours();
   const currentMin = now.getMinutes();
@@ -707,55 +817,63 @@ const calculateTransitOptions = (facility) => {
     };
   };
 
-  // Define transit route options
-  const transitData = [
-    {
+  const transitData = [];
+
+  if (facility.transit && facility.transit.otobus) {
+    transitData.push({
+      type: "otobus",
       icon: "🚌",
       label: "Otobüs (İETT)",
-      color: "#eab308", // Yellow
+      color: "#eab308",
       headway: 8,
       duration: Math.max(5, Math.round(distance / 240 + 12)),
       steps: [
         { type: "walk", desc: "En Yakın Durak", mins: 4 },
-        { type: "ride", desc: `İETT Otobüs (İETT Hatlar: 99A, 55)`, mins: Math.max(2, Math.round(distance / 300)), line: "İETT" },
+        { type: "ride", desc: `İETT Otobüs (Hat: ${facility.transit.otobus})`, mins: Math.max(2, Math.round(distance / 300)), line: "İETT" },
         { type: "walk", desc: "Tesise Yürüyüş", mins: 2 }
       ],
-      attribution: "Kaynak: İBB Açık Veri Portalı - İETT GTFS Sefer Tarifesi"
-    },
-    {
+      attribution: "Kaynak: İBB Açık Veri Portalı - İETT GTFS"
+    });
+  }
+
+  if (facility.transit && facility.transit.vapur) {
+    transitData.push({
+      type: "vapur",
       icon: "🛳️",
       label: "Vapur / Motor",
-      color: "#06b6d4", // Cyan
+      color: "#06b6d4",
       headway: 20,
       duration: Math.max(10, Math.round(distance / 320 + 15)),
       steps: [
         { type: "walk", desc: "İskele Yürüyüş", mins: 12 },
-        { type: "ride", desc: "Şehir Hatları Vapuru (Deniz Yolu)", mins: Math.max(5, Math.round(distance / 350)), line: "Vapur" },
+        { type: "ride", desc: `Şehir Hatları Vapuru (${facility.transit.vapur})`, mins: Math.max(5, Math.round(distance / 350)), line: "Vapur" },
         { type: "walk", desc: "Sahil Boyunca Yürüyüş", mins: 5 }
       ],
-      attribution: "Kaynak: İBB Şehir Hatları Sefer Veritabanı"
-    },
-    {
+      attribution: "Kaynak: İBB Şehir Hatları Sefer Verileri"
+    });
+  }
+
+  if (facility.transit && facility.transit.aktarma) {
+    transitData.push({
+      type: "aktarma",
       icon: "🔄",
       label: "Aktarmalı Rota",
-      color: "#8b5cf6", // Purple
+      color: "#8b5cf6",
       headway: 6,
       duration: Math.max(5, Math.round(distance / 220 + 8)),
       steps: [
         { type: "walk", desc: "Metro İstasyonuna Yürüyüş", mins: 6 },
-        { type: "ride", desc: "M2 Metro Hattı (Raylı Sistem)", mins: Math.max(2, Math.round(distance / 400)), line: "Metro M2" },
-        { type: "walk", desc: "Aktarma / Geçiş Düğümü", mins: 3 },
-        { type: "ride", desc: "İETT Destek Otobüs Hattı", mins: Math.max(2, Math.round(distance / 300)), line: "Otobüs" }
+        { type: "ride", desc: `Aktarma: ${facility.transit.aktarma}`, mins: Math.max(2, Math.round(distance / 400)), line: "Metro" },
+        { type: "walk", desc: "Tesise Yürüyüş", mins: 2 }
       ],
-      attribution: "Kaynak: Metro İstanbul Raylı Sistem Planları & İETT Koord."
-    }
-  ];
+      attribution: "Kaynak: Metro İstanbul Raylı Sistem Planları"
+    });
+  }
 
-  // Render cards
-  transitData.forEach(route => {
+  let firstCard = null;
+
+  transitData.forEach((route, idx) => {
     const dep = getNextDeparture(route.headway);
-    
-    // Rota segment timeline HTML
     let stepsHTML = '';
     route.steps.forEach((s, idx) => {
       const isLast = idx === route.steps.length - 1;
@@ -788,7 +906,6 @@ const calculateTransitOptions = (facility) => {
         Kalkış: <strong>${dep.timeStr}</strong> (${dep.wait} dk sonra)
       </div>
       
-      <!-- Timeline segments -->
       <div class="route-timeline">
         ${stepsHTML}
       </div>
@@ -796,8 +913,23 @@ const calculateTransitOptions = (facility) => {
       <small class="provenance-label">${route.attribution}</small>
     `;
 
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.transit-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      Routing.drawTransitRoute(origin, dest, route.type, route.color);
+    });
+
     container.appendChild(card);
+    if (idx === 0) {
+      firstCard = card;
+    }
   });
+
+  if (firstCard) {
+    firstCard.click();
+  } else {
+    Routing.draw(origin, dest);
+  }
 };
 
 // Turf-based Service Coverage Shadow Map Calculation
@@ -805,26 +937,33 @@ const calculateCoverageShadows = () => {
   if (!state.districtsGeoJSON || state.facilities.length === 0) return;
 
   try {
-    // Generate Turf point buffers
     const bufferPolygons = state.facilities.map(f => {
-      const point = turf.point([f.koordinatlar[1], f.koordinatlar[0]]); // Turf is [lng, lat]
-      return turf.buffer(point, 2.0, { units: 'kilometers' }); // 2km radius service buffer
+      const point = turf.point([f.koordinatlar[1], f.koordinatlar[0]]);
+      return turf.buffer(point, 2.0, { units: 'kilometers' });
     });
 
-    // Merge buffers using turf union
     let unionBuffer = bufferPolygons[0];
     for (let i = 1; i < bufferPolygons.length; i++) {
-      unionBuffer = turf.union(unionBuffer, bufferPolygons[i]);
+      if (bufferPolygons[i]) {
+        unionBuffer = turf.union(unionBuffer, bufferPolygons[i]);
+      }
     }
 
-    // Render buffer layer as light transparent green overlay
+    let istanbulPolygon = state.districtsGeoJSON.features[0];
+    for (let i = 1; i < state.districtsGeoJSON.features.length; i++) {
+      istanbulPolygon = turf.union(istanbulPolygon, state.districtsGeoJSON.features[i]);
+    }
+
+    const shadowPolygon = turf.difference(istanbulPolygon, unionBuffer);
+
     if (state.shadowsLayer) state.map.removeLayer(state.shadowsLayer);
     
-    state.shadowsLayer = L.geoJSON(unionBuffer, {
+    state.shadowsLayer = L.geoJSON(shadowPolygon, {
       style: {
-        fillColor: '#ef4444',
-        weight: 0,
-        fillOpacity: 0.12 // Light transparent coverage shade
+        fillColor: '#1e293b',
+        weight: 0.5,
+        color: '#334155',
+        fillOpacity: 0.35
       },
       interactive: false
     });
@@ -837,49 +976,117 @@ const calculateCoverageShadows = () => {
 
 // OSRM Routing Engine & Fallback Line Rendering
 const Routing = (() => {
-  let activeRouteLine = null;
+  let activeRouteGroup = null;
+
+  const clear = () => {
+    if (activeRouteGroup && state.map) {
+      state.map.removeLayer(activeRouteGroup);
+      activeRouteGroup = null;
+    }
+  };
 
   const draw = async (start, end) => {
     clear();
-    
+    activeRouteGroup = L.layerGroup().addTo(state.map);
+
     const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
     try {
       const res = await fetch(url);
-      if (!res.ok) throw new Error("OSRM Routing API returned failure response status.");
+      if (!res.ok) throw new Error("OSRM driving route failed");
       const data = await res.json();
       
       if (data.routes && data.routes.length > 0) {
-        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]); // Leaflet coordinates
-        activeRouteLine = L.polyline(routeCoords, {
+        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        L.polyline(routeCoords, {
           color: '#3b82f6',
-          weight: 4,
-          opacity: 0.75,
-          dashArray: '4, 8',
-          lineCap: 'round'
-        }).addTo(state.map);
+          weight: 5,
+          opacity: 0.85
+        }).addTo(activeRouteGroup);
       } else {
-        throw new Error("No routes returned");
+        throw new Error("No routes");
       }
     } catch (e) {
-      // APoSD Fallback: Draw straight geodesic path to handle routing service failures gracefully
-      console.warn("OSRM routing failed. Rendering geodezik line fallback.", e);
-      activeRouteLine = L.polyline([start, end], {
-        color: '#f87171',
-        weight: 3,
-        opacity: 0.6,
-        dashArray: '10, 10'
-      }).addTo(state.map);
+      L.polyline([start, end], {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7
+      }).addTo(activeRouteGroup);
     }
   };
 
-  const clear = () => {
-    if (activeRouteLine) {
-      state.map.removeLayer(activeRouteLine);
-      activeRouteLine = null;
+  const drawTransitRoute = async (start, end, routeType, routeColor) => {
+    clear();
+    activeRouteGroup = L.layerGroup().addTo(state.map);
+
+    if (routeType === 'vapur') {
+      const coords = interpolatePoints(start, end, 30);
+      renderThreeSegments(coords, routeColor);
+      return;
+    }
+
+    const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("OSRM transit route failed");
+      const data = await res.json();
+      
+      if (data.routes && data.routes.length > 0) {
+        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+        renderThreeSegments(routeCoords, routeColor);
+      } else {
+        throw new Error("No routes");
+      }
+    } catch (e) {
+      const coords = interpolatePoints(start, end, 15);
+      renderThreeSegments(coords, routeColor);
     }
   };
 
-  return { draw, clear };
+  const interpolatePoints = (p1, p2, steps = 10) => {
+    const coords = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      coords.push([
+        p1[0] + t * (p2[0] - p1[0]),
+        p1[1] + t * (p2[1] - p1[1])
+      ]);
+    }
+    return coords;
+  };
+
+  const renderThreeSegments = (coords, rideColor) => {
+    const len = coords.length;
+    if (len < 3) return;
+
+    const idx1 = Math.max(1, Math.floor(len * 0.15));
+    const idx2 = Math.max(idx1 + 1, Math.floor(len * 0.85));
+
+    const walk1 = coords.slice(0, idx1 + 1);
+    const ride = coords.slice(idx1, idx2 + 1);
+    const walk2 = coords.slice(idx2);
+
+    L.polyline(walk1, {
+      color: '#94a3b8',
+      weight: 3.5,
+      opacity: 0.8,
+      dashArray: '5, 8'
+    }).addTo(activeRouteGroup);
+
+    L.polyline(ride, {
+      color: rideColor,
+      weight: 5.5,
+      opacity: 0.95
+    }).addTo(activeRouteGroup);
+
+    L.polyline(walk2, {
+      color: '#94a3b8',
+      weight: 3.5,
+      opacity: 0.8,
+      dashArray: '5, 8'
+    }).addTo(activeRouteGroup);
+  };
+
+  return { draw, drawTransitRoute, clear };
 })();
 
 // Geolocation
@@ -1118,6 +1325,7 @@ const Auth = (() => {
     const reserveOut = document.getElementById('reservation-logged-out');
     const reserveIn = document.getElementById('reservation-logged-in');
     const adminLink = document.getElementById('menu-admin-panel');
+    const deleteBtn = document.getElementById('admin-delete-facility-btn');
 
     if (token && userJson) {
       const user = JSON.parse(userJson);
@@ -1132,8 +1340,10 @@ const Auth = (() => {
 
       if (user.role === 'admin') {
         adminLink.classList.remove('hidden');
+        if (deleteBtn) deleteBtn.classList.remove('hidden');
       } else {
         adminLink.classList.add('hidden');
+        if (deleteBtn) deleteBtn.classList.add('hidden');
       }
     } else {
       state.userSession = null;
@@ -1142,6 +1352,7 @@ const Auth = (() => {
       reserveOut.classList.remove('hidden');
       reserveIn.classList.add('hidden');
       adminLink.classList.add('hidden');
+      if (deleteBtn) deleteBtn.classList.add('hidden');
     }
   };
 
@@ -1216,3 +1427,172 @@ const Auth = (() => {
     loadProfile
   };
 })();
+
+const initDropdownBehavior = () => {
+  const profilePill = document.querySelector('.user-profile-pill');
+  const dropdown = document.querySelector('.dropdown-menu');
+  if (!profilePill || !dropdown) return;
+
+  let hideTimeout = null;
+
+  const showDropdown = () => {
+    if (hideTimeout) clearTimeout(hideTimeout);
+    dropdown.classList.add('show');
+  };
+
+  const delayHideDropdown = () => {
+    if (hideTimeout) clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => {
+      dropdown.classList.remove('show');
+    }, 10000);
+  };
+
+  profilePill.addEventListener('mouseenter', showDropdown);
+  profilePill.addEventListener('mouseleave', delayHideDropdown);
+  
+  profilePill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (dropdown.classList.contains('show')) {
+      dropdown.classList.remove('show');
+    } else {
+      showDropdown();
+    }
+  });
+};
+
+const clearShiftMarkers = () => {
+  if (state.shiftStartMarker) {
+    state.map.removeLayer(state.shiftStartMarker);
+    state.shiftStartMarker = null;
+  }
+  if (state.shiftEndMarker) {
+    state.map.removeLayer(state.shiftEndMarker);
+    state.shiftEndMarker = null;
+  }
+  state.shiftStartCoords = null;
+};
+
+const handleShiftClick = (latlng) => {
+  const coords = [latlng.lat, latlng.lng];
+  
+  if (!state.shiftStartCoords) {
+    state.shiftStartCoords = coords;
+    clearShiftMarkers();
+    Routing.clear();
+    
+    state.shiftStartMarker = L.circleMarker(coords, {
+      radius: 8,
+      fillColor: '#10b981',
+      color: '#ffffff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 1
+    }).addTo(state.map).bindTooltip('Özel Rota Başlangıcı (Shift-Tık)').openTooltip();
+  } else {
+    const start = state.shiftStartCoords;
+    state.shiftStartCoords = null;
+    
+    state.shiftEndMarker = L.circleMarker(coords, {
+      radius: 8,
+      fillColor: '#ef4444',
+      color: '#ffffff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 1
+    }).addTo(state.map).bindTooltip('Özel Rota Bitişi (Shift-Tık)').openTooltip();
+    
+    // Display custom route metadata details in panel
+    document.getElementById('detail-code').textContent = "ÖZEL ROTA";
+    document.getElementById('detail-name').textContent = "İki Nokta Arası Özel Güzergah";
+    document.getElementById('detail-capacity').textContent = "-";
+    document.getElementById('detail-occupancy-percent').textContent = "-";
+    document.getElementById('detail-occupancy-text').textContent = "Shift + Tıklama ile oluşturulmuş özel rota.";
+    
+    // Hide facility cards not related to routing
+    document.getElementById('facility-menu-card').classList.add('hidden');
+    document.getElementById('detail-ispark-card').classList.add('hidden');
+    document.getElementById('detail-reservation-section').classList.add('hidden');
+    document.getElementById('facility-weather-card').classList.add('hidden');
+
+    const mockFacility = {
+      id: "custom",
+      ad: "Özel Rota",
+      kod: "CUSTOM",
+      koordinatlar: coords,
+      transit: {
+        otobus: "İETT Özel Güzergah Otobüs Hattı",
+        vapur: "Özel Rota Vapur / Deniz Hattı",
+        transit_transfer: "Raylı Sistem / Tramvay aktarmalı"
+      }
+    };
+    
+    const savedUserLocation = { ...state.userLocation };
+    state.userLocation.lat = start[0];
+    state.userLocation.lng = start[1];
+    
+    calculateTransitOptions(mockFacility);
+    switchSidebarView('detail-view');
+    
+    state.userLocation = savedUserLocation;
+  }
+};
+
+const autoFillTransitDetails = (lat, lng) => {
+  let containingDistrictName = "İstanbul";
+  
+  if (state.districtsGeoJSON) {
+    for (const f of state.districtsGeoJSON.features) {
+      if (pointInPolygon(lng, lat, f.geometry)) {
+        containingDistrictName = f.properties.name;
+        break;
+      }
+    }
+  }
+  
+  document.getElementById('admin-iett').value = `${containingDistrictName} Merkez Durağı (Hatlar: 99A, 55, 15F)`;
+  document.getElementById('admin-transit-transfer').value = `Metro / Metrobüs -> ${containingDistrictName} aktarmalı`;
+  document.getElementById('admin-route-description').value = `${containingDistrictName} sahil veya ana caddeleri üzerinden`;
+};
+
+const deleteSelectedFacility = async (facilityId) => {
+  try {
+    const token = localStorage.getItem('session-token');
+    const res = await fetch(`${API_BASE}/api/facilities?id=${facilityId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (res.ok) {
+      alert("Tesis başarıyla silindi!");
+      await loadData();
+      switchSidebarView('list-view');
+      Routing.clear();
+    } else {
+      const data = await res.json();
+      alert(data.error || "Tesis silinemedi.");
+    }
+  } catch (e) {
+    console.warn("Delete facility backend connection failed, falling back to local storage.", e);
+    // Offline docs local storage fallback
+    const MOCK_FACILITIES_KEY = 'mufettis_mock_facilities';
+    let localFacs = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY)) || state.facilities;
+    localFacs = localFacs.filter(f => f.id !== facilityId);
+    localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(localFacs));
+    
+    const MOCK_RESERVATIONS_KEY = 'mufettis_mock_reservations';
+    let localRes = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY)) || [];
+    localRes = localRes.filter(r => r.facility_id !== facilityId);
+    localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(localRes));
+
+    state.facilities = localFacs;
+    alert("Tesis yerel olarak silindi (Offline Mod).");
+    renderStats();
+    renderFacilityList();
+    renderFacilityMarkers();
+    calculateCoverageShadows();
+    switchSidebarView('list-view');
+    Routing.clear();
+  }
+};

@@ -11,7 +11,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
 from app.config import PORT
-from app.models import init_db, get_facilities, get_facility_by_id, add_facility, get_user_by_username, create_user, create_reservation, get_reservations_by_user_id
+from app.models import init_db, get_facilities, get_facility_by_id, add_facility, get_user_by_username, create_user, create_reservation, get_reservations_by_user_id, delete_facility
 from security.crypto_signer import hash_password, sign_jwt, verify_jwt, sign_reservation
 from services.scraper import scrape_menu
 from services.weather import get_live_weather
@@ -22,7 +22,7 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
     def end_headers(self):
         # Enable CORS
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         super().end_headers()
 
@@ -226,16 +226,23 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                 return
 
             crypto_signature = sign_reservation(user['id'], fac_id, r_date, r_time, guests)
-            create_reservation(user['id'], fac_id, r_date, r_time, guests, crypto_signature)
-
-            log_request("POST", path, 200, self.client_address[0])
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "message": "Rezervasyon başarıyla oluşturuldu.",
-                "signature": crypto_signature
-            }).encode('utf-8'))
+            try:
+                create_reservation(user['id'], fac_id, r_date, r_time, guests, crypto_signature)
+                log_request("POST", path, 200, self.client_address[0])
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "message": "Rezervasyon başarıyla oluşturuldu.",
+                    "signature": crypto_signature,
+                    "crypto_signature": crypto_signature
+                }).encode('utf-8'))
+            except Exception as e:
+                log_request("POST", path, 400, self.client_address[0])
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode('utf-8'))
             return
 
         # 4. API: Admin Add Facility (JWT Authenticated, Admin role check)
@@ -249,7 +256,7 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "Erişim engellendi: Yönetici yetkisi gereklidir."}).encode('utf-8'))
                 return
 
-            name = body.get('ad')
+            name = body.get('ad') or body.get('name')
             lat = body.get('lat')
             lng = body.get('lng')
             capacity = body.get('capacity')
@@ -263,7 +270,20 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": "Eksik parametreler."}).encode('utf-8'))
+                self.wfile.write(json.dumps({"error": "Eksik parametreler (ad, lat, lng gereklidir)."}).encode('utf-8'))
+                return
+
+            try:
+                lat = float(lat)
+                lng = float(lng)
+                capacity = int(capacity) if capacity is not None else 150
+                occupancy = int(occupancy) if occupancy is not None else 25
+            except ValueError:
+                log_request("POST", path, 400, self.client_address[0])
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Geçersiz sayısal değerler."}).encode('utf-8'))
                 return
 
             try:
@@ -272,7 +292,7 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                 next_id = max([f['id'] for f in all_facs]) + 1 if all_facs else 1
                 code = f"ALTY-{str(next_id).padStart(2, '0')}" if hasattr(str, 'padStart') else f"ALTY-{str(next_id).zfill(2)}"
                 
-                add_facility(code, name, float(lat), float(lng), int(capacity), int(occupancy), iett, transit, route)
+                add_facility(code, name, lat, lng, capacity, occupancy, iett, transit, route)
                 
                 log_request("POST", path, 200, self.client_address[0])
                 self.send_response(200)
@@ -288,6 +308,50 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
             return
 
         log_request("POST", path, 404, self.client_address[0])
+        self.send_response(404)
+        self.end_headers()
+
+    def do_DELETE(self):
+        parsed_url = urllib.parse.urlparse(self.path)
+        path = parsed_url.path
+        query_params = urllib.parse.parse_qs(parsed_url.query)
+
+        # Admin delete facility module
+        if path == '/api/facilities':
+            user = self.get_auth_user()
+            if not user or user.get('role') != 'admin':
+                log_request("DELETE", path, 403, self.client_address[0])
+                self.send_response(403)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Erişim engellendi: Yönetici yetkisi gereklidir."}).encode('utf-8'))
+                return
+
+            fac_id = query_params.get('id', [''])[0]
+            if not fac_id:
+                log_request("DELETE", path, 400, self.client_address[0])
+                self.send_response(400)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Eksik parametre: id gereklidir."}).encode('utf-8'))
+                return
+
+            try:
+                delete_facility(int(fac_id))
+                log_request("DELETE", path, 200, self.client_address[0])
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"message": "Tesis başarıyla silindi."}).encode('utf-8'))
+            except Exception as e:
+                log_request("DELETE", path, 500, self.client_address[0])
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Veritabanı hatası: {str(e)}"}).encode('utf-8'))
+            return
+
+        log_request("DELETE", path, 404, self.client_address[0])
         self.send_response(404)
         self.end_headers()
 

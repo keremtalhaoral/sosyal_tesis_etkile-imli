@@ -52,6 +52,14 @@ def init_db():
         route_description TEXT NOT NULL
     )
     """)
+    
+    # Auto-seed default users if table is empty
+    cursor.execute("SELECT COUNT(*) as count FROM users")
+    if cursor.fetchone()["count"] == 0:
+        from security.crypto_signer import hash_password
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ("user", hash_password("user"), "user"))
+        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ("admin", hash_password("admin"), "admin"))
+    
     conn.commit()
     conn.close()
 
@@ -99,10 +107,45 @@ def create_user(username, password_hash, role='user'):
 def create_reservation(user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO reservations (user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature))
+    try:
+        # Check capacity constraints
+        cursor.execute("SELECT capacity, occupancy FROM facilities WHERE id = ?", (facility_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise Exception("Tesis bulunamadı.")
+        
+        capacity = row["capacity"]
+        occupancy = row["occupancy"]
+        current_occupied = int(capacity * (occupancy / 100.0))
+        
+        if current_occupied + guests > capacity:
+            raise Exception("Tesis kapasitesi yetersiz. Yer kalmadı.")
+            
+        new_occupied = current_occupied + guests
+        new_occupancy = min(100, int((new_occupied / capacity) * 100))
+        
+        # Update facility occupancy
+        cursor.execute("UPDATE facilities SET occupancy = ? WHERE id = ?", (new_occupancy, facility_id))
+        
+        # Insert reservation
+        cursor.execute("""
+            INSERT INTO reservations (user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature))
+        
+        conn.commit()
+        return True, new_occupancy
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+def delete_facility(facility_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM facilities WHERE id = ?", (facility_id,))
+    cursor.execute("DELETE FROM reservations WHERE facility_id = ?", (facility_id,))
     conn.commit()
     conn.close()
 
@@ -118,3 +161,4 @@ def get_reservations_by_user_id(user_id):
     rows = cursor.fetchall()
     conn.close()
     return rows
+

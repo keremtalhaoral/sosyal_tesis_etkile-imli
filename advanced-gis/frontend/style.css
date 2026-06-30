@@ -727,7 +727,7 @@ body {
 }
 
 .floating-controls.top-right {
-  top: 16px;
+  top: 75px;
   right: 16px;
 }
 
@@ -1287,12 +1287,13 @@ body {
 
 /* Sidebar Collapse Transition */
 .sidebar {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sidebar.collapsed {
   transform: translateX(-100%);
   opacity: 0;
   pointer-events: none;
+  margin-left: -420px;
 }
 .collapse-toggle-btn {
   background: transparent;
@@ -1332,8 +1333,8 @@ body {
 /* Floating User / Session Controls */
 .floating-user-controls {
   position: absolute;
-  top: 20px;
-  right: 80px;
+  top: 16px;
+  right: 16px;
   z-index: 1000;
 }
 .user-pill-container {
@@ -1364,11 +1365,7 @@ body {
   color: var(--text-primary);
   cursor: pointer;
 }
-.user-profile-pill:hover .dropdown-menu {
-  display: block;
-}
 .dropdown-menu {
-  display: none;
   position: absolute;
   top: 100%;
   right: 0;
@@ -1381,6 +1378,18 @@ body {
   width: 200px;
   overflow: hidden;
   text-align: left;
+  /* Animative Transitions */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
+  z-index: 1010;
+}
+.dropdown-menu.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 .dropdown-menu a {
   display: block;
@@ -1392,6 +1401,18 @@ body {
 }
 .dropdown-menu a:hover {
   background: var(--primary-light);
+}
+
+.provenance-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  font-style: italic;
+  border-top: 1px dashed var(--border-color);
+  padding-top: 6px;
+  text-align: right;
+  opacity: 0.85;
 }
 
 /* Modal Overlay & Card Layout */

@@ -108,7 +108,10 @@
             <button class="back-btn" id="back-to-list-btn" aria-label="Listeye Dön">
               ← Listeye Dön
             </button>
-            <span class="facility-badge" id="detail-code">ALTY-00</span>
+            <div>
+              <button class="btn btn-danger btn-sm hidden" id="admin-delete-facility-btn" style="margin-right: 8px; padding: 4px 8px; font-size: 11px;">Tesisi Sil</button>
+              <span class="facility-badge" id="detail-code">ALTY-00</span>
+            </div>
           </div>
           
           <h2 class="detail-title" id="detail-name">Tesis Seçilmedi</h2>
@@ -299,6 +302,7 @@
                 <input type="number" id="admin-lng" step="any" min="28" max="30" required placeholder="29.02">
               </div>
             </div>
+            <button type="button" id="admin-select-map-btn" class="btn btn-secondary btn-block" style="margin-bottom: 15px; background-color: #4b5563; border-color: #4b5563; font-size: 13px;">Haritadan Konum Seç</button>
             <div class="form-row">
               <div class="form-group">
                 <label for="admin-capacity">Kapasite</label>
