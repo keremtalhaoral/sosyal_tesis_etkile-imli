@@ -12,6 +12,16 @@ dist/
 build/
 .out/
 
+# Veritabanı dosyaları (türetilmiş veri - kanonik kaynak data/seed.json'dır)
+data/app.db
+*.db-wal
+*.db-shm
+advanced-gis/data/database.db
+
+# Python
+__pycache__/
+*.pyc
+
 # Sistem ve Log Dosyaları
 *.log
 .DS_Store
