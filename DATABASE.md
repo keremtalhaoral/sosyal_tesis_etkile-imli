@@ -87,6 +87,20 @@ Pages statik hosting'dir; sunucu süreci çalıştıramaz. `docs/app.js` bu yüz
 tarayıcı içi **çevrimdışı replikasını** kullanır. Bu bilinçli bir "derived data" kararıdır:
 kanonik kaynak `data/seed.json`'dır, Pages kopyası ondan türetilir ve sunum/demo amaçlıdır.
 
+Uygulanışı (`docs/app.js -> bootstrapCentralSeed`):
+- Sayfa açılışında `docs/data/seed.json` (kanonik seed'in kopyası) fetch edilir ve
+  localStorage replikası tohumlanır - koda gömülü 10 tesislik eski mock kaldırıldı,
+  Pages artık merkezi 30 tesislik veriyle birebir aynıdır.
+- `mufettis_seed_version` anahtarı ile versiyon takibi yapılır: seed.json'da `version`
+  yükseltilirse ziyaretçilerin eski replikası otomatik yenilenir (rezervasyonlardan
+  hâlâ geçerli tesise ait olanlar korunur). Türetilmiş veri her zaman kaynaktan
+  yeniden inşa edilebilir (DDIA Bölüm 11).
+- `data/seed.json` değiştiğinde `docs/data/seed.json`'a kopyalanmalı ve `version`
+  artırılmalıdır: `cp data/seed.json docs/data/seed.json`
+- Leaflet ve Turf.js kütüphaneleri CDN yerine `docs/vendor/` altına alındı: site,
+  unpkg/jsdelivr erişimi olmayan ağlarda da (kurum ağı, çevrimdışı demo) çalışır.
+  Varsayılan Pages girişleri: `admin/adminpassword`, `user/userpassword`.
+
 ## PostgreSQL + PostGIS'e Geçiş Yolu
 1. Şema birebir taşınır (tipler zaten uyumlu; `TEXT` tarihler `date`/`time` olur).
 2. `facilities(lat,lng)` -> `geometry(Point, 4326)` kolonu; GeoJSON ilçeler `districts.geom`'a yüklenir.
