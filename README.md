@@ -11,7 +11,7 @@ Bu proje, sosyal tesislerin coğrafi verilerini harita üzerinde etkileşimli ol
 Projenin geliştirilmesinde aşağıdaki teknoloji yığını ve kütüphaneler kullanılmıştır:
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+)
 - **GIS Altyapısı:** OpenLayers / Leaflet (Kullandığınız kütüphaneye göre güncelleyin)
-- **Veritabanı & Backend:** PostgreSQL ve PostGIS (Mekansal sorgular ve veri depolama için)
+- **Veritabanı & Backend:** Merkezi SQLite (WAL modu) — tüm servislerin paylaştığı tek gerçek kaynak; tasarım ve PostgreSQL + PostGIS geçiş yolu için bkz. [DATABASE.md](DATABASE.md)
 
 ## 💻 Yerel Geliştirme ve Çalıştırma
 

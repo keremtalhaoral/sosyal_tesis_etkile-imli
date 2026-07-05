@@ -1,0 +1,596 @@
+{
+  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin.",
+  "version": 1,
+  "users": [
+    {
+      "username": "admin",
+      "password_raw": "adminpassword",
+      "role": "admin"
+    },
+    {
+      "username": "user",
+      "password_raw": "userpassword",
+      "role": "user"
+    }
+  ],
+  "districts": [
+    {
+      "name": "Adalar",
+      "population": 16372
+    },
+    {
+      "name": "Arnavutköy",
+      "population": 336062
+    },
+    {
+      "name": "Ataşehir",
+      "population": 416529
+    },
+    {
+      "name": "Avcılar",
+      "population": 462372
+    },
+    {
+      "name": "Bağcılar",
+      "population": 719264
+    },
+    {
+      "name": "Bahçelievler",
+      "population": 575225
+    },
+    {
+      "name": "Bakırköy",
+      "population": 220974
+    },
+    {
+      "name": "Başakşehir",
+      "population": 514900
+    },
+    {
+      "name": "Bayrampaşa",
+      "population": 268600
+    },
+    {
+      "name": "Beşiktaş",
+      "population": 169022
+    },
+    {
+      "name": "Beykoz",
+      "population": 245902
+    },
+    {
+      "name": "Beylikdüzü",
+      "population": 417287
+    },
+    {
+      "name": "Beyoğlu",
+      "population": 218789
+    },
+    {
+      "name": "Büyükçekmece",
+      "population": 272449
+    },
+    {
+      "name": "Çatalca",
+      "population": 78931
+    },
+    {
+      "name": "Çekmeköy",
+      "population": 298466
+    },
+    {
+      "name": "Esenler",
+      "population": 443058
+    },
+    {
+      "name": "Esenyurt",
+      "population": 978923
+    },
+    {
+      "name": "Eyüpsultan",
+      "population": 439737
+    },
+    {
+      "name": "Fatih",
+      "population": 356220
+    },
+    {
+      "name": "Gaziosmanpaşa",
+      "population": 483025
+    },
+    {
+      "name": "Güngören",
+      "population": 280256
+    },
+    {
+      "name": "Kadıköy",
+      "population": 467919
+    },
+    {
+      "name": "Kağıthane",
+      "population": 454530
+    },
+    {
+      "name": "Kartal",
+      "population": 485847
+    },
+    {
+      "name": "Küçükçekmece",
+      "population": 792030
+    },
+    {
+      "name": "Maltepe",
+      "population": 528544
+    },
+    {
+      "name": "Pendik",
+      "population": 741895
+    },
+    {
+      "name": "Sancaktepe",
+      "population": 490189
+    },
+    {
+      "name": "Sarıyer",
+      "population": 344250
+    },
+    {
+      "name": "Silivri",
+      "population": 221733
+    },
+    {
+      "name": "Şişli",
+      "population": 264516
+    },
+    {
+      "name": "Sultanbeyli",
+      "population": 360879
+    },
+    {
+      "name": "Sultangazi",
+      "population": 532846
+    },
+    {
+      "name": "Şile",
+      "population": 48826
+    },
+    {
+      "name": "Tuzla",
+      "population": 293645
+    },
+    {
+      "name": "Ümraniye",
+      "population": 723436
+    },
+    {
+      "name": "Üsküdar",
+      "population": 527325
+    },
+    {
+      "name": "Zeytinburnu",
+      "population": 280252
+    }
+  ],
+  "facilities": [
+    {
+      "id": 1,
+      "kod": "ALTY-01",
+      "ad": "Altınboynuz Sosyal Tesisi",
+      "adres": "Tekke Parkı Merkez Bahariye Cd. No: 16 Eyüpsultan",
+      "lat": 41.0578458,
+      "lng": 28.9456101,
+      "capacity": 120,
+      "occupancy": 75,
+      "iett_info": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)",
+      "vapur_info": "Haliç Hattı (Eyüpsultan İskelesi)",
+      "transit_transfer": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)",
+      "route_description": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"
+    },
+    {
+      "id": 2,
+      "kod": "ALTY-02",
+      "ad": "Arnavutköy Sosyal Tesisi",
+      "adres": "Arnavutköy, Bebek Arnavutköy Cd No:72, Beşiktaş",
+      "lat": 41.067491,
+      "lng": 29.0448903,
+      "capacity": 150,
+      "occupancy": 85,
+      "iett_info": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)",
+      "vapur_info": "Boğaz Hattı (Arnavutköy İskelesi)",
+      "transit_transfer": "M2 Metro (Taksim) -> 40T Otobüsü",
+      "route_description": "Bebek Arnavutköy Cd. üzerinden"
+    },
+    {
+      "id": 3,
+      "kod": "ALTY-03",
+      "ad": "Avcılar Sosyal Tesisi",
+      "adres": "Denizköşkler, Dr. Sadık Ahmet Cd. No:7, Avcılar",
+      "lat": 40.976648,
+      "lng": 28.743912,
+      "capacity": 200,
+      "occupancy": 55,
+      "iett_info": "76O, 146, 76C (Denizköşkler Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Metrobüs (Şükrübey Durağı) -> 10 dk yürüyüş",
+      "route_description": "D-100 Karayolu ve Dr. Sadık Ahmet Cd. üzerinden"
+    },
+    {
+      "id": 4,
+      "kod": "ALTY-04",
+      "ad": "Beykoz Koru Sosyal Tesisi",
+      "adres": "Merkez, Kelle İbrahim Cd. 17/A, Beykoz",
+      "lat": 41.1316936,
+      "lng": 29.0942223,
+      "capacity": 250,
+      "occupancy": 90,
+      "iett_info": "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)",
+      "vapur_info": "İstinye - Çubuklu Vapuru veya Üsküdar - Beykoz Motoru",
+      "transit_transfer": "M2 Metro (Hacıosman) -> Otobüs / Vapur",
+      "route_description": "Beykoz Sahil Yolu üzerinden"
+    },
+    {
+      "id": 5,
+      "kod": "ALTY-05",
+      "ad": "Beykoz Sahil Sosyal Tesisi",
+      "adres": "Paşabahçe Mahallesi Burunbahçe Mevkii, Beykoz",
+      "lat": 41.1134095,
+      "lng": 29.0864284,
+      "capacity": 180,
+      "occupancy": 65,
+      "iett_info": "15, 15F, 15T, 15BK, 121A (Burunbahçe Durağı)",
+      "vapur_info": "İstinye - Çubuklu Vapuru veya Üsküdar - Beykoz Motoru",
+      "transit_transfer": "M2 Metro (Hacıosman) -> Otobüs / Vapur",
+      "route_description": "Beykoz Sahil Yolu ve Burunbahçe Sk. üzerinden"
+    },
+    {
+      "id": 6,
+      "kod": "ALTY-06",
+      "ad": "Boğazköy Sosyal Tesisi",
+      "adres": "Yunus Emre, Erdener Sk. No:36, Arnavutköy",
+      "lat": 41.185797,
+      "lng": 28.765582,
+      "capacity": 110,
+      "occupancy": 40,
+      "iett_info": "336G, 36AY, 36B (Boğazköy Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M11 Metro (Arnavutköy) -> 336G Otobüsü",
+      "route_description": "E-80 ve Erdener Sk. üzerinden"
+    },
+    {
+      "id": 7,
+      "kod": "ALTY-07",
+      "ad": "Çamlıca Sosyal Tesisi",
+      "adres": "Kısıklı, Turistik Çamlıca Cd., Üsküdar",
+      "lat": 41.027788,
+      "lng": 29.069052,
+      "capacity": 300,
+      "occupancy": 95,
+      "iett_info": "129T, 11A, 11ÜS, 14F (Kısıklı Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M5 Metro (Kısıklı İstasyonu) -> 15 dk yürüyüş",
+      "route_description": "Turistik Çamlıca Cd. üzerinden"
+    },
+    {
+      "id": 8,
+      "kod": "ALTY-08",
+      "ad": "Cihangir Sosyal Tesisi",
+      "adres": "Kamacı Ustası Sk. No: 1, Cihangir/Beyoğlu",
+      "lat": 41.0284966,
+      "lng": 28.9825361,
+      "capacity": 90,
+      "occupancy": 72,
+      "iett_info": "26, 26A, 26B, 28, 28T (Fındıklı Durağı + Yürüyüş)",
+      "vapur_info": "Boğaz Hattı (Kabataş İskelesi)",
+      "transit_transfer": "M2 Metro (Taksim) veya T1 Tramvay (Fındıklı) -> Yürüyüş",
+      "route_description": "Meclis-i Mebusan Cd. ve Kamacı Ustası Sk. üzerinden"
+    },
+    {
+      "id": 9,
+      "kod": "ALTY-09",
+      "ad": "Dragos Sosyal Tesisi",
+      "adres": "Orhantepe, Turgut Özal Blv. No:10, Kartal",
+      "lat": 40.9013477,
+      "lng": 29.1466597,
+      "capacity": 220,
+      "occupancy": 83,
+      "iett_info": "134YK, 16D, 17, 252 (Dragos Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M4 Metro (Hastane-Adliye) -> 134YK Otobüsü",
+      "route_description": "Turgut Özal Bulvarı (Sahil Yolu) üzerinden"
+    },
+    {
+      "id": 10,
+      "kod": "ALTY-10",
+      "ad": "Fethipaşa Sosyal Tesisi",
+      "adres": "Kuzguncuk Mahallesi Nacak Sokak No:6, Üsküdar",
+      "lat": 41.0333739,
+      "lng": 29.0259101,
+      "capacity": 280,
+      "occupancy": 89,
+      "iett_info": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)",
+      "vapur_info": "Üsküdar İskelesi (1.2 km yürüyüş)",
+      "transit_transfer": "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı",
+      "route_description": "Paşalimanı Cd. ve Nacak Sk. üzerinden"
+    },
+    {
+      "id": 11,
+      "kod": "ALTY-11",
+      "ad": "Florya Sosyal Tesisi",
+      "adres": "İtfaiye Cad. No:1 Florya, Bakırköy",
+      "lat": 40.960613,
+      "lng": 28.807588,
+      "capacity": 350,
+      "occupancy": 91,
+      "iett_info": "73Y, 73B, 73F (Florya Sosyal Tesisler Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Marmaray (Florya Akvaryum Durağı) -> 5 dk yürüyüş",
+      "route_description": "Florya Sahil Yolu üzerinden"
+    },
+    {
+      "id": 12,
+      "kod": "ALTY-12",
+      "ad": "Gazi Sosyal Tesisi",
+      "adres": "Zübeyde Hanım, 1481. Sk., Sultangazi",
+      "lat": 41.101274,
+      "lng": 28.916913,
+      "capacity": 130,
+      "occupancy": 58,
+      "iett_info": "38G, 49G, 36L (Gazi Barajı Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "T4 Tramvayı (Mescid-i Selam) -> 38G Otobüsü",
+      "route_description": "Zübeyde Hanım Mahallesi ve 1481. Sk. üzerinden"
+    },
+    {
+      "id": 13,
+      "kod": "ALTY-13",
+      "ad": "Gözdağı Sosyal Tesisi",
+      "adres": "Dumlupınar, Gözdağı Tepesi No:50, Pendik",
+      "lat": 40.8906409,
+      "lng": 29.2536092,
+      "capacity": 160,
+      "occupancy": 74,
+      "iett_info": "132G, 132V, 132P (Gözdağı Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M4 Metro (Pendik İstasyonu) -> 132G Otobüsü",
+      "route_description": "D-100 ve Gözdağı Caddesi üzerinden"
+    },
+    {
+      "id": 14,
+      "kod": "ALTY-14",
+      "ad": "Haliç Sosyal Tesisi",
+      "adres": "Abdülezel Paşa Cad. Kadir Has Üni. Karşısı, Fatih",
+      "lat": 41.028283,
+      "lng": 28.957092,
+      "capacity": 180,
+      "occupancy": 62,
+      "iett_info": "99A, 55T, 48E, 399B (Kadir Has Üniversitesi Durağı)",
+      "vapur_info": "Haliç Hattı (Cibali İskelesi)",
+      "transit_transfer": "T5 Tramvayı (Cibali İstasyonu) -> Yürüyüş",
+      "route_description": "Abdülezelpaşa Caddesi üzerinden"
+    },
+    {
+      "id": 15,
+      "kod": "ALTY-15",
+      "ad": "İstinye Sosyal Tesisi",
+      "adres": "İstinye, Emirgan Koru Cd. No:108, Sarıyer",
+      "lat": 41.1147873,
+      "lng": 29.0549822,
+      "capacity": 200,
+      "occupancy": 80,
+      "iett_info": "22, 22RE, 25E, 40T, 42T (İstinye Devlet Hastanesi Durağı)",
+      "vapur_info": "İstinye - Çubuklu Arabalı Vapuru",
+      "transit_transfer": "M2 Metro (İTÜ Ayazağa) -> 29S Otobüsü",
+      "route_description": "Emirgan Koru Caddesi ve İstinye Sahil Yolu üzerinden"
+    },
+    {
+      "id": 16,
+      "kod": "ALTY-16",
+      "ad": "Kasımpaşa Sosyal Tesisi",
+      "adres": "Bedrettin, Evliya Çelebi Cd. No:4, Beyoğlu",
+      "lat": 41.0299569,
+      "lng": 28.9667688,
+      "capacity": 140,
+      "occupancy": 48,
+      "iett_info": "EM1, EM2, 77, 77A, 54HT (Kasımpaşa Durağı)",
+      "vapur_info": "Haliç Hattı (Kasımpaşa İskelesi)",
+      "transit_transfer": "M2 Metro (Şişhane) -> 15 dk yürüyüş / Tünel",
+      "route_description": "Bahriye Caddesi ve Evliya Çelebi Caddesi üzerinden"
+    },
+    {
+      "id": 17,
+      "kod": "ALTY-17",
+      "ad": "Küçük Çamlıca Sosyal Tesisi",
+      "adres": "Küçük Çamlıca Oyma Sokak No:3, Üsküdar",
+      "lat": 41.016344,
+      "lng": 29.064013,
+      "capacity": 210,
+      "occupancy": 67,
+      "iett_info": "11ES, 11L, 11M, 11ÜS (Küçük Çamlıca Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M5 Metro (Kısıklı) -> 11ES Otobüsü",
+      "route_description": "Kısıklı ve Küçük Çamlıca Oyma Sk. üzerinden"
+    },
+    {
+      "id": 18,
+      "kod": "ALTY-18",
+      "ad": "Küçükçekmece Sosyal Tesisi",
+      "adres": "Fatih Mahallesi Yalı Caddesi, Küçükçekmece",
+      "lat": 40.9998227,
+      "lng": 28.765311,
+      "capacity": 170,
+      "occupancy": 53,
+      "iett_info": "76O, 89A, 89B, 98TB (Küçükçekmece Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Metrobüs (Küçükçekmece İstasyonu) -> Marmaray Aktarması",
+      "route_description": "D-100 ve Yalı Caddesi üzerinden"
+    },
+    {
+      "id": 19,
+      "kod": "ALTY-19",
+      "ad": "Safa Tepesi Sosyal Tesisi",
+      "adres": "Yunus Emre Mah., Mevlana Cd. No:69, Sancaktepe",
+      "lat": 41.0137496,
+      "lng": 29.2547994,
+      "capacity": 190,
+      "occupancy": 79,
+      "iett_info": "131A, 131YS, 132YM (Safa Tepesi Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M5 Metro (Çekmeköy) -> 131A Otobüsü",
+      "route_description": "Şile Otoyolu ve Mevlana Caddesi üzerinden"
+    },
+    {
+      "id": 20,
+      "kod": "ALTY-20",
+      "ad": "Sultanbeyli Sosyal Tesisi",
+      "adres": "Sultanbeyli Gölet Parkı İçi, Sultanbeyli",
+      "lat": 40.954071,
+      "lng": 29.276533,
+      "capacity": 240,
+      "occupancy": 86,
+      "iett_info": "131, 131H, 131Ü, 18M (Sultanbeyli Gölet Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M5 Metro (Madenler) -> 131 no'lu Otobüs hattı",
+      "route_description": "TEM Otoyolu Sultanbeyli çıkışı ve Gölet Parkı üzerinden"
+    },
+    {
+      "id": 21,
+      "kod": "ALTY-21",
+      "ad": "Yakuplu Sosyal Tesisi",
+      "adres": "Güzelyurt, Mehmet Akif Ersoy Cd. No:20/1, Esenyurt",
+      "lat": 41.0036611,
+      "lng": 28.6677748,
+      "capacity": 150,
+      "occupancy": 45,
+      "iett_info": "458, 76Y (Yakuplu Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Metrobüs (Haramidere) -> 458 Otobüsü",
+      "route_description": "Yakuplu Liman Yolu ve Mehmet Akif Ersoy Cd. üzerinden"
+    },
+    {
+      "id": 22,
+      "kod": "ALTY-22",
+      "ad": "Beykoz Kır Bahçesi Sosyal Tesisi",
+      "adres": "Merkez Mahallesi, Kelle İbrahim Cd., Beykoz",
+      "lat": 41.134419,
+      "lng": 29.1006,
+      "capacity": 280,
+      "occupancy": 82,
+      "iett_info": "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)",
+      "vapur_info": "İstinye - Çubuklu Vapuru veya Şehir Hatları",
+      "transit_transfer": "M2 Metro (Hacıosman) -> Otobüs",
+      "route_description": "Beykoz Sahil Yolu ve Kelle İbrahim Cd. üzerinden"
+    },
+    {
+      "id": 23,
+      "kod": "ALTY-23",
+      "ad": "Pembe Köşk Sosyal Tesisi",
+      "adres": "Emirgan, Emirgan Korusu İçi, Sarıyer",
+      "lat": 41.109894,
+      "lng": 29.05697,
+      "capacity": 120,
+      "occupancy": 94,
+      "iett_info": "22, 22RE, 25E, 40T, 42T (Emirgan Durağı)",
+      "vapur_info": "Boğaz Hattı (Emirgan İskelesi)",
+      "transit_transfer": "M2 Metro (İTÜ Ayazağa) -> Emirgan otobüsleri",
+      "route_description": "Emirgan Korusu iç yolları üzerinden"
+    },
+    {
+      "id": 24,
+      "kod": "ALTY-24",
+      "ad": "Kır Kahvesi Sosyal Tesisi",
+      "adres": "Yıldız Mahallesi, Yıldız Parkı İçi, Beşiktaş",
+      "lat": 41.0479649,
+      "lng": 29.0131607,
+      "capacity": 100,
+      "occupancy": 70,
+      "iett_info": "22, 22RE, 25E, 30D, 40T, 42T (Yıldız Parkı Durağı)",
+      "vapur_info": "Beşiktaş İskelesi (1.5 km yürüyüş)",
+      "transit_transfer": "M7 Metro (Beşiktaş İstasyonu) -> 5 dk yürüyüş",
+      "route_description": "Yıldız Parkı iç yolları üzerinden"
+    },
+    {
+      "id": 25,
+      "kod": "ALTY-25",
+      "ad": "Paşalimanı Sosyal Tesisi",
+      "adres": "Kuzguncuk, Paşalimanı Cd., Üsküdar",
+      "lat": 41.032235,
+      "lng": 29.022992,
+      "capacity": 160,
+      "occupancy": 88,
+      "iett_info": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)",
+      "vapur_info": "Üsküdar İskelesi (800m yürüyüş)",
+      "transit_transfer": "Marmaray / M5 Metro (Üsküdar İstasyonu) -> Paşalimanı sahil yürüyüşü",
+      "route_description": "Paşalimanı Caddesi üzerinden"
+    },
+    {
+      "id": 26,
+      "kod": "ALTY-26",
+      "ad": "Florya Yerleşim Birimleri",
+      "adres": "Basınköy, İtfaıye Cd. No:1, Bakırköy",
+      "lat": 40.971945,
+      "lng": 28.788689,
+      "capacity": 320,
+      "occupancy": 50,
+      "iett_info": "73Y, 73B, 73F (Basınköy Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Marmaray (Florya Durağı) -> 10 dk yürüyüş",
+      "route_description": "Florya Sahil Yolu ve Basınköy İç Yolu üzerinden"
+    },
+    {
+      "id": 27,
+      "kod": "ALTY-27",
+      "ad": "Zeytinburnu Sosyal Tesisi",
+      "adres": "Kazlıçeşme, Beşkardeşler Sk. No:12, Zeytinburnu",
+      "lat": 40.9850535,
+      "lng": 28.906515,
+      "capacity": 200,
+      "occupancy": 73,
+      "iett_info": "93, 93M, 93T, MR10 (Kazlıçeşme Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Marmaray (Kazlıçeşme İstasyonu) -> 8 dk yürüyüş",
+      "route_description": "Sahil Kennedy Caddesi ve Beşkardeşler Sk. üzerinden"
+    },
+    {
+      "id": 28,
+      "kod": "ALTY-28",
+      "ad": "1453 Çırpıcı Sosyal Tesisi",
+      "adres": "Çırpıcı Şehir Parkı Koşuyolu Sokak, Bakırköy",
+      "lat": 41.0003203,
+      "lng": 28.8892505,
+      "capacity": 300,
+      "occupancy": 61,
+      "iett_info": "93, 93M, 93T (Çırpıcı Parkı Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Metro M1 / Metrobüs (Zeytinburnu durağı) -> 2 dk yürüyüş",
+      "route_description": "D-100 yanyol ve Koşuyolu Sokak üzerinden"
+    },
+    {
+      "id": 29,
+      "kod": "ALTY-29",
+      "ad": "Denizköşk Sosyal Tesisi",
+      "adres": "Denizköşkler, Kemal Sunal Cd. No:38, Avcılar",
+      "lat": 40.974184,
+      "lng": 28.743431,
+      "capacity": 190,
+      "occupancy": 59,
+      "iett_info": "76O, 146, 76C (Denizköşkler Durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "Metrobüs (Şükrübey Durağı) -> 12 dk yürüyüş",
+      "route_description": "Sahil Yolu ve Kemal Sunal Caddesi üzerinden"
+    },
+    {
+      "id": 30,
+      "kod": "ALTY-30",
+      "ad": "Güngören Sosyal Tesisi",
+      "adres": "Gençosman Mah. Akyıldız Sk. No:94, Güngören",
+      "lat": 41.0363577,
+      "lng": 28.871629,
+      "capacity": 140,
+      "occupancy": 66,
+      "iett_info": "92T, 41AT, 85T (Güngören durağı)",
+      "vapur_info": "Mevcut Değil",
+      "transit_transfer": "M1B Metro (Menderes) -> Yürüyüş veya Minibüs",
+      "route_description": "O-3 yanyol ve Akyıldız Sokak üzerinden"
+    }
+  ]
+}
