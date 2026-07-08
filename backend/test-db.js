@@ -26,11 +26,10 @@ assert('seed: 30 tesis yüklendi', facilities.length === 30);
 assert('seed: transit bilgisi korundu', facilities[0].transit.otobus.includes('39D'));
 assert('seed: API şekli değişmedi (koordinatlar dizisi)', Array.isArray(facilities[0].koordinatlar));
 
-// 2. Parola hash'i Python (pbkdf2_hmac sha256, 100k) ile bit-uyumlu mu?
-// Python: hashlib.pbkdf2_hmac('sha256', b'adminpassword', b'mufettis_salt_value_2026', 100000).hex()
+// 2. Kimlik: kullanıcı seed edildi; parola PHC formatında ve ham DEĞİL.
 const admin = db.getUserByUsername('admin');
 assert('auth: admin kullanıcısı seed edildi', !!admin);
-assert('auth: hash deterministik', admin.password === hashPassword('adminpassword'));
+assert('auth: parola PHC formatında saklanıyor', /^pbkdf2_sha256\$\d+\$/.test(admin.password));
 
 // 3. KNN yakınlık analizi DB üzerinden çalışıyor mu?
 const closest = db.getClosestFacilities(41.0369, 28.9850, 3); // Taksim
@@ -160,6 +159,43 @@ const orphanOrders = conn.prepare('SELECT COUNT(*) AS n FROM orders WHERE reserv
 const orphanItems = conn.prepare('SELECT COUNT(*) AS n FROM order_items WHERE order_id = ?').get(orderId).n;
 assert('FK: rezervasyon silinince sipariş cascade silindi', orphanOrders === 0);
 assert('FK: sipariş silinince kalemler cascade silindi', orphanItems === 0);
+
+// ===========================================================================
+// Faz v2-02: Kriptografi testleri
+// ===========================================================================
+const { verifyPassword } = require('./database');
+const { signJwt, verifyJwt } = require('./security');
+
+// 15. Doğru parola doğrulanır, yanlış reddedilir
+const u1 = db.createUser('kripto_test_1', 'S3cret-Parola!');
+const rec1 = db.getUserByUsername('kripto_test_1');
+assert('kripto: doğru parola doğrulandı', verifyPassword('S3cret-Parola!', rec1.password) === true);
+assert('kripto: yanlış parola reddedildi', verifyPassword('yanlis', rec1.password) === false);
+
+// 16. Aynı parola farklı kullanıcıda FARKLI hash üretir (per-user salt kanıtı)
+db.createUser('kripto_test_2', 'AyniParola123');
+db.createUser('kripto_test_3', 'AyniParola123');
+const r2 = db.getUserByUsername('kripto_test_2').password;
+const r3 = db.getUserByUsername('kripto_test_3').password;
+assert('kripto: aynı parola farklı hash (salt çalışıyor)', r2 !== r3);
+assert('kripto: ikisi de doğrulanabiliyor', verifyPassword('AyniParola123', r2) && verifyPassword('AyniParola123', r3));
+
+// 17. JWT imza + exp doğrulama
+const token = signJwt({ id: 1, username: 'x', role: 'admin' });
+const decoded = verifyJwt(token);
+assert('jwt: geçerli token çözüldü', decoded && decoded.username === 'x' && decoded.role === 'admin');
+assert('jwt: exp claim eklendi', typeof decoded.exp === 'number' && decoded.exp > decoded.iat);
+assert('jwt: kurcalanmış imza reddedildi', verifyJwt(token.slice(0, -3) + 'AAA') === null);
+
+// 18. Süresi geçmiş token reddedilir (payload'u geçmiş exp ile yeniden imzalamadan test:
+//     elle bozulmuş exp imzayı geçersiz kılar; süre kontrolünü ayrı bir sahte token ile doğrularız)
+const parts = token.split('.');
+const b64urlJson = (o) => Buffer.from(JSON.stringify(o)).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const expiredPayload = b64urlJson({ id: 1, username: 'x', role: 'admin', iat: 1, exp: 2 });
+const crypto2 = require('crypto');
+const forgedSig = crypto2.createHmac('sha256', process.env.JWT_SECRET || 'DEV-ONLY-INSECURE-SECRET-do-not-use-in-production')
+  .update(`${parts[0]}.${expiredPayload}`).digest('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+assert('jwt: süresi geçmiş token reddedildi', verifyJwt(`${parts[0]}.${expiredPayload}.${forgedSig}`) === null);
 
 console.log(`\n${passed} başarılı, ${failed} başarısız`);
 process.exit(failed === 0 ? 0 : 1);

@@ -18,6 +18,10 @@ data/app.db
 *.db-shm
 advanced-gis/data/database.db
 
+# Sırlar ve yerel dev parolaları (ASLA commit edilmez - ADR-002)
+.env
+data/dev-credentials.json
+
 # Python
 __pycache__/
 *.pyc

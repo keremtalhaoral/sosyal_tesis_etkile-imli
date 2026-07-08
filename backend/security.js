@@ -8,7 +8,20 @@
 
 const crypto = require('crypto');
 
-const JWT_SECRET = Buffer.from(process.env.JWT_SECRET || 'netcad_gis_crypto_key_2026_secure');
+// JWT secret ortam değişkeninden gelir. Üretimde (NODE_ENV=production) yoksa gürültülü hata;
+// geliştirmede açıkça 'DEV-ONLY' etiketli sabit kullanılır (ADR-002 Karar 2).
+const DEV_SECRET = 'DEV-ONLY-INSECURE-SECRET-do-not-use-in-production';
+const resolveSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET ortam değişkeni üretimde zorunludur (güvenlik).');
+  }
+  console.warn('[security] JWT_SECRET set edilmemiş - DEV-ONLY sabit kullanılıyor. Üretimde ASLA.');
+  return DEV_SECRET;
+};
+const JWT_SECRET = Buffer.from(resolveSecret());
+
+const TOKEN_TTL_SECONDS = 60 * 60 * 8; // 8 saat
 
 const base64urlEncode = (buf) =>
   Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -17,8 +30,11 @@ const base64urlDecode = (str) =>
   Buffer.from(str.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
 
 const signJwt = (userData) => {
+  const now = Math.floor(Date.now() / 1000);
+  // iat = veriliş anı, exp = son kullanma. Çalınan token sonsuza dek geçerli olmasın (ADR-002 Karar 3).
+  const claims = { ...userData, iat: now, exp: now + TOKEN_TTL_SECONDS };
   const header = base64urlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = base64urlEncode(JSON.stringify(userData));
+  const payload = base64urlEncode(JSON.stringify(claims));
   const signature = base64urlEncode(
     crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${payload}`).digest()
   );
@@ -35,8 +51,10 @@ const verifyJwt = (token) => {
     );
     const a = Buffer.from(signature);
     const b = Buffer.from(expected);
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-    return JSON.parse(base64urlDecode(payload).toString('utf8'));
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null; // imza geçersiz
+    const claims = JSON.parse(base64urlDecode(payload).toString('utf8'));
+    if (claims.exp && Math.floor(Date.now() / 1000) >= claims.exp) return null; // süresi geçmiş
+    return claims;
   } catch {
     return null;
   }

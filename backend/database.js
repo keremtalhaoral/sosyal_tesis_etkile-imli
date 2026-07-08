@@ -28,12 +28,62 @@ const crypto = require('crypto');
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'app.db');
 const SEED_PATH = path.join(DATA_DIR, 'seed.json');
+// Yerel dev parolaları DB dosyasının yanında yaşar (gitignored). Testte geçici dizine düşer.
+const CREDENTIALS_PATH = path.join(path.dirname(DB_PATH), 'dev-credentials.json');
 
-// Python tarafındaki security/crypto_signer.py ile bit-uyumlu parola hash'i:
-// pbkdf2_hmac('sha256', parola, SALT, 100000) -> hex. Aynı kullanıcı tablosunu iki servis paylaşır.
-const PASSWORD_SALT = Buffer.from('mufettis_salt_value_2026');
-const hashPassword = (password) =>
-  crypto.pbkdf2Sync(String(password), PASSWORD_SALT, 100000, 32, 'sha256').toString('hex');
+// -------------------------------------------------------------------------
+// Parola hash'i - PHC (Password Hashing Competition) string formatı:
+//   pbkdf2_sha256$<iterasyon>$<salt_b64>$<hash_b64>
+// Django ile aynı biçim. Python (crypto_signer.py) ile ÇAPRAZ-UYUMLU: bir tarafın
+// ürettiği stringi diğeri doğrular. Her kullanıcıya AYRI rastgele salt (ADR-002 Karar 1).
+// -------------------------------------------------------------------------
+const PBKDF2_ITERATIONS = 600000; // OWASP 2023 önerisi (SHA-256)
+const PBKDF2_KEYLEN = 32;
+const PBKDF2_DIGEST = 'sha256';
+
+const hashPassword = (password) => {
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.pbkdf2Sync(String(password), salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, PBKDF2_DIGEST);
+  return `pbkdf2_sha256$${PBKDF2_ITERATIONS}$${salt.toString('base64')}$${hash.toString('base64')}`;
+};
+
+// Sabit-zamanlı doğrulama (timing attack'a karşı). Stored = PHC string.
+const verifyPassword = (password, stored) => {
+  try {
+    const parts = String(stored).split('$');
+    if (parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') return false;
+    const iterations = parseInt(parts[1], 10);
+    const salt = Buffer.from(parts[2], 'base64');
+    const expected = Buffer.from(parts[3], 'base64');
+    const actual = crypto.pbkdf2Sync(String(password), salt, iterations, expected.length, PBKDF2_DIGEST);
+    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+  } catch {
+    return false;
+  }
+};
+
+// Güçlü rastgele parola (base64url, ~16 karakter). Seed'de ham parola tutmayız.
+const generatePassword = () => crypto.randomBytes(12).toString('base64url');
+
+// Dev parolalarını yükle/oluştur (gitignored dosya). Node ve Python aynı dosyayı paylaşır:
+// hangi servis önce tohumlarsa parolayı üretir, diğeri aynı açık metni okur → login her iki
+// serviste de çalışır (DB'de sadece ilk servisin hash'i durur, INSERT OR IGNORE).
+const loadOrCreateCredentials = (users) => {
+  let store = { _comment: 'YEREL dev parolaları - git\'e girmez. Silerseniz app.db\'yi de silip yeniden tohumlayın.', users: {} };
+  if (fs.existsSync(CREDENTIALS_PATH)) {
+    try { store = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8')); store.users = store.users || {}; } catch { /* bozuksa yeniden üret */ }
+  }
+  let changed = false;
+  for (const u of users) {
+    if (!store.users[u.username]) { store.users[u.username] = generatePassword(); changed = true; }
+  }
+  if (changed) {
+    store.generated_at = new Date().toISOString();
+    fs.writeFileSync(CREDENTIALS_PATH, JSON.stringify(store, null, 2) + '\n');
+    console.log(`[db] Dev parolaları üretildi/güncellendi: ${CREDENTIALS_PATH}`);
+  }
+  return store.users;
+};
 
 const MIGRATIONS = [
   {
@@ -195,11 +245,15 @@ const seedDatabase = (conn) => {
 
   conn.exec('BEGIN');
   try {
+    // Ham parola artık seed'de YOK. Güçlü rastgele parola üretip gitignored dosyaya yazar,
+    // DB'ye sadece hash'i koyarız (ADR-002 Karar 4).
+    const seedUsers = seed.users || [];
+    const credentials = loadOrCreateCredentials(seedUsers);
     const insertUser = conn.prepare(
       'INSERT OR IGNORE INTO users (username, password, role) VALUES (?, ?, ?)'
     );
-    for (const u of seed.users || []) {
-      insertUser.run(u.username, hashPassword(u.password_raw), u.role);
+    for (const u of seedUsers) {
+      insertUser.run(u.username, hashPassword(credentials[u.username]), u.role);
     }
 
     const insertDistrict = conn.prepare(
@@ -264,4 +318,4 @@ const transaction = (fn) => {
   }
 };
 
-module.exports = { getDb, transaction, hashPassword, DB_PATH };
+module.exports = { getDb, transaction, hashPassword, verifyPassword, DB_PATH };

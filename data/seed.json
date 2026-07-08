@@ -1,15 +1,13 @@
 {
-  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır).",
-  "version": 2,
+  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır). | v3: ham parolalar sokuldu (backend gitignored dev-credentials.json uretir); demo_users yalniz Pages icin.",
+  "version": 3,
   "users": [
     {
       "username": "admin",
-      "password_raw": "adminpassword",
       "role": "admin"
     },
     {
       "username": "user",
-      "password_raw": "userpassword",
       "role": "user"
     }
   ],
@@ -663,6 +661,18 @@
       "name": "Simit",
       "category": "Atıştırmalık",
       "price_minor": 1500
+    }
+  ],
+  "demo_users": [
+    {
+      "username": "demo",
+      "password": "demo1234",
+      "role": "user"
+    },
+    {
+      "username": "demo-admin",
+      "password": "demo1234",
+      "role": "admin"
     }
   ]
 }
