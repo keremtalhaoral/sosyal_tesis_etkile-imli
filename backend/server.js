@@ -71,11 +71,11 @@ app.post('/api/auth/register', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
+  const { verifyPassword } = require('./database');
   const record = username ? db.getUserByUsername(String(username).trim()) : null;
-  const { hashPassword } = require('./database');
-  const candidate = hashPassword(password || '');
-  const valid = record && crypto.timingSafeEqual(Buffer.from(record.password), Buffer.from(candidate));
-  if (!valid) {
+  // verifyPassword sabit-zamanlıdır; kullanıcı yoksa da sahte doğrulama ile timing sızıntısını azaltırız.
+  const valid = verifyPassword(password || '', record ? record.password : 'pbkdf2_sha256$1$AA==$AA==');
+  if (!record || !valid) {
     return res.status(401).json({ error: 'Kullanıcı adı veya parola hatalı.' });
   }
   const user = { id: record.id, username: record.username, role: record.role };

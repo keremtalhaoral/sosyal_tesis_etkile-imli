@@ -5,16 +5,22 @@ import sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 
-from security.crypto_signer import hash_password, sign_jwt, verify_jwt, sign_reservation
+from security.crypto_signer import hash_password, verify_password, sign_jwt, verify_jwt, sign_reservation
 
 class TestCryptographicSignatures(unittest.TestCase):
-    
+
     def test_password_hashing(self):
+        # Faz v2-02: per-user salt sonrasi ayni parola FARKLI hash uretir (rainbow-table savunmasi).
         p1 = "mypassword123"
         h1 = hash_password(p1)
         h2 = hash_password(p1)
-        self.assertEqual(h1, h2) # Deterministic
-        self.assertNotEqual(p1, h1) # Hashed
+        self.assertNotEqual(h1, h2)              # Farkli salt -> farkli hash
+        self.assertNotEqual(p1, h1)              # Ham parola degil
+        self.assertTrue(h1.startswith("pbkdf2_sha256$"))  # PHC formati
+        # Ikisi de dogru parolayla dogrulanir, yanlisla reddedilir
+        self.assertTrue(verify_password(p1, h1))
+        self.assertTrue(verify_password(p1, h2))
+        self.assertFalse(verify_password("yanlis", h1))
 
     def test_jwt_session_auth(self):
         user_payload = {"id": 42, "username": "testuser", "role": "user"}

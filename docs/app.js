@@ -52,9 +52,11 @@ const MOCK_USERS_KEY = 'mufettis_mock_users';const defaultFacilities = [
   {"id": 10, "kod": "ALTY-10", "ad": "Fethipaşa Sosyal Tesisi", "koordinatlar": [41.0333739, 29.0259101], "kapasite": 280, "dolulukOrani": 89, "transit": {"otobus": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)", "aktarma": "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı", "arabayla": "Paşalimanı Cd. ve Nacak Sk. üzerinden"}}
 ];
 
+// DEMO hesaplar (yalnız GitHub Pages/çevrimdışı replika için). Gerçek backend bu parolaları
+// ASLA taşımaz; üretimde parolalar gitignored dev-credentials.json'da (ADR-002 Karar 4).
 const defaultUsers = [
-  { username: 'user', password_hash: 'userpassword_mock', role: 'user' },
-  { username: 'admin', password_hash: 'adminpassword_mock', role: 'admin' }
+  { username: 'demo', password_hash: 'demo1234_mock', role: 'user' },
+  { username: 'demo-admin', password_hash: 'demo1234_mock', role: 'admin' }
 ];
 
 const getMockItem = (key, defaultVal) => {
@@ -110,9 +112,10 @@ const bootstrapCentralSeed = async () => {
     if (storedVersion >= (seed.version || 1)) return; // replika zaten güncel
 
     localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify((seed.facilities || []).map(seedRowToFacility)));
-    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify((seed.users || []).map(u => ({
+    // Pages auth yalnız demo_users'tan beslenir (gerçek backend kullanıcıları parola taşımaz).
+    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify((seed.demo_users || []).map(u => ({
       username: u.username,
-      password_hash: u.password_raw + '_mock',
+      password_hash: u.password + '_mock',
       role: u.role
     }))));
 
