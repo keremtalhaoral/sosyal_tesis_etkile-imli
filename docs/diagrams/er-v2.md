@@ -1,9 +1,9 @@
 # v_2 Varlık-İlişki (ER) Diyagramı
 
-Bu diyagram v_2 hedef veri modelini gösterir. **Düz çizgili tablolar** uygulanmış durumdadır
-(migration v1 + v2). **Kesikli/planlanan** tablolar `daily_stats`, `ispark_status`, `audit_log`
-sonraki fazlarda kendi migration'larıyla eklenecek (bkz. ADR-001) — burada şemanın önden
-tasarlandığını göstermek için yer alıyorlar.
+Bu diyagram v_2 hedef veri modelini gösterir. **Uygulanmış tablolar** (migration v1 + v2 + v3):
+users, facilities, reservations, menu_items, orders, order_items, districts, **ispark_status**
+(v3). **Planlanan** tablolar `daily_stats` (v2-04) ve `audit_log` (v2-07) sonraki fazlarda
+kendi migration'larıyla eklenecek — burada şemanın önden tasarlandığını göstermek için yer alıyorlar.
 
 Para değerleri her yerde **tam sayı kuruş** (`*_minor`) olarak tutulur (float yuvarlama
 hatasından kaçınmak için — bkz. ADR-001).
@@ -13,6 +13,7 @@ erDiagram
     users ||--o{ reservations : "yapar"
     facilities ||--o{ reservations : "için"
     facilities ||--o{ menu_items : "sunar"
+    facilities ||--o| ispark_status : "otopark (atomik yer kapma)"
     reservations ||--o{ orders : "içerir"
     orders ||--o{ order_items : "kalemleri"
     menu_items ||--o{ order_items : "referans (fiyat snapshot'lanır)"
@@ -84,22 +85,21 @@ erDiagram
         string name UK
         int population "CHECK >= 0"
     }
+    ispark_status {
+        int facility_id PK_FK
+        int capacity "CHECK > 0"
+        int occupied "CHECK 0..capacity (overbook DB'de imkansız)"
+        string updated_at
+    }
 ```
 
 ## Planlanan tablolar (sonraki fazlar — henüz migration yok)
 
 ```mermaid
 erDiagram
-    facilities ||--o| ispark_status : "otopark durumu (Faz v2-03)"
     facilities ||--o{ daily_stats : "günlük özet (Faz v2-04)"
     users ||--o{ audit_log : "işlem kaydı (Faz v2-07)"
 
-    ispark_status {
-        int facility_id PK_FK
-        int capacity
-        int occupied "eşzamanlı düşülür (Faz 3: yarış koşulu)"
-        string updated_at
-    }
     daily_stats {
         string date PK "rollup anahtarı"
         int facility_id PK_FK

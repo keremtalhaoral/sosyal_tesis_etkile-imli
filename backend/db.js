@@ -209,38 +209,65 @@ const createUser = (username, passwordRaw, role = 'user') => {
 };
 
 /**
- * Rezervasyon oluşturma: kapasite kontrolü + doluluk güncellemesi + kayıt eklemesi
- * TEK atomik transaction'dır (DDIA Bölüm 7). Aradaki herhangi bir adım başarısız
- * olursa (örn. UNIQUE ihlali = çifte rezervasyon) tamamı geri alınır; doluluk oranı
- * ile rezervasyon kayıtları asla birbirinden koparılamaz.
+ * Rezervasyon oluşturma - PER-SLOT kapasite muhasebesi (Faz v2-03, ADR-003).
+ *
+ * Kapasite kararı artık kaba global yüzde DEĞİL: aynı (tesis, tarih, slot) için onaylı
+ * rezervasyonların misafir TOPLAMI + yeni misafir ≤ tesis kapasitesi olmalı. Okuma+kontrol+
+ * yazma TEK atomik transaction (BEGIN IMMEDIATE) içindedir → iki eşzamanlı rezervasyon
+ * son yeri paylaşamaz (WRITE-SKEW'e kapalı). Naif yol (txn dışı oku, sonra yaz) overbook
+ * ederdi; test-concurrency.js bunu kanıtlar.
+ *
+ * facilities.occupancy artık yalnız görüntüleme metriğidir (derived), booking'in kaynağı DEĞİL.
  */
-const createReservation = ({ userId, facilityId, reserveDate, reserveTime, guests, cryptoSignature }) =>
+const createReservation = ({ userId, facilityId, reserveDate, reserveTime, guests, highchairCount = 0, cryptoSignature }) =>
   transaction((conn) => {
-    const facility = conn.prepare('SELECT capacity, occupancy FROM facilities WHERE id = ?').get(facilityId);
+    const facility = conn.prepare('SELECT capacity FROM facilities WHERE id = ?').get(facilityId);
     if (!facility) {
       const err = new Error('Tesis bulunamadı.');
       err.statusCode = 404;
       throw err;
     }
 
-    const currentOccupied = Math.round(facility.capacity * (facility.occupancy / 100));
-    if (currentOccupied + guests > facility.capacity) {
-      const err = new Error('Tesis kapasitesi yetersiz. Yer kalmadı.');
+    const { booked } = conn.prepare(`
+      SELECT COALESCE(SUM(guests), 0) AS booked FROM reservations
+      WHERE facility_id = ? AND reserve_date = ? AND reserve_time = ? AND status != 'cancelled'
+    `).get(facilityId, reserveDate, reserveTime);
+
+    if (booked + guests > facility.capacity) {
+      const err = new Error(`Bu slot için yeterli yer yok. Kalan: ${facility.capacity - booked}, istenen: ${guests}.`);
       err.statusCode = 409;
       throw err;
     }
 
-    const newOccupancy = Math.min(100, Math.round(((currentOccupied + guests) / facility.capacity) * 100));
-    conn.prepare("UPDATE facilities SET occupancy = ?, updated_at = datetime('now') WHERE id = ?")
-      .run(newOccupancy, facilityId);
-
     const result = conn.prepare(`
-      INSERT INTO reservations (user_id, facility_id, reserve_date, reserve_time, guests, crypto_signature)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(userId, facilityId, reserveDate, reserveTime, guests, cryptoSignature);
+      INSERT INTO reservations (user_id, facility_id, reserve_date, reserve_time, guests, highchair_count, crypto_signature)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(userId, facilityId, reserveDate, reserveTime, guests, highchairCount, cryptoSignature);
 
-    return { id: Number(result.lastInsertRowid), newOccupancy };
+    const bookedAfter = booked + guests;
+    return { id: Number(result.lastInsertRowid), booked: bookedAfter, remaining: facility.capacity - bookedAfter };
   });
+
+// --- İSPARK: bağımsız bookable kaynak (atomik compare-and-set) --------------
+const getIsparkStatus = (facilityId) =>
+  getDb().prepare(
+    'SELECT facility_id, capacity, occupied, capacity - occupied AS free FROM ispark_status WHERE facility_id = ?'
+  ).get(facilityId) || null;
+
+/**
+ * Yer kapma - atomik compare-and-set. Koşul UPDATE'in WHERE'ine gömülüdür:
+ * "occupied < capacity" iken +1. Tek statement atomiktir; N eşzamanlı çağrıdan tam
+ * (capacity) tanesi başarılı olur, gerisi changes=0 alır (lost-update imkansız, ADR-003).
+ */
+const takeIsparkSpot = (facilityId) =>
+  getDb().prepare(
+    "UPDATE ispark_status SET occupied = occupied + 1, updated_at = datetime('now') WHERE facility_id = ? AND occupied < capacity"
+  ).run(facilityId).changes === 1;
+
+const releaseIsparkSpot = (facilityId) =>
+  getDb().prepare(
+    "UPDATE ispark_status SET occupied = occupied - 1, updated_at = datetime('now') WHERE facility_id = ? AND occupied > 0"
+  ).run(facilityId).changes === 1;
 
 const getReservationsByUserId = (userId) =>
   getDb().prepare(`
@@ -262,5 +289,8 @@ module.exports = {
   getUserByUsername,
   createUser,
   createReservation,
-  getReservationsByUserId
+  getReservationsByUserId,
+  getIsparkStatus,
+  takeIsparkSpot,
+  releaseIsparkSpot
 };

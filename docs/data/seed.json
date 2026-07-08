@@ -1,6 +1,6 @@
 {
-  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır). | v3: ham parolalar sokuldu (backend gitignored dev-credentials.json uretir); demo_users yalniz Pages icin.",
-  "version": 3,
+  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır). | v3: ham parolalar sokuldu (backend gitignored dev-credentials.json uretir); demo_users yalniz Pages icin. | v4: ispark config + ayrık zaman slotları.",
+  "version": 4,
   "users": [
     {
       "username": "admin",
@@ -674,5 +674,19 @@
       "password": "demo1234",
       "role": "admin"
     }
+  ],
+  "ispark": {
+    "capacity_divisor": 5,
+    "min_capacity": 10
+  },
+  "slots": [
+    "10:00",
+    "11:30",
+    "13:00",
+    "14:30",
+    "16:00",
+    "17:30",
+    "19:00",
+    "20:30"
   ]
 }

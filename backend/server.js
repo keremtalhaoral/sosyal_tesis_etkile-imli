@@ -14,6 +14,7 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const { signJwt, verifyJwt, signReservation } = require('./security');
+const { validateReservationInput } = require('./validate');
 const http = require('http');
 const crypto = require('crypto');
 
@@ -128,21 +129,18 @@ app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
 
 // --- Reservations API ---------------------------------------------------------
 app.post('/api/reservations', requireAuth, (req, res) => {
-  const { facilityId, reserveDate, reserveTime, guests } = req.body || {};
-  if (!Number.isInteger(facilityId) || !reserveDate || !reserveTime || !Number.isInteger(guests) || guests <= 0) {
-    return res.status(400).json({ error: 'facilityId, reserveDate, reserveTime ve guests (pozitif tamsayı) zorunludur.' });
-  }
+  // Merkezi doğrulama (slot, tarih, guests, highchair...) - DB CHECK'lerinden ÖNCE dostça hata.
+  const v = validateReservationInput(req.body);
+  if (!v.ok) return res.status(400).json({ error: v.error });
+  const { facilityId, reserveDate, reserveTime, guests, highchairCount } = v.value;
   try {
     const signature = signReservation(req.user.id, facilityId, reserveDate, reserveTime, guests);
     const result = db.createReservation({
       userId: req.user.id,
-      facilityId,
-      reserveDate,
-      reserveTime,
-      guests,
+      facilityId, reserveDate, reserveTime, guests, highchairCount,
       cryptoSignature: signature
     });
-    res.status(201).json({ id: result.id, newOccupancy: result.newOccupancy, signature });
+    res.status(201).json({ id: result.id, booked: result.booked, remaining: result.remaining, signature });
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'Aynı tesis, tarih ve saat için zaten rezervasyonunuz var.' });
@@ -153,6 +151,29 @@ app.post('/api/reservations', requireAuth, (req, res) => {
 
 app.get('/api/reservations', requireAuth, (req, res) => {
   res.json(db.getReservationsByUserId(req.user.id));
+});
+
+// --- İSPARK API (bağımsız otopark kaynağı, atomik yer kapma) -------------------
+app.get('/api/ispark/:facilityId', (req, res) => {
+  const status = db.getIsparkStatus(Number(req.params.facilityId));
+  if (!status) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  res.json(status);
+});
+
+app.post('/api/ispark/:facilityId/take', requireAuth, (req, res) => {
+  const facilityId = Number(req.params.facilityId);
+  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  if (!db.takeIsparkSpot(facilityId)) {
+    return res.status(409).json({ error: 'Otopark dolu, boş yer yok.' });
+  }
+  res.status(201).json(db.getIsparkStatus(facilityId));
+});
+
+app.post('/api/ispark/:facilityId/release', requireAuth, (req, res) => {
+  const facilityId = Number(req.params.facilityId);
+  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  db.releaseIsparkSpot(facilityId);
+  res.json(db.getIsparkStatus(facilityId));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms

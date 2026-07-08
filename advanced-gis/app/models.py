@@ -129,6 +129,19 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_orders_reservation ON orders(reservation_id)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id)")
 
+    # --- Migration v3 (Faz v2-03): İSPARK kaynagi + slot indeksi -------------------
+    # backend/database.js migration v3 ile birebir ayni. occupied<=capacity CHECK'i
+    # asiri dolulugu DB seviyesinde imkansiz kilar. Gerekce: docs/adr/ADR-003-eszamanlilik.md
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ispark_status (
+        facility_id INTEGER PRIMARY KEY REFERENCES facilities(id) ON DELETE CASCADE,
+        capacity INTEGER NOT NULL CHECK (capacity > 0),
+        occupied INTEGER NOT NULL DEFAULT 0 CHECK (occupied >= 0 AND occupied <= capacity),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(facility_id, reserve_date, reserve_time)")
+
     conn.commit()
     conn.close()
 
