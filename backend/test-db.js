@@ -39,18 +39,16 @@ assert('kNN: mesafeye göre sıralı', closest[0].distance <= closest[1].distanc
 // 4. Rezervasyon transaction'ı: kayıt + doluluk güncellemesi atomik mi?
 const user = db.getUserByUsername('user');
 const target = facilities.find(f => f.dolulukOrani < 90);
-const before = db.getFacilityById(target.id).dolulukOrani;
 const r1 = db.createReservation({
   userId: user.id, facilityId: target.id,
   reserveDate: '2026-08-01', reserveTime: '19:00', guests: 4,
   cryptoSignature: 'test-sig'
 });
 assert('tx: rezervasyon oluştu', Number.isInteger(r1.id));
-assert('tx: doluluk oranı güncellendi', db.getFacilityById(target.id).dolulukOrani >= before);
+assert('tx: per-slot booked doğru', r1.booked === 4 && r1.remaining === target.kapasite - 4);
 assert('tx: rezervasyon sorgulanabiliyor', db.getReservationsByUserId(user.id).length === 1);
 
-// 5. Çifte rezervasyon UNIQUE kısıtı ile engellenmeli, doluluk değişmemeli (rollback)
-const occBeforeDup = db.getFacilityById(target.id).dolulukOrani;
+// 5. Çifte rezervasyon UNIQUE kısıtı ile engellenmeli (aynı user+tesis+tarih+slot)
 let dupBlocked = false;
 try {
   db.createReservation({
@@ -62,7 +60,6 @@ try {
   dupBlocked = String(err.message).includes('UNIQUE');
 }
 assert('kısıt: çifte rezervasyon engellendi', dupBlocked);
-assert('tx: rollback doluluğu geri aldı', db.getFacilityById(target.id).dolulukOrani === occBeforeDup);
 
 // 6. Kapasite aşımı reddedilmeli
 let capacityBlocked = false;
@@ -96,6 +93,45 @@ db.createReservation({
 db.deleteFacility(created.id);
 const orphans = db.getReservationsByUserId(user.id).filter(r => r.facility_id === created.id);
 assert('FK: cascade silme yetim rezervasyon bırakmadı', orphans.length === 0);
+
+// ===========================================================================
+// Faz v2-03: Per-slot kapasite, İSPARK, giriş doğrulama
+// ===========================================================================
+const { validateReservationInput } = require('./validate');
+
+// 8b. Per-slot kapasite: küçük kapasiteli tesiste slotu doldur, sonraki reddedilmeli
+const smallFac = db.createFacility({ kod: 'SLOT-01', ad: 'Slot Testi', lat: 41, lng: 29, capacity: 5, occupancy: 0 });
+const su1 = db.createUser('slot_u1', 'p');
+const su2 = db.createUser('slot_u2', 'p');
+db.createReservation({ userId: su1.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '19:00', guests: 4, cryptoSignature: 'c' });
+let slotFull = false;
+try {
+  db.createReservation({ userId: su2.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '19:00', guests: 3, cryptoSignature: 'c' });
+} catch (err) { slotFull = err.statusCode === 409; }
+assert('per-slot: kapasiteyi aşan ikinci rezervasyon reddedildi (5 kap, 4+3)', slotFull);
+// Aynı slotta kalan yere sığan rezervasyon geçmeli (farklı kullanıcı)
+const fit = db.createReservation({ userId: su2.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '19:00', guests: 1, cryptoSignature: 'c' });
+assert('per-slot: kalan yere sığan rezervasyon kabul edildi', fit.booked === 5 && fit.remaining === 0);
+// Farklı slot bağımsız: aynı gün başka slot boş
+const otherSlot = db.createReservation({ userId: su1.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '13:00', guests: 4, cryptoSignature: 'c' });
+assert('per-slot: farklı slot bağımsız kapasiteye sahip', otherSlot.booked === 4);
+
+// 8c. İSPARK atomik take/release + CHECK (seed'li tesis 1 üzerinde)
+const ISPARK_FAC = 1;
+const ip = db.getIsparkStatus(ISPARK_FAC);
+assert('İSPARK: seed ile kayıt oluştu', ip && ip.capacity >= 1 && ip.occupied === 0);
+let taken = 0;
+for (let i = 0; i < ip.capacity + 3; i++) { if (db.takeIsparkSpot(ISPARK_FAC)) taken++; }
+assert('İSPARK: en fazla kapasite kadar yer kapıldı', taken === ip.capacity, `(taken=${taken}, cap=${ip.capacity})`);
+assert('İSPARK: dolu olunca take başarısız', db.takeIsparkSpot(ISPARK_FAC) === false);
+assert('İSPARK: release bir yer açar', db.releaseIsparkSpot(ISPARK_FAC) === true && db.getIsparkStatus(ISPARK_FAC).occupied === ip.capacity - 1);
+
+// 8d. Giriş doğrulama (validate.js)
+assert('validate: geçerli girdi kabul', validateReservationInput({ facilityId: 1, reserveDate: '2999-01-01', reserveTime: '19:00', guests: 2 }).ok === true);
+assert('validate: geçersiz slot reddi', validateReservationInput({ facilityId: 1, reserveDate: '2999-01-01', reserveTime: '12:00', guests: 2 }).ok === false);
+assert('validate: geçmiş tarih reddi', validateReservationInput({ facilityId: 1, reserveDate: '2000-01-01', reserveTime: '19:00', guests: 2 }).ok === false);
+assert('validate: negatif guests reddi', validateReservationInput({ facilityId: 1, reserveDate: '2999-01-01', reserveTime: '19:00', guests: -1 }).ok === false);
+assert('validate: bebe sandalyesi > guests reddi', validateReservationInput({ facilityId: 1, reserveDate: '2999-01-01', reserveTime: '19:00', guests: 2, highchairCount: 3 }).ok === false);
 
 // ===========================================================================
 // Migration v2 (Faz v2-01: Veri Modeli) testleri

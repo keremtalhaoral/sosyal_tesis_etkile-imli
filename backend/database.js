@@ -31,6 +31,13 @@ const SEED_PATH = path.join(DATA_DIR, 'seed.json');
 // Yerel dev parolaları DB dosyasının yanında yaşar (gitignored). Testte geçici dizine düşer.
 const CREDENTIALS_PATH = path.join(path.dirname(DB_PATH), 'dev-credentials.json');
 
+// Ayrık zaman slotları - kanonik kaynak data/seed.json (slots). Rezervasyon bu kümeden olmalı.
+let SLOTS = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30', '19:00', '20:30'];
+try {
+  const s = JSON.parse(fs.readFileSync(SEED_PATH, 'utf8'));
+  if (Array.isArray(s.slots) && s.slots.length) SLOTS = s.slots;
+} catch { /* seed yoksa varsayılan slotlar */ }
+
 // -------------------------------------------------------------------------
 // Parola hash'i - PHC (Password Hashing Competition) string formatı:
 //   pbkdf2_sha256$<iterasyon>$<salt_b64>$<hash_b64>
@@ -195,6 +202,27 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
       `);
     }
+  },
+  {
+    // Migration v3 (Faz v2-03: Veri Bütünlüğü & Eşzamanlılık).
+    // Gerekçeler: docs/adr/ADR-003-eszamanlilik.md
+    version: 3,
+    up: (db) => {
+      // İSPARK bağımsız bookable kaynak. occupied <= capacity CHECK'i aşırı doluluğu
+      // DB seviyesinde imkansız kılar (uygulama hatası olsa bile son savunma hattı).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS ispark_status (
+          facility_id INTEGER PRIMARY KEY REFERENCES facilities(id) ON DELETE CASCADE,
+          capacity INTEGER NOT NULL CHECK (capacity > 0),
+          occupied INTEGER NOT NULL DEFAULT 0 CHECK (occupied >= 0 AND occupied <= capacity),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        -- Slot kapasite sorgusu (SUM(guests) per facility+date+time) için bileşik indeks.
+        CREATE INDEX IF NOT EXISTS idx_reservations_slot
+          ON reservations(facility_id, reserve_date, reserve_time);
+      `);
+    }
   }
 ];
 
@@ -288,6 +316,16 @@ const seedDatabase = (conn) => {
         }
       }
     }
+
+    // İSPARK kapasitesi: tesis kapasitesine ORANTILI (gerçekçi), seed.ispark ile ayarlanır.
+    const isparkCfg = seed.ispark || { capacity_divisor: 5, min_capacity: 10 };
+    const insertIspark = conn.prepare(
+      'INSERT OR IGNORE INTO ispark_status (facility_id, capacity, occupied) VALUES (?, ?, 0)'
+    );
+    for (const f of conn.prepare('SELECT id, capacity FROM facilities').all()) {
+      const parkCap = Math.max(isparkCfg.min_capacity, Math.round(f.capacity / isparkCfg.capacity_divisor));
+      insertIspark.run(f.id, parkCap);
+    }
     conn.exec('COMMIT');
   } catch (err) {
     conn.exec('ROLLBACK');
@@ -318,4 +356,4 @@ const transaction = (fn) => {
   }
 };
 
-module.exports = { getDb, transaction, hashPassword, verifyPassword, DB_PATH };
+module.exports = { getDb, transaction, hashPassword, verifyPassword, SLOTS, DB_PATH };

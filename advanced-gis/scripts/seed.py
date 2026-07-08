@@ -101,6 +101,16 @@ def run_seed():
                     VALUES (?, ?, ?, ?)
                 """, (fid, m["name"], m.get("category", "Genel"), m["price_minor"]))
 
+    # İSPARK kapasitesi: tesis kapasitesine orantili (Node database.js ile ayni mantik).
+    ispark_cfg = data.get("ispark", {"capacity_divisor": 5, "min_capacity": 10})
+    print("Seeding İSPARK capacities...")
+    for row in cursor.execute("SELECT id, capacity FROM facilities").fetchall():
+        park_cap = max(ispark_cfg["min_capacity"], round(row["capacity"] / ispark_cfg["capacity_divisor"]))
+        cursor.execute(
+            "INSERT OR IGNORE INTO ispark_status (facility_id, capacity, occupied) VALUES (?, ?, 0)",
+            (row["id"], park_cap),
+        )
+
     conn.commit()
     conn.close()
     print("Central database seeding completed successfully.")
