@@ -87,6 +87,64 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_reservations_facility_date ON reservations(facility_id, reserve_date);
       `);
     }
+  },
+  {
+    // Migration v2 (Faz v2-01: Veri Modeli) - sipariş/menü altyapısı + rezervasyon zenginleştirme.
+    // Tasarım kararları ve gerekçeleri: docs/adr/ADR-001-veri-modeli.md
+    version: 2,
+    up: (db) => {
+      // --- reservations zenginleştirme -------------------------------------
+      // Not: SQLite ADD COLUMN yalnızca SABİT DEFAULT + CHECK destekler (UNIQUE/PK ekleyemez).
+      // Para her yerde TAM SAYI KURUŞ olarak tutulur (float yuvarlama hatasından kaçınmak için).
+      db.exec(`
+        ALTER TABLE reservations ADD COLUMN status TEXT NOT NULL DEFAULT 'confirmed'
+          CHECK (status IN ('pending', 'confirmed', 'cancelled'));
+        ALTER TABLE reservations ADD COLUMN amount_minor INTEGER NOT NULL DEFAULT 0
+          CHECK (amount_minor >= 0);
+        ALTER TABLE reservations ADD COLUMN payment_type TEXT
+          CHECK (payment_type IN ('cash', 'card', 'online'));
+        ALTER TABLE reservations ADD COLUMN highchair_count INTEGER NOT NULL DEFAULT 0
+          CHECK (highchair_count >= 0);
+      `);
+
+      // --- menu_items: tesise ait menü kalemleri ---------------------------
+      // price_minor = kuruş. Menü zamanla değişebilir; siparişteki fiyat snapshot'ı
+      // order_items.unit_price_minor'da saklanır (bkz. ADR-001, derived vs captured).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS menu_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'Genel',
+          price_minor INTEGER NOT NULL CHECK (price_minor >= 0),
+          is_available INTEGER NOT NULL DEFAULT 1 CHECK (is_available IN (0, 1)),
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (facility_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          reservation_id INTEGER NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
+          status TEXT NOT NULL DEFAULT 'open'
+            CHECK (status IN ('open', 'submitted', 'served', 'paid', 'cancelled')),
+          total_minor INTEGER NOT NULL DEFAULT 0 CHECK (total_minor >= 0),
+          crypto_signature TEXT NOT NULL DEFAULT '',
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS order_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+          menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
+          quantity INTEGER NOT NULL CHECK (quantity > 0),
+          unit_price_minor INTEGER NOT NULL CHECK (unit_price_minor >= 0)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_menu_items_facility ON menu_items(facility_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_reservation ON orders(reservation_id);
+        CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
+      `);
+    }
   }
 ];
 
@@ -162,6 +220,19 @@ const seedDatabase = (conn) => {
         f.iett_info || 'Mevcut Değil', f.vapur_info || 'Mevcut Değil',
         f.transit_transfer || 'Mevcut Değil', f.route_description || 'Mevcut Değil'
       );
+    }
+
+    // Menü: tek şablon her tesise uygulanır (DRY). UNIQUE(facility_id, name) + IGNORE = idempotent.
+    if (Array.isArray(seed.menu_template) && seed.menu_template.length) {
+      const facilityIds = conn.prepare('SELECT id FROM facilities').all().map(r => r.id);
+      const insertMenuItem = conn.prepare(
+        'INSERT OR IGNORE INTO menu_items (facility_id, name, category, price_minor) VALUES (?, ?, ?, ?)'
+      );
+      for (const fid of facilityIds) {
+        for (const m of seed.menu_template) {
+          insertMenuItem.run(fid, m.name, m.category || 'Genel', m.price_minor);
+        }
+      }
     }
     conn.exec('COMMIT');
   } catch (err) {

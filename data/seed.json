@@ -1,6 +1,6 @@
 {
-  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin.",
-  "version": 1,
+  "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır).",
+  "version": 2,
   "users": [
     {
       "username": "admin",
@@ -591,6 +591,78 @@
       "vapur_info": "Mevcut Değil",
       "transit_transfer": "M1B Metro (Menderes) -> Yürüyüş veya Minibüs",
       "route_description": "O-3 yanyol ve Akyıldız Sokak üzerinden"
+    }
+  ],
+  "menu_template": [
+    {
+      "name": "Serpme Kahvaltı",
+      "category": "Kahvaltı",
+      "price_minor": 25000
+    },
+    {
+      "name": "Menemen",
+      "category": "Kahvaltı",
+      "price_minor": 12000
+    },
+    {
+      "name": "Çay",
+      "category": "Sıcak İçecek",
+      "price_minor": 1500
+    },
+    {
+      "name": "Türk Kahvesi",
+      "category": "Sıcak İçecek",
+      "price_minor": 4000
+    },
+    {
+      "name": "Filtre Kahve",
+      "category": "Sıcak İçecek",
+      "price_minor": 5500
+    },
+    {
+      "name": "Limonata",
+      "category": "Soğuk İçecek",
+      "price_minor": 6000
+    },
+    {
+      "name": "Ayran",
+      "category": "Soğuk İçecek",
+      "price_minor": 2500
+    },
+    {
+      "name": "Mercimek Çorbası",
+      "category": "Ana Yemek",
+      "price_minor": 8000
+    },
+    {
+      "name": "Köfte Ekmek",
+      "category": "Ana Yemek",
+      "price_minor": 15000
+    },
+    {
+      "name": "Izgara Tavuk",
+      "category": "Ana Yemek",
+      "price_minor": 18000
+    },
+    {
+      "name": "Sütlaç",
+      "category": "Tatlı",
+      "price_minor": 9000
+    },
+    {
+      "name": "Baklava",
+      "category": "Tatlı",
+      "price_minor": 12000
+    },
+    {
+      "name": "Tost",
+      "category": "Atıştırmalık",
+      "price_minor": 7000
+    },
+    {
+      "name": "Simit",
+      "category": "Atıştırmalık",
+      "price_minor": 1500
     }
   ]
 }
