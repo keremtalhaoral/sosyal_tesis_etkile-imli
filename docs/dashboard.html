@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müfettiş · Analiz Paneli</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    // FOUC önleme: temayı erken uygula (docs/app.js ile aynı anahtar)
+    (function () {
+      var t = localStorage.getItem('color-scheme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <style>
+    /* ---- dataviz referans paleti: rollerle tanımla, tema tek yerde değişsin ---- */
+    :root {
+      --surface-1: #fcfcfb; --page: #f9f9f7;
+      --text-primary: #0b0b0b; --text-secondary: #52514e; --muted: #898781;
+      --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+      --s1:#2a78d6; --s2:#1baf7a; --s3:#eda100; --s4:#008300; --s5:#4a3aa7; --s6:#e34948; --s7:#e87ba4; --s8:#eb6834;
+      /* sequential blue ramp (heatmap) */
+      --seq-0:#eef4fd; --seq-1:#cde2fb; --seq-2:#9ec5f4; --seq-3:#6da7ec; --seq-4:#3987e5; --seq-5:#256abf; --seq-6:#184f95; --seq-7:#0d366b;
+    }
+    :root[data-theme="dark"] {
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border: rgba(255,255,255,0.10);
+      --s1:#3987e5; --s2:#199e70; --s3:#c98500; --s4:#008300; --s5:#9085e9; --s6:#e66767; --s7:#d55181; --s8:#d95926;
+      --seq-0:#10233c; --seq-1:#12385f; --seq-2:#184f95; --seq-3:#256abf; --seq-4:#3987e5; --seq-5:#5598e7; --seq-6:#86b6ef; --seq-7:#cde2fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--page); color: var(--text-primary);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface-1);
+      position: sticky; top: 0; z-index: 10;
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 700; }
+    header .sub { color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+    .spacer { flex: 1; }
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .seg button {
+      border: 0; background: transparent; color: var(--text-secondary);
+      padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .seg button.active { background: var(--s1); color: #fff; }
+    .btn { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
+           padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .mode-banner { padding: 8px 24px; font-size: 12px; color: var(--text-secondary); background: var(--surface-1); border-bottom: 1px solid var(--border); }
+    main { padding: 20px 24px 48px; max-width: 1360px; margin: 0 auto; }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .kpi { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; }
+    .kpi .label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+    .kpi .value { font-size: 25px; font-weight: 750; margin-top: 6px; line-height: 1.15; letter-spacing: -0.02em; white-space: nowrap; }
+    .kpi .unit { font-size: 15px; color: var(--text-secondary); font-weight: 600; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; min-width: 0; }
+    .card.wide { grid-column: 1 / -1; }
+    .card h2 { font-size: 14px; margin: 0 0 2px; font-weight: 700; }
+    .card .hint { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+    .chart-box { position: relative; height: 300px; }
+    @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .chart-box { height: 260px; } }
+
+    /* Heatmap (sequential ramp, CSS grid — Chart.js değil) */
+    .heat { overflow-x: auto; }
+    .heat table { border-collapse: separate; border-spacing: 3px; font-size: 12px; }
+    .heat th { color: var(--muted); font-weight: 600; font-size: 11px; padding: 2px 4px; text-align: center; }
+    .heat td.rowlab { color: var(--text-secondary); font-weight: 600; text-align: right; padding-right: 6px; }
+    .heat .cell { width: 46px; height: 30px; border-radius: 6px; text-align: center; line-height: 30px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .legend-seq { display: flex; align-items: center; gap: 6px; margin-top: 10px; color: var(--muted); font-size: 11px; }
+    .legend-seq .sw { width: 22px; height: 12px; border-radius: 3px; }
+
+    .loading { padding: 60px; text-align: center; color: var(--muted); }
+    .err { padding: 20px; color: var(--s6); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>📊 Analiz Paneli</h1>
+      <div class="sub">Müfettiş · Sosyal Tesis Karar Destek</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="seg" id="granularity" role="group" aria-label="Zaman aralığı">
+      <button data-g="day">Günlük</button>
+      <button data-g="week">Haftalık</button>
+      <button data-g="month" class="active">Aylık</button>
+      <button data-g="year">Yıllık</button>
+    </div>
+    <button class="btn" id="theme-toggle" title="Tema değiştir">🌓 Tema</button>
+    <a class="btn" href="index.html">🗺️ Haritaya dön</a>
+  </header>
+  <div class="mode-banner" id="mode-banner">Veri kaynağı belirleniyor…</div>
+
+  <main>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="card wide">
+        <h2>Ciro Zaman Serisi</h2>
+        <p class="hint" id="revenue-hint">Onaylı rezervasyonların cirosu (₺)</p>
+        <div class="chart-box"><canvas id="c-revenue"></canvas></div>
+      </div>
+      <div class="card wide">
+        <h2>Doluluk Isı Haritası</h2>
+        <p class="hint">Haftanın günü × zaman slotu — toplam misafir (koyu = yoğun)</p>
+        <div class="heat" id="heatmap"></div>
+        <div class="legend-seq" id="heat-legend"></div>
+      </div>
+      <div class="card">
+        <h2>En Yoğun 10 Tesis</h2>
+        <p class="hint">Ciroya göre (₺)</p>
+        <div class="chart-box"><canvas id="c-facilities"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Ödeme Tipi Dağılımı</h2>
+        <p class="hint">Onaylı rezervasyon sayısı</p>
+        <div class="chart-box"><canvas id="c-payments"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>Bebe Sandalyesi İhtiyacı</h2>
+        <p class="hint">Dönem başına toplam bebe sandalyesi</p>
+        <div class="chart-box"><canvas id="c-highchair"></canvas></div>
+      </div>
+      <div class="card">
+        <h2>İptal Oranı</h2>
+        <p class="hint">Dönem başına iptal / toplam (%)</p>
+        <div class="chart-box"><canvas id="c-cancel"></canvas></div>
+      </div>
+      <div class="card wide">
+        <h2>Menü Kategorisi Satışları</h2>
+        <p class="hint">Kategori başına ciro (₺)</p>
+        <div class="chart-box"><canvas id="c-category"></canvas></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="vendor/chartjs/chart.umd.min.js"></script>
+  <script src="dashboard.js?v=1"></script>
+</body>
+</html>

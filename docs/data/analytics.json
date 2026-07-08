@@ -1,0 +1,7872 @@
+{
+  "generated_at": "2026-07-08T20:06:40.499Z",
+  "kpi": {
+    "revenue_minor": 5376984000,
+    "reservations": 196960,
+    "guests": 689500,
+    "avg_group_size": 3.5,
+    "highchairs": 42076,
+    "cancellation_rate": 0.08
+  },
+  "occupancy_heatmap": [
+    {
+      "dow": 0,
+      "slot": "10:00",
+      "guests": 8203,
+      "reservations": 2324
+    },
+    {
+      "dow": 0,
+      "slot": "11:30",
+      "guests": 13900,
+      "reservations": 4028
+    },
+    {
+      "dow": 0,
+      "slot": "13:00",
+      "guests": 21716,
+      "reservations": 6192
+    },
+    {
+      "dow": 0,
+      "slot": "14:30",
+      "guests": 13476,
+      "reservations": 3846
+    },
+    {
+      "dow": 0,
+      "slot": "16:00",
+      "guests": 8060,
+      "reservations": 2298
+    },
+    {
+      "dow": 0,
+      "slot": "17:30",
+      "guests": 13931,
+      "reservations": 3982
+    },
+    {
+      "dow": 0,
+      "slot": "19:00",
+      "guests": 21679,
+      "reservations": 6201
+    },
+    {
+      "dow": 0,
+      "slot": "20:30",
+      "guests": 21745,
+      "reservations": 6140
+    },
+    {
+      "dow": 1,
+      "slot": "10:00",
+      "guests": 6327,
+      "reservations": 1843
+    },
+    {
+      "dow": 1,
+      "slot": "11:30",
+      "guests": 10213,
+      "reservations": 2904
+    },
+    {
+      "dow": 1,
+      "slot": "13:00",
+      "guests": 14967,
+      "reservations": 4278
+    },
+    {
+      "dow": 1,
+      "slot": "14:30",
+      "guests": 10183,
+      "reservations": 2829
+    },
+    {
+      "dow": 1,
+      "slot": "16:00",
+      "guests": 6409,
+      "reservations": 1856
+    },
+    {
+      "dow": 1,
+      "slot": "17:30",
+      "guests": 10135,
+      "reservations": 2891
+    },
+    {
+      "dow": 1,
+      "slot": "19:00",
+      "guests": 15058,
+      "reservations": 4280
+    },
+    {
+      "dow": 1,
+      "slot": "20:30",
+      "guests": 14784,
+      "reservations": 4227
+    },
+    {
+      "dow": 2,
+      "slot": "10:00",
+      "guests": 6643,
+      "reservations": 1898
+    },
+    {
+      "dow": 2,
+      "slot": "11:30",
+      "guests": 10175,
+      "reservations": 2892
+    },
+    {
+      "dow": 2,
+      "slot": "13:00",
+      "guests": 15125,
+      "reservations": 4324
+    },
+    {
+      "dow": 2,
+      "slot": "14:30",
+      "guests": 10241,
+      "reservations": 2870
+    },
+    {
+      "dow": 2,
+      "slot": "16:00",
+      "guests": 6427,
+      "reservations": 1852
+    },
+    {
+      "dow": 2,
+      "slot": "17:30",
+      "guests": 10316,
+      "reservations": 2972
+    },
+    {
+      "dow": 2,
+      "slot": "19:00",
+      "guests": 15132,
+      "reservations": 4335
+    },
+    {
+      "dow": 2,
+      "slot": "20:30",
+      "guests": 14784,
+      "reservations": 4199
+    },
+    {
+      "dow": 3,
+      "slot": "10:00",
+      "guests": 6434,
+      "reservations": 1854
+    },
+    {
+      "dow": 3,
+      "slot": "11:30",
+      "guests": 10259,
+      "reservations": 2933
+    },
+    {
+      "dow": 3,
+      "slot": "13:00",
+      "guests": 15363,
+      "reservations": 4355
+    },
+    {
+      "dow": 3,
+      "slot": "14:30",
+      "guests": 10241,
+      "reservations": 2915
+    },
+    {
+      "dow": 3,
+      "slot": "16:00",
+      "guests": 6590,
+      "reservations": 1852
+    },
+    {
+      "dow": 3,
+      "slot": "17:30",
+      "guests": 10194,
+      "reservations": 2976
+    },
+    {
+      "dow": 3,
+      "slot": "19:00",
+      "guests": 15342,
+      "reservations": 4350
+    },
+    {
+      "dow": 3,
+      "slot": "20:30",
+      "guests": 15573,
+      "reservations": 4488
+    },
+    {
+      "dow": 4,
+      "slot": "10:00",
+      "guests": 6641,
+      "reservations": 1869
+    },
+    {
+      "dow": 4,
+      "slot": "11:30",
+      "guests": 10043,
+      "reservations": 2899
+    },
+    {
+      "dow": 4,
+      "slot": "13:00",
+      "guests": 15048,
+      "reservations": 4279
+    },
+    {
+      "dow": 4,
+      "slot": "14:30",
+      "guests": 10215,
+      "reservations": 2944
+    },
+    {
+      "dow": 4,
+      "slot": "16:00",
+      "guests": 6446,
+      "reservations": 1850
+    },
+    {
+      "dow": 4,
+      "slot": "17:30",
+      "guests": 10046,
+      "reservations": 2874
+    },
+    {
+      "dow": 4,
+      "slot": "19:00",
+      "guests": 15529,
+      "reservations": 4427
+    },
+    {
+      "dow": 4,
+      "slot": "20:30",
+      "guests": 15200,
+      "reservations": 4365
+    },
+    {
+      "dow": 5,
+      "slot": "10:00",
+      "guests": 6601,
+      "reservations": 1873
+    },
+    {
+      "dow": 5,
+      "slot": "11:30",
+      "guests": 10165,
+      "reservations": 2892
+    },
+    {
+      "dow": 5,
+      "slot": "13:00",
+      "guests": 14983,
+      "reservations": 4278
+    },
+    {
+      "dow": 5,
+      "slot": "14:30",
+      "guests": 10266,
+      "reservations": 2930
+    },
+    {
+      "dow": 5,
+      "slot": "16:00",
+      "guests": 6409,
+      "reservations": 1844
+    },
+    {
+      "dow": 5,
+      "slot": "17:30",
+      "guests": 10220,
+      "reservations": 2919
+    },
+    {
+      "dow": 5,
+      "slot": "19:00",
+      "guests": 15156,
+      "reservations": 4324
+    },
+    {
+      "dow": 5,
+      "slot": "20:30",
+      "guests": 14629,
+      "reservations": 4230
+    },
+    {
+      "dow": 6,
+      "slot": "10:00",
+      "guests": 8212,
+      "reservations": 2336
+    },
+    {
+      "dow": 6,
+      "slot": "11:30",
+      "guests": 13972,
+      "reservations": 4040
+    },
+    {
+      "dow": 6,
+      "slot": "13:00",
+      "guests": 21031,
+      "reservations": 5985
+    },
+    {
+      "dow": 6,
+      "slot": "14:30",
+      "guests": 13911,
+      "reservations": 4003
+    },
+    {
+      "dow": 6,
+      "slot": "16:00",
+      "guests": 8204,
+      "reservations": 2338
+    },
+    {
+      "dow": 6,
+      "slot": "17:30",
+      "guests": 13746,
+      "reservations": 3935
+    },
+    {
+      "dow": 6,
+      "slot": "19:00",
+      "guests": 21393,
+      "reservations": 6096
+    },
+    {
+      "dow": 6,
+      "slot": "20:30",
+      "guests": 21809,
+      "reservations": 6246
+    }
+  ],
+  "top_facilities": [
+    {
+      "id": 16,
+      "name": "Kasımpaşa Sosyal Tesisi",
+      "revenue_minor": 186724000,
+      "reservations": 6648
+    },
+    {
+      "id": 10,
+      "name": "Fethipaşa Sosyal Tesisi",
+      "revenue_minor": 183994000,
+      "reservations": 6660
+    },
+    {
+      "id": 25,
+      "name": "Paşalimanı Sosyal Tesisi",
+      "revenue_minor": 183556000,
+      "reservations": 6715
+    },
+    {
+      "id": 14,
+      "name": "Haliç Sosyal Tesisi",
+      "revenue_minor": 183303000,
+      "reservations": 6540
+    },
+    {
+      "id": 29,
+      "name": "Denizköşk Sosyal Tesisi",
+      "revenue_minor": 181942500,
+      "reservations": 6680
+    },
+    {
+      "id": 12,
+      "name": "Gazi Sosyal Tesisi",
+      "revenue_minor": 181883000,
+      "reservations": 6659
+    },
+    {
+      "id": 28,
+      "name": "1453 Çırpıcı Sosyal Tesisi",
+      "revenue_minor": 181851500,
+      "reservations": 6539
+    },
+    {
+      "id": 30,
+      "name": "Güngören Sosyal Tesisi",
+      "revenue_minor": 181676500,
+      "reservations": 6680
+    },
+    {
+      "id": 23,
+      "name": "Pembe Köşk Sosyal Tesisi",
+      "revenue_minor": 180894500,
+      "reservations": 6589
+    },
+    {
+      "id": 2,
+      "name": "Arnavutköy Sosyal Tesisi",
+      "revenue_minor": 180746000,
+      "reservations": 6510
+    }
+  ],
+  "payments": [
+    {
+      "payment_type": "card",
+      "reservations": 65777,
+      "revenue_minor": 1789721500
+    },
+    {
+      "payment_type": "cash",
+      "reservations": 65717,
+      "revenue_minor": 1799109000
+    },
+    {
+      "payment_type": "online",
+      "reservations": 65466,
+      "revenue_minor": 1788153500
+    }
+  ],
+  "category_sales": [
+    {
+      "category": "Ana Yemek",
+      "quantity": 127518,
+      "revenue_minor": 1742011000
+    },
+    {
+      "category": "Kahvaltı",
+      "quantity": 85219,
+      "revenue_minor": 1576792000
+    },
+    {
+      "category": "Tatlı",
+      "quantity": 83718,
+      "revenue_minor": 880173000
+    },
+    {
+      "category": "Sıcak İçecek",
+      "quantity": 125820,
+      "revenue_minor": 461424000
+    },
+    {
+      "category": "Atıştırmalık",
+      "quantity": 84361,
+      "revenue_minor": 358982500
+    },
+    {
+      "category": "Soğuk İçecek",
+      "quantity": 83906,
+      "revenue_minor": 357601500
+    }
+  ],
+  "byGranularity": {
+    "day": {
+      "revenue": [
+        {
+          "bucket": "2025-07-09",
+          "revenue_minor": 11993500,
+          "reservations": 477,
+          "guests": 1612
+        },
+        {
+          "bucket": "2025-07-10",
+          "revenue_minor": 13852500,
+          "reservations": 533,
+          "guests": 1769
+        },
+        {
+          "bucket": "2025-07-11",
+          "revenue_minor": 13520500,
+          "reservations": 497,
+          "guests": 1640
+        },
+        {
+          "bucket": "2025-07-12",
+          "revenue_minor": 20953500,
+          "reservations": 684,
+          "guests": 2380
+        },
+        {
+          "bucket": "2025-07-13",
+          "revenue_minor": 17988000,
+          "reservations": 659,
+          "guests": 2366
+        },
+        {
+          "bucket": "2025-07-14",
+          "revenue_minor": 11627000,
+          "reservations": 477,
+          "guests": 1697
+        },
+        {
+          "bucket": "2025-07-15",
+          "revenue_minor": 13735000,
+          "reservations": 490,
+          "guests": 1677
+        },
+        {
+          "bucket": "2025-07-16",
+          "revenue_minor": 14085000,
+          "reservations": 470,
+          "guests": 1623
+        },
+        {
+          "bucket": "2025-07-17",
+          "revenue_minor": 13869500,
+          "reservations": 498,
+          "guests": 1693
+        },
+        {
+          "bucket": "2025-07-18",
+          "revenue_minor": 12667000,
+          "reservations": 507,
+          "guests": 1783
+        },
+        {
+          "bucket": "2025-07-19",
+          "revenue_minor": 17988000,
+          "reservations": 674,
+          "guests": 2404
+        },
+        {
+          "bucket": "2025-07-20",
+          "revenue_minor": 17874500,
+          "reservations": 666,
+          "guests": 2310
+        },
+        {
+          "bucket": "2025-07-21",
+          "revenue_minor": 14545000,
+          "reservations": 500,
+          "guests": 1721
+        },
+        {
+          "bucket": "2025-07-22",
+          "revenue_minor": 13109500,
+          "reservations": 447,
+          "guests": 1596
+        },
+        {
+          "bucket": "2025-07-23",
+          "revenue_minor": 12647000,
+          "reservations": 476,
+          "guests": 1638
+        },
+        {
+          "bucket": "2025-07-24",
+          "revenue_minor": 13368500,
+          "reservations": 522,
+          "guests": 1781
+        },
+        {
+          "bucket": "2025-07-25",
+          "revenue_minor": 12963000,
+          "reservations": 488,
+          "guests": 1700
+        },
+        {
+          "bucket": "2025-07-26",
+          "revenue_minor": 17006500,
+          "reservations": 702,
+          "guests": 2418
+        },
+        {
+          "bucket": "2025-07-27",
+          "revenue_minor": 17101500,
+          "reservations": 648,
+          "guests": 2274
+        },
+        {
+          "bucket": "2025-07-28",
+          "revenue_minor": 13023000,
+          "reservations": 507,
+          "guests": 1790
+        },
+        {
+          "bucket": "2025-07-29",
+          "revenue_minor": 13043000,
+          "reservations": 490,
+          "guests": 1726
+        },
+        {
+          "bucket": "2025-07-30",
+          "revenue_minor": 12317000,
+          "reservations": 466,
+          "guests": 1604
+        },
+        {
+          "bucket": "2025-07-31",
+          "revenue_minor": 13412000,
+          "reservations": 486,
+          "guests": 1767
+        },
+        {
+          "bucket": "2025-08-01",
+          "revenue_minor": 12807000,
+          "reservations": 496,
+          "guests": 1701
+        },
+        {
+          "bucket": "2025-08-02",
+          "revenue_minor": 16144500,
+          "reservations": 647,
+          "guests": 2305
+        },
+        {
+          "bucket": "2025-08-03",
+          "revenue_minor": 18434000,
+          "reservations": 681,
+          "guests": 2346
+        },
+        {
+          "bucket": "2025-08-04",
+          "revenue_minor": 12682500,
+          "reservations": 473,
+          "guests": 1692
+        },
+        {
+          "bucket": "2025-08-05",
+          "revenue_minor": 13939500,
+          "reservations": 471,
+          "guests": 1628
+        },
+        {
+          "bucket": "2025-08-06",
+          "revenue_minor": 13839000,
+          "reservations": 501,
+          "guests": 1780
+        },
+        {
+          "bucket": "2025-08-07",
+          "revenue_minor": 11669500,
+          "reservations": 437,
+          "guests": 1560
+        },
+        {
+          "bucket": "2025-08-08",
+          "revenue_minor": 14711000,
+          "reservations": 500,
+          "guests": 1721
+        },
+        {
+          "bucket": "2025-08-09",
+          "revenue_minor": 17880500,
+          "reservations": 638,
+          "guests": 2142
+        },
+        {
+          "bucket": "2025-08-10",
+          "revenue_minor": 16973500,
+          "reservations": 640,
+          "guests": 2312
+        },
+        {
+          "bucket": "2025-08-11",
+          "revenue_minor": 11644000,
+          "reservations": 452,
+          "guests": 1595
+        },
+        {
+          "bucket": "2025-08-12",
+          "revenue_minor": 13523000,
+          "reservations": 496,
+          "guests": 1707
+        },
+        {
+          "bucket": "2025-08-13",
+          "revenue_minor": 13554000,
+          "reservations": 500,
+          "guests": 1741
+        },
+        {
+          "bucket": "2025-08-14",
+          "revenue_minor": 13696000,
+          "reservations": 462,
+          "guests": 1630
+        },
+        {
+          "bucket": "2025-08-15",
+          "revenue_minor": 14219000,
+          "reservations": 489,
+          "guests": 1686
+        },
+        {
+          "bucket": "2025-08-16",
+          "revenue_minor": 16922000,
+          "reservations": 660,
+          "guests": 2357
+        },
+        {
+          "bucket": "2025-08-17",
+          "revenue_minor": 19144500,
+          "reservations": 668,
+          "guests": 2399
+        },
+        {
+          "bucket": "2025-08-18",
+          "revenue_minor": 12767500,
+          "reservations": 460,
+          "guests": 1570
+        },
+        {
+          "bucket": "2025-08-19",
+          "revenue_minor": 15438500,
+          "reservations": 514,
+          "guests": 1783
+        },
+        {
+          "bucket": "2025-08-20",
+          "revenue_minor": 12734000,
+          "reservations": 488,
+          "guests": 1691
+        },
+        {
+          "bucket": "2025-08-21",
+          "revenue_minor": 13767500,
+          "reservations": 488,
+          "guests": 1741
+        },
+        {
+          "bucket": "2025-08-22",
+          "revenue_minor": 12157500,
+          "reservations": 479,
+          "guests": 1716
+        },
+        {
+          "bucket": "2025-08-23",
+          "revenue_minor": 17519000,
+          "reservations": 692,
+          "guests": 2289
+        },
+        {
+          "bucket": "2025-08-24",
+          "revenue_minor": 19192500,
+          "reservations": 676,
+          "guests": 2441
+        },
+        {
+          "bucket": "2025-08-25",
+          "revenue_minor": 11017500,
+          "reservations": 484,
+          "guests": 1727
+        },
+        {
+          "bucket": "2025-08-26",
+          "revenue_minor": 13537000,
+          "reservations": 502,
+          "guests": 1719
+        },
+        {
+          "bucket": "2025-08-27",
+          "revenue_minor": 13667500,
+          "reservations": 498,
+          "guests": 1757
+        },
+        {
+          "bucket": "2025-08-28",
+          "revenue_minor": 13481000,
+          "reservations": 504,
+          "guests": 1802
+        },
+        {
+          "bucket": "2025-08-29",
+          "revenue_minor": 12434500,
+          "reservations": 486,
+          "guests": 1713
+        },
+        {
+          "bucket": "2025-08-30",
+          "revenue_minor": 16986000,
+          "reservations": 627,
+          "guests": 2169
+        },
+        {
+          "bucket": "2025-08-31",
+          "revenue_minor": 17594500,
+          "reservations": 656,
+          "guests": 2335
+        },
+        {
+          "bucket": "2025-09-01",
+          "revenue_minor": 14141500,
+          "reservations": 510,
+          "guests": 1750
+        },
+        {
+          "bucket": "2025-09-02",
+          "revenue_minor": 12829500,
+          "reservations": 481,
+          "guests": 1707
+        },
+        {
+          "bucket": "2025-09-03",
+          "revenue_minor": 12436500,
+          "reservations": 471,
+          "guests": 1662
+        },
+        {
+          "bucket": "2025-09-04",
+          "revenue_minor": 15196000,
+          "reservations": 514,
+          "guests": 1753
+        },
+        {
+          "bucket": "2025-09-05",
+          "revenue_minor": 12986500,
+          "reservations": 471,
+          "guests": 1634
+        },
+        {
+          "bucket": "2025-09-06",
+          "revenue_minor": 19250500,
+          "reservations": 686,
+          "guests": 2413
+        },
+        {
+          "bucket": "2025-09-07",
+          "revenue_minor": 17687000,
+          "reservations": 695,
+          "guests": 2435
+        },
+        {
+          "bucket": "2025-09-08",
+          "revenue_minor": 13662500,
+          "reservations": 472,
+          "guests": 1668
+        },
+        {
+          "bucket": "2025-09-09",
+          "revenue_minor": 14169000,
+          "reservations": 515,
+          "guests": 1821
+        },
+        {
+          "bucket": "2025-09-10",
+          "revenue_minor": 12693000,
+          "reservations": 466,
+          "guests": 1621
+        },
+        {
+          "bucket": "2025-09-11",
+          "revenue_minor": 13709500,
+          "reservations": 496,
+          "guests": 1737
+        },
+        {
+          "bucket": "2025-09-12",
+          "revenue_minor": 12815000,
+          "reservations": 503,
+          "guests": 1740
+        },
+        {
+          "bucket": "2025-09-13",
+          "revenue_minor": 19291500,
+          "reservations": 728,
+          "guests": 2496
+        },
+        {
+          "bucket": "2025-09-14",
+          "revenue_minor": 16717500,
+          "reservations": 668,
+          "guests": 2360
+        },
+        {
+          "bucket": "2025-09-15",
+          "revenue_minor": 12926000,
+          "reservations": 475,
+          "guests": 1661
+        },
+        {
+          "bucket": "2025-09-16",
+          "revenue_minor": 14244500,
+          "reservations": 486,
+          "guests": 1664
+        },
+        {
+          "bucket": "2025-09-17",
+          "revenue_minor": 12575000,
+          "reservations": 469,
+          "guests": 1652
+        },
+        {
+          "bucket": "2025-09-18",
+          "revenue_minor": 13407500,
+          "reservations": 500,
+          "guests": 1712
+        },
+        {
+          "bucket": "2025-09-19",
+          "revenue_minor": 13668500,
+          "reservations": 508,
+          "guests": 1811
+        },
+        {
+          "bucket": "2025-09-20",
+          "revenue_minor": 16943500,
+          "reservations": 659,
+          "guests": 2323
+        },
+        {
+          "bucket": "2025-09-21",
+          "revenue_minor": 20577000,
+          "reservations": 718,
+          "guests": 2463
+        },
+        {
+          "bucket": "2025-09-22",
+          "revenue_minor": 11267000,
+          "reservations": 462,
+          "guests": 1616
+        },
+        {
+          "bucket": "2025-09-23",
+          "revenue_minor": 12657500,
+          "reservations": 479,
+          "guests": 1680
+        },
+        {
+          "bucket": "2025-09-24",
+          "revenue_minor": 13843500,
+          "reservations": 485,
+          "guests": 1703
+        },
+        {
+          "bucket": "2025-09-25",
+          "revenue_minor": 13621500,
+          "reservations": 472,
+          "guests": 1678
+        },
+        {
+          "bucket": "2025-09-26",
+          "revenue_minor": 14371500,
+          "reservations": 517,
+          "guests": 1744
+        },
+        {
+          "bucket": "2025-09-27",
+          "revenue_minor": 18384000,
+          "reservations": 700,
+          "guests": 2359
+        },
+        {
+          "bucket": "2025-09-28",
+          "revenue_minor": 19078500,
+          "reservations": 677,
+          "guests": 2367
+        },
+        {
+          "bucket": "2025-09-29",
+          "revenue_minor": 13541500,
+          "reservations": 534,
+          "guests": 1819
+        },
+        {
+          "bucket": "2025-09-30",
+          "revenue_minor": 14426500,
+          "reservations": 496,
+          "guests": 1718
+        },
+        {
+          "bucket": "2025-10-01",
+          "revenue_minor": 12222500,
+          "reservations": 498,
+          "guests": 1728
+        },
+        {
+          "bucket": "2025-10-02",
+          "revenue_minor": 13007000,
+          "reservations": 503,
+          "guests": 1786
+        },
+        {
+          "bucket": "2025-10-03",
+          "revenue_minor": 13859500,
+          "reservations": 497,
+          "guests": 1690
+        },
+        {
+          "bucket": "2025-10-04",
+          "revenue_minor": 20166000,
+          "reservations": 698,
+          "guests": 2437
+        },
+        {
+          "bucket": "2025-10-05",
+          "revenue_minor": 19881000,
+          "reservations": 674,
+          "guests": 2303
+        },
+        {
+          "bucket": "2025-10-06",
+          "revenue_minor": 11832500,
+          "reservations": 462,
+          "guests": 1632
+        },
+        {
+          "bucket": "2025-10-07",
+          "revenue_minor": 13577500,
+          "reservations": 502,
+          "guests": 1783
+        },
+        {
+          "bucket": "2025-10-08",
+          "revenue_minor": 12859500,
+          "reservations": 489,
+          "guests": 1689
+        },
+        {
+          "bucket": "2025-10-09",
+          "revenue_minor": 13219000,
+          "reservations": 443,
+          "guests": 1552
+        },
+        {
+          "bucket": "2025-10-10",
+          "revenue_minor": 14059500,
+          "reservations": 535,
+          "guests": 1865
+        },
+        {
+          "bucket": "2025-10-11",
+          "revenue_minor": 18631000,
+          "reservations": 694,
+          "guests": 2448
+        },
+        {
+          "bucket": "2025-10-12",
+          "revenue_minor": 19113500,
+          "reservations": 688,
+          "guests": 2363
+        },
+        {
+          "bucket": "2025-10-13",
+          "revenue_minor": 13484500,
+          "reservations": 466,
+          "guests": 1640
+        },
+        {
+          "bucket": "2025-10-14",
+          "revenue_minor": 14054500,
+          "reservations": 518,
+          "guests": 1787
+        },
+        {
+          "bucket": "2025-10-15",
+          "revenue_minor": 13099500,
+          "reservations": 498,
+          "guests": 1691
+        },
+        {
+          "bucket": "2025-10-16",
+          "revenue_minor": 11203500,
+          "reservations": 449,
+          "guests": 1583
+        },
+        {
+          "bucket": "2025-10-17",
+          "revenue_minor": 12649000,
+          "reservations": 474,
+          "guests": 1692
+        },
+        {
+          "bucket": "2025-10-18",
+          "revenue_minor": 17307500,
+          "reservations": 678,
+          "guests": 2348
+        },
+        {
+          "bucket": "2025-10-19",
+          "revenue_minor": 20040500,
+          "reservations": 688,
+          "guests": 2381
+        },
+        {
+          "bucket": "2025-10-20",
+          "revenue_minor": 13312000,
+          "reservations": 501,
+          "guests": 1693
+        },
+        {
+          "bucket": "2025-10-21",
+          "revenue_minor": 13177500,
+          "reservations": 493,
+          "guests": 1718
+        },
+        {
+          "bucket": "2025-10-22",
+          "revenue_minor": 12314000,
+          "reservations": 473,
+          "guests": 1643
+        },
+        {
+          "bucket": "2025-10-23",
+          "revenue_minor": 14600500,
+          "reservations": 494,
+          "guests": 1683
+        },
+        {
+          "bucket": "2025-10-24",
+          "revenue_minor": 13661500,
+          "reservations": 537,
+          "guests": 1837
+        },
+        {
+          "bucket": "2025-10-25",
+          "revenue_minor": 21367500,
+          "reservations": 708,
+          "guests": 2578
+        },
+        {
+          "bucket": "2025-10-26",
+          "revenue_minor": 19698500,
+          "reservations": 677,
+          "guests": 2322
+        },
+        {
+          "bucket": "2025-10-27",
+          "revenue_minor": 13267500,
+          "reservations": 467,
+          "guests": 1694
+        },
+        {
+          "bucket": "2025-10-28",
+          "revenue_minor": 12472000,
+          "reservations": 493,
+          "guests": 1718
+        },
+        {
+          "bucket": "2025-10-29",
+          "revenue_minor": 12656000,
+          "reservations": 484,
+          "guests": 1678
+        },
+        {
+          "bucket": "2025-10-30",
+          "revenue_minor": 13369500,
+          "reservations": 508,
+          "guests": 1785
+        },
+        {
+          "bucket": "2025-10-31",
+          "revenue_minor": 14304500,
+          "reservations": 459,
+          "guests": 1662
+        },
+        {
+          "bucket": "2025-11-01",
+          "revenue_minor": 21739000,
+          "reservations": 731,
+          "guests": 2535
+        },
+        {
+          "bucket": "2025-11-02",
+          "revenue_minor": 17544000,
+          "reservations": 657,
+          "guests": 2335
+        },
+        {
+          "bucket": "2025-11-03",
+          "revenue_minor": 13931000,
+          "reservations": 496,
+          "guests": 1719
+        },
+        {
+          "bucket": "2025-11-04",
+          "revenue_minor": 14415500,
+          "reservations": 490,
+          "guests": 1708
+        },
+        {
+          "bucket": "2025-11-05",
+          "revenue_minor": 15202000,
+          "reservations": 507,
+          "guests": 1783
+        },
+        {
+          "bucket": "2025-11-06",
+          "revenue_minor": 13260000,
+          "reservations": 470,
+          "guests": 1710
+        },
+        {
+          "bucket": "2025-11-07",
+          "revenue_minor": 12644500,
+          "reservations": 483,
+          "guests": 1699
+        },
+        {
+          "bucket": "2025-11-08",
+          "revenue_minor": 17439000,
+          "reservations": 633,
+          "guests": 2225
+        },
+        {
+          "bucket": "2025-11-09",
+          "revenue_minor": 14715500,
+          "reservations": 639,
+          "guests": 2264
+        },
+        {
+          "bucket": "2025-11-10",
+          "revenue_minor": 14186000,
+          "reservations": 507,
+          "guests": 1738
+        },
+        {
+          "bucket": "2025-11-11",
+          "revenue_minor": 12767500,
+          "reservations": 492,
+          "guests": 1783
+        },
+        {
+          "bucket": "2025-11-12",
+          "revenue_minor": 12170500,
+          "reservations": 447,
+          "guests": 1593
+        },
+        {
+          "bucket": "2025-11-13",
+          "revenue_minor": 16277500,
+          "reservations": 521,
+          "guests": 1874
+        },
+        {
+          "bucket": "2025-11-14",
+          "revenue_minor": 12789500,
+          "reservations": 500,
+          "guests": 1734
+        },
+        {
+          "bucket": "2025-11-15",
+          "revenue_minor": 17622000,
+          "reservations": 690,
+          "guests": 2421
+        },
+        {
+          "bucket": "2025-11-16",
+          "revenue_minor": 18023000,
+          "reservations": 679,
+          "guests": 2350
+        },
+        {
+          "bucket": "2025-11-17",
+          "revenue_minor": 13402000,
+          "reservations": 496,
+          "guests": 1755
+        },
+        {
+          "bucket": "2025-11-18",
+          "revenue_minor": 13476500,
+          "reservations": 458,
+          "guests": 1608
+        },
+        {
+          "bucket": "2025-11-19",
+          "revenue_minor": 13913000,
+          "reservations": 499,
+          "guests": 1729
+        },
+        {
+          "bucket": "2025-11-20",
+          "revenue_minor": 12966500,
+          "reservations": 464,
+          "guests": 1623
+        },
+        {
+          "bucket": "2025-11-21",
+          "revenue_minor": 14385500,
+          "reservations": 488,
+          "guests": 1703
+        },
+        {
+          "bucket": "2025-11-22",
+          "revenue_minor": 17403500,
+          "reservations": 653,
+          "guests": 2247
+        },
+        {
+          "bucket": "2025-11-23",
+          "revenue_minor": 17085000,
+          "reservations": 635,
+          "guests": 2302
+        },
+        {
+          "bucket": "2025-11-24",
+          "revenue_minor": 14859500,
+          "reservations": 503,
+          "guests": 1754
+        },
+        {
+          "bucket": "2025-11-25",
+          "revenue_minor": 12770000,
+          "reservations": 479,
+          "guests": 1758
+        },
+        {
+          "bucket": "2025-11-26",
+          "revenue_minor": 12669000,
+          "reservations": 491,
+          "guests": 1712
+        },
+        {
+          "bucket": "2025-11-27",
+          "revenue_minor": 12521000,
+          "reservations": 488,
+          "guests": 1626
+        },
+        {
+          "bucket": "2025-11-28",
+          "revenue_minor": 12006000,
+          "reservations": 484,
+          "guests": 1689
+        },
+        {
+          "bucket": "2025-11-29",
+          "revenue_minor": 16794000,
+          "reservations": 647,
+          "guests": 2349
+        },
+        {
+          "bucket": "2025-11-30",
+          "revenue_minor": 18550000,
+          "reservations": 664,
+          "guests": 2374
+        },
+        {
+          "bucket": "2025-12-01",
+          "revenue_minor": 11904500,
+          "reservations": 458,
+          "guests": 1620
+        },
+        {
+          "bucket": "2025-12-02",
+          "revenue_minor": 13288000,
+          "reservations": 506,
+          "guests": 1764
+        },
+        {
+          "bucket": "2025-12-03",
+          "revenue_minor": 11828000,
+          "reservations": 440,
+          "guests": 1575
+        },
+        {
+          "bucket": "2025-12-04",
+          "revenue_minor": 12153500,
+          "reservations": 465,
+          "guests": 1644
+        },
+        {
+          "bucket": "2025-12-05",
+          "revenue_minor": 12001500,
+          "reservations": 464,
+          "guests": 1672
+        },
+        {
+          "bucket": "2025-12-06",
+          "revenue_minor": 17509500,
+          "reservations": 649,
+          "guests": 2231
+        },
+        {
+          "bucket": "2025-12-07",
+          "revenue_minor": 19438500,
+          "reservations": 693,
+          "guests": 2438
+        },
+        {
+          "bucket": "2025-12-08",
+          "revenue_minor": 14340500,
+          "reservations": 491,
+          "guests": 1661
+        },
+        {
+          "bucket": "2025-12-09",
+          "revenue_minor": 13354500,
+          "reservations": 496,
+          "guests": 1712
+        },
+        {
+          "bucket": "2025-12-10",
+          "revenue_minor": 13346000,
+          "reservations": 478,
+          "guests": 1639
+        },
+        {
+          "bucket": "2025-12-11",
+          "revenue_minor": 12653500,
+          "reservations": 476,
+          "guests": 1743
+        },
+        {
+          "bucket": "2025-12-12",
+          "revenue_minor": 12510000,
+          "reservations": 508,
+          "guests": 1725
+        },
+        {
+          "bucket": "2025-12-13",
+          "revenue_minor": 17727000,
+          "reservations": 668,
+          "guests": 2357
+        },
+        {
+          "bucket": "2025-12-14",
+          "revenue_minor": 18053500,
+          "reservations": 670,
+          "guests": 2412
+        },
+        {
+          "bucket": "2025-12-15",
+          "revenue_minor": 13284500,
+          "reservations": 480,
+          "guests": 1721
+        },
+        {
+          "bucket": "2025-12-16",
+          "revenue_minor": 13558500,
+          "reservations": 482,
+          "guests": 1681
+        },
+        {
+          "bucket": "2025-12-17",
+          "revenue_minor": 13674500,
+          "reservations": 477,
+          "guests": 1722
+        },
+        {
+          "bucket": "2025-12-18",
+          "revenue_minor": 14635000,
+          "reservations": 524,
+          "guests": 1842
+        },
+        {
+          "bucket": "2025-12-19",
+          "revenue_minor": 13963000,
+          "reservations": 478,
+          "guests": 1777
+        },
+        {
+          "bucket": "2025-12-20",
+          "revenue_minor": 17515500,
+          "reservations": 663,
+          "guests": 2344
+        },
+        {
+          "bucket": "2025-12-21",
+          "revenue_minor": 17514500,
+          "reservations": 634,
+          "guests": 2283
+        },
+        {
+          "bucket": "2025-12-22",
+          "revenue_minor": 14008500,
+          "reservations": 475,
+          "guests": 1657
+        },
+        {
+          "bucket": "2025-12-23",
+          "revenue_minor": 12812500,
+          "reservations": 459,
+          "guests": 1599
+        },
+        {
+          "bucket": "2025-12-24",
+          "revenue_minor": 12709000,
+          "reservations": 462,
+          "guests": 1647
+        },
+        {
+          "bucket": "2025-12-25",
+          "revenue_minor": 12389000,
+          "reservations": 485,
+          "guests": 1716
+        },
+        {
+          "bucket": "2025-12-26",
+          "revenue_minor": 11848000,
+          "reservations": 454,
+          "guests": 1569
+        },
+        {
+          "bucket": "2025-12-27",
+          "revenue_minor": 19389000,
+          "reservations": 669,
+          "guests": 2304
+        },
+        {
+          "bucket": "2025-12-28",
+          "revenue_minor": 18087000,
+          "reservations": 650,
+          "guests": 2305
+        },
+        {
+          "bucket": "2025-12-29",
+          "revenue_minor": 13183500,
+          "reservations": 527,
+          "guests": 1840
+        },
+        {
+          "bucket": "2025-12-30",
+          "revenue_minor": 13198500,
+          "reservations": 478,
+          "guests": 1616
+        },
+        {
+          "bucket": "2025-12-31",
+          "revenue_minor": 13130000,
+          "reservations": 482,
+          "guests": 1708
+        },
+        {
+          "bucket": "2026-01-01",
+          "revenue_minor": 14550000,
+          "reservations": 508,
+          "guests": 1774
+        },
+        {
+          "bucket": "2026-01-02",
+          "revenue_minor": 14818000,
+          "reservations": 479,
+          "guests": 1737
+        },
+        {
+          "bucket": "2026-01-03",
+          "revenue_minor": 18581000,
+          "reservations": 673,
+          "guests": 2361
+        },
+        {
+          "bucket": "2026-01-04",
+          "revenue_minor": 18159000,
+          "reservations": 712,
+          "guests": 2468
+        },
+        {
+          "bucket": "2026-01-05",
+          "revenue_minor": 13389500,
+          "reservations": 478,
+          "guests": 1663
+        },
+        {
+          "bucket": "2026-01-06",
+          "revenue_minor": 10848000,
+          "reservations": 461,
+          "guests": 1664
+        },
+        {
+          "bucket": "2026-01-07",
+          "revenue_minor": 12551000,
+          "reservations": 477,
+          "guests": 1725
+        },
+        {
+          "bucket": "2026-01-08",
+          "revenue_minor": 12988000,
+          "reservations": 486,
+          "guests": 1760
+        },
+        {
+          "bucket": "2026-01-09",
+          "revenue_minor": 12907500,
+          "reservations": 482,
+          "guests": 1642
+        },
+        {
+          "bucket": "2026-01-10",
+          "revenue_minor": 20392000,
+          "reservations": 690,
+          "guests": 2413
+        },
+        {
+          "bucket": "2026-01-11",
+          "revenue_minor": 20286500,
+          "reservations": 714,
+          "guests": 2524
+        },
+        {
+          "bucket": "2026-01-12",
+          "revenue_minor": 12447500,
+          "reservations": 491,
+          "guests": 1696
+        },
+        {
+          "bucket": "2026-01-13",
+          "revenue_minor": 13069500,
+          "reservations": 494,
+          "guests": 1704
+        },
+        {
+          "bucket": "2026-01-14",
+          "revenue_minor": 12160500,
+          "reservations": 505,
+          "guests": 1750
+        },
+        {
+          "bucket": "2026-01-15",
+          "revenue_minor": 14632000,
+          "reservations": 522,
+          "guests": 1818
+        },
+        {
+          "bucket": "2026-01-16",
+          "revenue_minor": 11750500,
+          "reservations": 498,
+          "guests": 1643
+        },
+        {
+          "bucket": "2026-01-17",
+          "revenue_minor": 20382000,
+          "reservations": 734,
+          "guests": 2503
+        },
+        {
+          "bucket": "2026-01-18",
+          "revenue_minor": 19818500,
+          "reservations": 732,
+          "guests": 2591
+        },
+        {
+          "bucket": "2026-01-19",
+          "revenue_minor": 11598000,
+          "reservations": 458,
+          "guests": 1622
+        },
+        {
+          "bucket": "2026-01-20",
+          "revenue_minor": 12251000,
+          "reservations": 469,
+          "guests": 1628
+        },
+        {
+          "bucket": "2026-01-21",
+          "revenue_minor": 13712500,
+          "reservations": 489,
+          "guests": 1740
+        },
+        {
+          "bucket": "2026-01-22",
+          "revenue_minor": 14354000,
+          "reservations": 484,
+          "guests": 1686
+        },
+        {
+          "bucket": "2026-01-23",
+          "revenue_minor": 14118000,
+          "reservations": 486,
+          "guests": 1696
+        },
+        {
+          "bucket": "2026-01-24",
+          "revenue_minor": 18452000,
+          "reservations": 677,
+          "guests": 2320
+        },
+        {
+          "bucket": "2026-01-25",
+          "revenue_minor": 18588000,
+          "reservations": 639,
+          "guests": 2219
+        },
+        {
+          "bucket": "2026-01-26",
+          "revenue_minor": 12885500,
+          "reservations": 502,
+          "guests": 1811
+        },
+        {
+          "bucket": "2026-01-27",
+          "revenue_minor": 13529500,
+          "reservations": 492,
+          "guests": 1702
+        },
+        {
+          "bucket": "2026-01-28",
+          "revenue_minor": 13189500,
+          "reservations": 479,
+          "guests": 1645
+        },
+        {
+          "bucket": "2026-01-29",
+          "revenue_minor": 14088000,
+          "reservations": 497,
+          "guests": 1707
+        },
+        {
+          "bucket": "2026-01-30",
+          "revenue_minor": 14059500,
+          "reservations": 526,
+          "guests": 1805
+        },
+        {
+          "bucket": "2026-01-31",
+          "revenue_minor": 19845500,
+          "reservations": 678,
+          "guests": 2375
+        },
+        {
+          "bucket": "2026-02-01",
+          "revenue_minor": 17559500,
+          "reservations": 677,
+          "guests": 2389
+        },
+        {
+          "bucket": "2026-02-02",
+          "revenue_minor": 13665000,
+          "reservations": 496,
+          "guests": 1721
+        },
+        {
+          "bucket": "2026-02-03",
+          "revenue_minor": 11741000,
+          "reservations": 463,
+          "guests": 1644
+        },
+        {
+          "bucket": "2026-02-04",
+          "revenue_minor": 13145000,
+          "reservations": 499,
+          "guests": 1728
+        },
+        {
+          "bucket": "2026-02-05",
+          "revenue_minor": 13912000,
+          "reservations": 512,
+          "guests": 1754
+        },
+        {
+          "bucket": "2026-02-06",
+          "revenue_minor": 14234000,
+          "reservations": 479,
+          "guests": 1626
+        },
+        {
+          "bucket": "2026-02-07",
+          "revenue_minor": 18362500,
+          "reservations": 663,
+          "guests": 2297
+        },
+        {
+          "bucket": "2026-02-08",
+          "revenue_minor": 18904000,
+          "reservations": 682,
+          "guests": 2405
+        },
+        {
+          "bucket": "2026-02-09",
+          "revenue_minor": 11948000,
+          "reservations": 468,
+          "guests": 1678
+        },
+        {
+          "bucket": "2026-02-10",
+          "revenue_minor": 12456500,
+          "reservations": 486,
+          "guests": 1712
+        },
+        {
+          "bucket": "2026-02-11",
+          "revenue_minor": 15618000,
+          "reservations": 504,
+          "guests": 1804
+        },
+        {
+          "bucket": "2026-02-12",
+          "revenue_minor": 11944000,
+          "reservations": 476,
+          "guests": 1672
+        },
+        {
+          "bucket": "2026-02-13",
+          "revenue_minor": 13197500,
+          "reservations": 466,
+          "guests": 1657
+        },
+        {
+          "bucket": "2026-02-14",
+          "revenue_minor": 17804000,
+          "reservations": 683,
+          "guests": 2343
+        },
+        {
+          "bucket": "2026-02-15",
+          "revenue_minor": 20005000,
+          "reservations": 687,
+          "guests": 2321
+        },
+        {
+          "bucket": "2026-02-16",
+          "revenue_minor": 13787000,
+          "reservations": 494,
+          "guests": 1693
+        },
+        {
+          "bucket": "2026-02-17",
+          "revenue_minor": 12429000,
+          "reservations": 475,
+          "guests": 1738
+        },
+        {
+          "bucket": "2026-02-18",
+          "revenue_minor": 15343000,
+          "reservations": 510,
+          "guests": 1776
+        },
+        {
+          "bucket": "2026-02-19",
+          "revenue_minor": 14407500,
+          "reservations": 507,
+          "guests": 1744
+        },
+        {
+          "bucket": "2026-02-20",
+          "revenue_minor": 14884500,
+          "reservations": 530,
+          "guests": 1855
+        },
+        {
+          "bucket": "2026-02-21",
+          "revenue_minor": 20197500,
+          "reservations": 689,
+          "guests": 2402
+        },
+        {
+          "bucket": "2026-02-22",
+          "revenue_minor": 16995500,
+          "reservations": 647,
+          "guests": 2300
+        },
+        {
+          "bucket": "2026-02-23",
+          "revenue_minor": 13877500,
+          "reservations": 497,
+          "guests": 1704
+        },
+        {
+          "bucket": "2026-02-24",
+          "revenue_minor": 13729500,
+          "reservations": 505,
+          "guests": 1773
+        },
+        {
+          "bucket": "2026-02-25",
+          "revenue_minor": 12716000,
+          "reservations": 490,
+          "guests": 1694
+        },
+        {
+          "bucket": "2026-02-26",
+          "revenue_minor": 13475000,
+          "reservations": 500,
+          "guests": 1747
+        },
+        {
+          "bucket": "2026-02-27",
+          "revenue_minor": 13429000,
+          "reservations": 486,
+          "guests": 1768
+        },
+        {
+          "bucket": "2026-02-28",
+          "revenue_minor": 17960000,
+          "reservations": 649,
+          "guests": 2293
+        },
+        {
+          "bucket": "2026-03-01",
+          "revenue_minor": 19454500,
+          "reservations": 700,
+          "guests": 2374
+        },
+        {
+          "bucket": "2026-03-02",
+          "revenue_minor": 12779500,
+          "reservations": 481,
+          "guests": 1691
+        },
+        {
+          "bucket": "2026-03-03",
+          "revenue_minor": 14906500,
+          "reservations": 524,
+          "guests": 1770
+        },
+        {
+          "bucket": "2026-03-04",
+          "revenue_minor": 12150000,
+          "reservations": 483,
+          "guests": 1738
+        },
+        {
+          "bucket": "2026-03-05",
+          "revenue_minor": 14509500,
+          "reservations": 503,
+          "guests": 1799
+        },
+        {
+          "bucket": "2026-03-06",
+          "revenue_minor": 12844000,
+          "reservations": 463,
+          "guests": 1627
+        },
+        {
+          "bucket": "2026-03-07",
+          "revenue_minor": 18422000,
+          "reservations": 680,
+          "guests": 2376
+        },
+        {
+          "bucket": "2026-03-08",
+          "revenue_minor": 20168500,
+          "reservations": 690,
+          "guests": 2403
+        },
+        {
+          "bucket": "2026-03-09",
+          "revenue_minor": 13403000,
+          "reservations": 478,
+          "guests": 1746
+        },
+        {
+          "bucket": "2026-03-10",
+          "revenue_minor": 12336500,
+          "reservations": 485,
+          "guests": 1730
+        },
+        {
+          "bucket": "2026-03-11",
+          "revenue_minor": 12445000,
+          "reservations": 487,
+          "guests": 1673
+        },
+        {
+          "bucket": "2026-03-12",
+          "revenue_minor": 12818500,
+          "reservations": 508,
+          "guests": 1731
+        },
+        {
+          "bucket": "2026-03-13",
+          "revenue_minor": 12725000,
+          "reservations": 487,
+          "guests": 1687
+        },
+        {
+          "bucket": "2026-03-14",
+          "revenue_minor": 18335000,
+          "reservations": 680,
+          "guests": 2426
+        },
+        {
+          "bucket": "2026-03-15",
+          "revenue_minor": 17357500,
+          "reservations": 663,
+          "guests": 2352
+        },
+        {
+          "bucket": "2026-03-16",
+          "revenue_minor": 13360000,
+          "reservations": 460,
+          "guests": 1664
+        },
+        {
+          "bucket": "2026-03-17",
+          "revenue_minor": 13407000,
+          "reservations": 516,
+          "guests": 1829
+        },
+        {
+          "bucket": "2026-03-18",
+          "revenue_minor": 14272000,
+          "reservations": 500,
+          "guests": 1739
+        },
+        {
+          "bucket": "2026-03-19",
+          "revenue_minor": 14835500,
+          "reservations": 464,
+          "guests": 1598
+        },
+        {
+          "bucket": "2026-03-20",
+          "revenue_minor": 14029500,
+          "reservations": 493,
+          "guests": 1712
+        },
+        {
+          "bucket": "2026-03-21",
+          "revenue_minor": 18188000,
+          "reservations": 672,
+          "guests": 2396
+        },
+        {
+          "bucket": "2026-03-22",
+          "revenue_minor": 18481000,
+          "reservations": 681,
+          "guests": 2331
+        },
+        {
+          "bucket": "2026-03-23",
+          "revenue_minor": 13849500,
+          "reservations": 528,
+          "guests": 1813
+        },
+        {
+          "bucket": "2026-03-24",
+          "revenue_minor": 12496000,
+          "reservations": 491,
+          "guests": 1748
+        },
+        {
+          "bucket": "2026-03-25",
+          "revenue_minor": 13073500,
+          "reservations": 470,
+          "guests": 1637
+        },
+        {
+          "bucket": "2026-03-26",
+          "revenue_minor": 13128500,
+          "reservations": 479,
+          "guests": 1694
+        },
+        {
+          "bucket": "2026-03-27",
+          "revenue_minor": 12879500,
+          "reservations": 492,
+          "guests": 1748
+        },
+        {
+          "bucket": "2026-03-28",
+          "revenue_minor": 18742000,
+          "reservations": 708,
+          "guests": 2487
+        },
+        {
+          "bucket": "2026-03-29",
+          "revenue_minor": 17568500,
+          "reservations": 693,
+          "guests": 2382
+        },
+        {
+          "bucket": "2026-03-30",
+          "revenue_minor": 13120000,
+          "reservations": 488,
+          "guests": 1767
+        },
+        {
+          "bucket": "2026-03-31",
+          "revenue_minor": 13348500,
+          "reservations": 485,
+          "guests": 1728
+        },
+        {
+          "bucket": "2026-04-01",
+          "revenue_minor": 13520000,
+          "reservations": 442,
+          "guests": 1557
+        },
+        {
+          "bucket": "2026-04-02",
+          "revenue_minor": 13180500,
+          "reservations": 467,
+          "guests": 1680
+        },
+        {
+          "bucket": "2026-04-03",
+          "revenue_minor": 13097500,
+          "reservations": 473,
+          "guests": 1707
+        },
+        {
+          "bucket": "2026-04-04",
+          "revenue_minor": 19422000,
+          "reservations": 687,
+          "guests": 2450
+        },
+        {
+          "bucket": "2026-04-05",
+          "revenue_minor": 17724000,
+          "reservations": 632,
+          "guests": 2269
+        },
+        {
+          "bucket": "2026-04-06",
+          "revenue_minor": 13438500,
+          "reservations": 488,
+          "guests": 1687
+        },
+        {
+          "bucket": "2026-04-07",
+          "revenue_minor": 13694500,
+          "reservations": 491,
+          "guests": 1692
+        },
+        {
+          "bucket": "2026-04-08",
+          "revenue_minor": 14312500,
+          "reservations": 520,
+          "guests": 1773
+        },
+        {
+          "bucket": "2026-04-09",
+          "revenue_minor": 13937500,
+          "reservations": 497,
+          "guests": 1734
+        },
+        {
+          "bucket": "2026-04-10",
+          "revenue_minor": 12026000,
+          "reservations": 469,
+          "guests": 1676
+        },
+        {
+          "bucket": "2026-04-11",
+          "revenue_minor": 17958500,
+          "reservations": 656,
+          "guests": 2323
+        },
+        {
+          "bucket": "2026-04-12",
+          "revenue_minor": 18910500,
+          "reservations": 663,
+          "guests": 2339
+        },
+        {
+          "bucket": "2026-04-13",
+          "revenue_minor": 13372500,
+          "reservations": 457,
+          "guests": 1560
+        },
+        {
+          "bucket": "2026-04-14",
+          "revenue_minor": 13435000,
+          "reservations": 489,
+          "guests": 1730
+        },
+        {
+          "bucket": "2026-04-15",
+          "revenue_minor": 14034000,
+          "reservations": 485,
+          "guests": 1724
+        },
+        {
+          "bucket": "2026-04-16",
+          "revenue_minor": 13766500,
+          "reservations": 504,
+          "guests": 1758
+        },
+        {
+          "bucket": "2026-04-17",
+          "revenue_minor": 12756500,
+          "reservations": 447,
+          "guests": 1589
+        },
+        {
+          "bucket": "2026-04-18",
+          "revenue_minor": 17237000,
+          "reservations": 633,
+          "guests": 2273
+        },
+        {
+          "bucket": "2026-04-19",
+          "revenue_minor": 17630000,
+          "reservations": 645,
+          "guests": 2310
+        },
+        {
+          "bucket": "2026-04-20",
+          "revenue_minor": 12881500,
+          "reservations": 471,
+          "guests": 1658
+        },
+        {
+          "bucket": "2026-04-21",
+          "revenue_minor": 12578500,
+          "reservations": 492,
+          "guests": 1797
+        },
+        {
+          "bucket": "2026-04-22",
+          "revenue_minor": 12017500,
+          "reservations": 441,
+          "guests": 1610
+        },
+        {
+          "bucket": "2026-04-23",
+          "revenue_minor": 13628000,
+          "reservations": 496,
+          "guests": 1715
+        },
+        {
+          "bucket": "2026-04-24",
+          "revenue_minor": 11094000,
+          "reservations": 438,
+          "guests": 1554
+        },
+        {
+          "bucket": "2026-04-25",
+          "revenue_minor": 17961500,
+          "reservations": 659,
+          "guests": 2335
+        },
+        {
+          "bucket": "2026-04-26",
+          "revenue_minor": 16849500,
+          "reservations": 677,
+          "guests": 2426
+        },
+        {
+          "bucket": "2026-04-27",
+          "revenue_minor": 12888500,
+          "reservations": 469,
+          "guests": 1639
+        },
+        {
+          "bucket": "2026-04-28",
+          "revenue_minor": 12342500,
+          "reservations": 475,
+          "guests": 1665
+        },
+        {
+          "bucket": "2026-04-29",
+          "revenue_minor": 13443500,
+          "reservations": 496,
+          "guests": 1763
+        },
+        {
+          "bucket": "2026-04-30",
+          "revenue_minor": 13091000,
+          "reservations": 481,
+          "guests": 1676
+        },
+        {
+          "bucket": "2026-05-01",
+          "revenue_minor": 12993500,
+          "reservations": 480,
+          "guests": 1631
+        },
+        {
+          "bucket": "2026-05-02",
+          "revenue_minor": 17391500,
+          "reservations": 649,
+          "guests": 2301
+        },
+        {
+          "bucket": "2026-05-03",
+          "revenue_minor": 17602500,
+          "reservations": 676,
+          "guests": 2299
+        },
+        {
+          "bucket": "2026-05-04",
+          "revenue_minor": 12716000,
+          "reservations": 490,
+          "guests": 1680
+        },
+        {
+          "bucket": "2026-05-05",
+          "revenue_minor": 12630500,
+          "reservations": 474,
+          "guests": 1670
+        },
+        {
+          "bucket": "2026-05-06",
+          "revenue_minor": 13894500,
+          "reservations": 486,
+          "guests": 1728
+        },
+        {
+          "bucket": "2026-05-07",
+          "revenue_minor": 13218000,
+          "reservations": 504,
+          "guests": 1791
+        },
+        {
+          "bucket": "2026-05-08",
+          "revenue_minor": 12762000,
+          "reservations": 475,
+          "guests": 1652
+        },
+        {
+          "bucket": "2026-05-09",
+          "revenue_minor": 18763500,
+          "reservations": 690,
+          "guests": 2405
+        },
+        {
+          "bucket": "2026-05-10",
+          "revenue_minor": 20243500,
+          "reservations": 705,
+          "guests": 2415
+        },
+        {
+          "bucket": "2026-05-11",
+          "revenue_minor": 13156000,
+          "reservations": 463,
+          "guests": 1652
+        },
+        {
+          "bucket": "2026-05-12",
+          "revenue_minor": 12802000,
+          "reservations": 457,
+          "guests": 1629
+        },
+        {
+          "bucket": "2026-05-13",
+          "revenue_minor": 13144500,
+          "reservations": 477,
+          "guests": 1668
+        },
+        {
+          "bucket": "2026-05-14",
+          "revenue_minor": 14019500,
+          "reservations": 504,
+          "guests": 1720
+        },
+        {
+          "bucket": "2026-05-15",
+          "revenue_minor": 13712000,
+          "reservations": 490,
+          "guests": 1748
+        },
+        {
+          "bucket": "2026-05-16",
+          "revenue_minor": 19278000,
+          "reservations": 656,
+          "guests": 2262
+        },
+        {
+          "bucket": "2026-05-17",
+          "revenue_minor": 19042000,
+          "reservations": 696,
+          "guests": 2362
+        },
+        {
+          "bucket": "2026-05-18",
+          "revenue_minor": 13926500,
+          "reservations": 474,
+          "guests": 1698
+        },
+        {
+          "bucket": "2026-05-19",
+          "revenue_minor": 12012000,
+          "reservations": 484,
+          "guests": 1688
+        },
+        {
+          "bucket": "2026-05-20",
+          "revenue_minor": 16645500,
+          "reservations": 536,
+          "guests": 1812
+        },
+        {
+          "bucket": "2026-05-21",
+          "revenue_minor": 13632500,
+          "reservations": 462,
+          "guests": 1646
+        },
+        {
+          "bucket": "2026-05-22",
+          "revenue_minor": 12771000,
+          "reservations": 480,
+          "guests": 1762
+        },
+        {
+          "bucket": "2026-05-23",
+          "revenue_minor": 18607500,
+          "reservations": 638,
+          "guests": 2219
+        },
+        {
+          "bucket": "2026-05-24",
+          "revenue_minor": 18373000,
+          "reservations": 643,
+          "guests": 2235
+        },
+        {
+          "bucket": "2026-05-25",
+          "revenue_minor": 12763500,
+          "reservations": 502,
+          "guests": 1758
+        },
+        {
+          "bucket": "2026-05-26",
+          "revenue_minor": 12828000,
+          "reservations": 485,
+          "guests": 1704
+        },
+        {
+          "bucket": "2026-05-27",
+          "revenue_minor": 13950500,
+          "reservations": 510,
+          "guests": 1767
+        },
+        {
+          "bucket": "2026-05-28",
+          "revenue_minor": 14059000,
+          "reservations": 499,
+          "guests": 1740
+        },
+        {
+          "bucket": "2026-05-29",
+          "revenue_minor": 12238000,
+          "reservations": 478,
+          "guests": 1640
+        },
+        {
+          "bucket": "2026-05-30",
+          "revenue_minor": 17093500,
+          "reservations": 650,
+          "guests": 2294
+        },
+        {
+          "bucket": "2026-05-31",
+          "revenue_minor": 18277000,
+          "reservations": 661,
+          "guests": 2299
+        },
+        {
+          "bucket": "2026-06-01",
+          "revenue_minor": 13551000,
+          "reservations": 499,
+          "guests": 1765
+        },
+        {
+          "bucket": "2026-06-02",
+          "revenue_minor": 14444000,
+          "reservations": 497,
+          "guests": 1716
+        },
+        {
+          "bucket": "2026-06-03",
+          "revenue_minor": 14827000,
+          "reservations": 504,
+          "guests": 1786
+        },
+        {
+          "bucket": "2026-06-04",
+          "revenue_minor": 13811500,
+          "reservations": 497,
+          "guests": 1657
+        },
+        {
+          "bucket": "2026-06-05",
+          "revenue_minor": 12866000,
+          "reservations": 465,
+          "guests": 1610
+        },
+        {
+          "bucket": "2026-06-06",
+          "revenue_minor": 18053000,
+          "reservations": 643,
+          "guests": 2254
+        },
+        {
+          "bucket": "2026-06-07",
+          "revenue_minor": 19684500,
+          "reservations": 691,
+          "guests": 2435
+        },
+        {
+          "bucket": "2026-06-08",
+          "revenue_minor": 12056000,
+          "reservations": 451,
+          "guests": 1623
+        },
+        {
+          "bucket": "2026-06-09",
+          "revenue_minor": 10456500,
+          "reservations": 475,
+          "guests": 1683
+        },
+        {
+          "bucket": "2026-06-10",
+          "revenue_minor": 14636000,
+          "reservations": 500,
+          "guests": 1779
+        },
+        {
+          "bucket": "2026-06-11",
+          "revenue_minor": 14077500,
+          "reservations": 482,
+          "guests": 1609
+        },
+        {
+          "bucket": "2026-06-12",
+          "revenue_minor": 13844000,
+          "reservations": 494,
+          "guests": 1725
+        },
+        {
+          "bucket": "2026-06-13",
+          "revenue_minor": 18790500,
+          "reservations": 704,
+          "guests": 2428
+        },
+        {
+          "bucket": "2026-06-14",
+          "revenue_minor": 19144500,
+          "reservations": 681,
+          "guests": 2324
+        },
+        {
+          "bucket": "2026-06-15",
+          "revenue_minor": 14261000,
+          "reservations": 460,
+          "guests": 1661
+        },
+        {
+          "bucket": "2026-06-16",
+          "revenue_minor": 12940000,
+          "reservations": 490,
+          "guests": 1735
+        },
+        {
+          "bucket": "2026-06-17",
+          "revenue_minor": 11894000,
+          "reservations": 480,
+          "guests": 1709
+        },
+        {
+          "bucket": "2026-06-18",
+          "revenue_minor": 12439000,
+          "reservations": 480,
+          "guests": 1659
+        },
+        {
+          "bucket": "2026-06-19",
+          "revenue_minor": 12138000,
+          "reservations": 463,
+          "guests": 1634
+        },
+        {
+          "bucket": "2026-06-20",
+          "revenue_minor": 18610000,
+          "reservations": 652,
+          "guests": 2234
+        },
+        {
+          "bucket": "2026-06-21",
+          "revenue_minor": 15468000,
+          "reservations": 620,
+          "guests": 2184
+        },
+        {
+          "bucket": "2026-06-22",
+          "revenue_minor": 13336000,
+          "reservations": 485,
+          "guests": 1647
+        },
+        {
+          "bucket": "2026-06-23",
+          "revenue_minor": 13414000,
+          "reservations": 475,
+          "guests": 1678
+        },
+        {
+          "bucket": "2026-06-24",
+          "revenue_minor": 11448500,
+          "reservations": 458,
+          "guests": 1599
+        },
+        {
+          "bucket": "2026-06-25",
+          "revenue_minor": 12643500,
+          "reservations": 486,
+          "guests": 1726
+        },
+        {
+          "bucket": "2026-06-26",
+          "revenue_minor": 13746000,
+          "reservations": 493,
+          "guests": 1703
+        },
+        {
+          "bucket": "2026-06-27",
+          "revenue_minor": 17441000,
+          "reservations": 652,
+          "guests": 2330
+        },
+        {
+          "bucket": "2026-06-28",
+          "revenue_minor": 19706000,
+          "reservations": 688,
+          "guests": 2449
+        },
+        {
+          "bucket": "2026-06-29",
+          "revenue_minor": 13330500,
+          "reservations": 476,
+          "guests": 1623
+        },
+        {
+          "bucket": "2026-06-30",
+          "revenue_minor": 13657000,
+          "reservations": 503,
+          "guests": 1705
+        },
+        {
+          "bucket": "2026-07-01",
+          "revenue_minor": 12901000,
+          "reservations": 495,
+          "guests": 1691
+        },
+        {
+          "bucket": "2026-07-02",
+          "revenue_minor": 13557500,
+          "reservations": 500,
+          "guests": 1783
+        },
+        {
+          "bucket": "2026-07-03",
+          "revenue_minor": 13494500,
+          "reservations": 476,
+          "guests": 1692
+        },
+        {
+          "bucket": "2026-07-04",
+          "revenue_minor": 19655000,
+          "reservations": 656,
+          "guests": 2299
+        },
+        {
+          "bucket": "2026-07-05",
+          "revenue_minor": 21145500,
+          "reservations": 716,
+          "guests": 2465
+        },
+        {
+          "bucket": "2026-07-06",
+          "revenue_minor": 12469500,
+          "reservations": 469,
+          "guests": 1726
+        },
+        {
+          "bucket": "2026-07-07",
+          "revenue_minor": 14090500,
+          "reservations": 496,
+          "guests": 1720
+        },
+        {
+          "bucket": "2026-07-08",
+          "revenue_minor": 13724000,
+          "reservations": 508,
+          "guests": 1760
+        }
+      ],
+      "highchair": [
+        {
+          "bucket": "2025-07-09",
+          "highchairs": 98,
+          "reservations_with_highchair": 71,
+          "reservations": 477
+        },
+        {
+          "bucket": "2025-07-10",
+          "highchairs": 116,
+          "reservations_with_highchair": 86,
+          "reservations": 533
+        },
+        {
+          "bucket": "2025-07-11",
+          "highchairs": 102,
+          "reservations_with_highchair": 73,
+          "reservations": 497
+        },
+        {
+          "bucket": "2025-07-12",
+          "highchairs": 138,
+          "reservations_with_highchair": 96,
+          "reservations": 684
+        },
+        {
+          "bucket": "2025-07-13",
+          "highchairs": 132,
+          "reservations_with_highchair": 96,
+          "reservations": 659
+        },
+        {
+          "bucket": "2025-07-14",
+          "highchairs": 109,
+          "reservations_with_highchair": 75,
+          "reservations": 477
+        },
+        {
+          "bucket": "2025-07-15",
+          "highchairs": 119,
+          "reservations_with_highchair": 82,
+          "reservations": 490
+        },
+        {
+          "bucket": "2025-07-16",
+          "highchairs": 100,
+          "reservations_with_highchair": 71,
+          "reservations": 470
+        },
+        {
+          "bucket": "2025-07-17",
+          "highchairs": 102,
+          "reservations_with_highchair": 73,
+          "reservations": 498
+        },
+        {
+          "bucket": "2025-07-18",
+          "highchairs": 87,
+          "reservations_with_highchair": 64,
+          "reservations": 507
+        },
+        {
+          "bucket": "2025-07-19",
+          "highchairs": 130,
+          "reservations_with_highchair": 98,
+          "reservations": 674
+        },
+        {
+          "bucket": "2025-07-20",
+          "highchairs": 142,
+          "reservations_with_highchair": 94,
+          "reservations": 666
+        },
+        {
+          "bucket": "2025-07-21",
+          "highchairs": 121,
+          "reservations_with_highchair": 86,
+          "reservations": 500
+        },
+        {
+          "bucket": "2025-07-22",
+          "highchairs": 83,
+          "reservations_with_highchair": 64,
+          "reservations": 447
+        },
+        {
+          "bucket": "2025-07-23",
+          "highchairs": 98,
+          "reservations_with_highchair": 73,
+          "reservations": 476
+        },
+        {
+          "bucket": "2025-07-24",
+          "highchairs": 114,
+          "reservations_with_highchair": 78,
+          "reservations": 522
+        },
+        {
+          "bucket": "2025-07-25",
+          "highchairs": 120,
+          "reservations_with_highchair": 88,
+          "reservations": 488
+        },
+        {
+          "bucket": "2025-07-26",
+          "highchairs": 150,
+          "reservations_with_highchair": 112,
+          "reservations": 702
+        },
+        {
+          "bucket": "2025-07-27",
+          "highchairs": 125,
+          "reservations_with_highchair": 94,
+          "reservations": 648
+        },
+        {
+          "bucket": "2025-07-28",
+          "highchairs": 130,
+          "reservations_with_highchair": 93,
+          "reservations": 507
+        },
+        {
+          "bucket": "2025-07-29",
+          "highchairs": 91,
+          "reservations_with_highchair": 65,
+          "reservations": 490
+        },
+        {
+          "bucket": "2025-07-30",
+          "highchairs": 87,
+          "reservations_with_highchair": 60,
+          "reservations": 466
+        },
+        {
+          "bucket": "2025-07-31",
+          "highchairs": 123,
+          "reservations_with_highchair": 80,
+          "reservations": 486
+        },
+        {
+          "bucket": "2025-08-01",
+          "highchairs": 112,
+          "reservations_with_highchair": 80,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-08-02",
+          "highchairs": 133,
+          "reservations_with_highchair": 93,
+          "reservations": 647
+        },
+        {
+          "bucket": "2025-08-03",
+          "highchairs": 161,
+          "reservations_with_highchair": 112,
+          "reservations": 681
+        },
+        {
+          "bucket": "2025-08-04",
+          "highchairs": 101,
+          "reservations_with_highchair": 70,
+          "reservations": 473
+        },
+        {
+          "bucket": "2025-08-05",
+          "highchairs": 96,
+          "reservations_with_highchair": 69,
+          "reservations": 471
+        },
+        {
+          "bucket": "2025-08-06",
+          "highchairs": 92,
+          "reservations_with_highchair": 65,
+          "reservations": 501
+        },
+        {
+          "bucket": "2025-08-07",
+          "highchairs": 111,
+          "reservations_with_highchair": 76,
+          "reservations": 437
+        },
+        {
+          "bucket": "2025-08-08",
+          "highchairs": 124,
+          "reservations_with_highchair": 89,
+          "reservations": 500
+        },
+        {
+          "bucket": "2025-08-09",
+          "highchairs": 140,
+          "reservations_with_highchair": 100,
+          "reservations": 638
+        },
+        {
+          "bucket": "2025-08-10",
+          "highchairs": 131,
+          "reservations_with_highchair": 97,
+          "reservations": 640
+        },
+        {
+          "bucket": "2025-08-11",
+          "highchairs": 98,
+          "reservations_with_highchair": 69,
+          "reservations": 452
+        },
+        {
+          "bucket": "2025-08-12",
+          "highchairs": 109,
+          "reservations_with_highchair": 81,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-08-13",
+          "highchairs": 125,
+          "reservations_with_highchair": 88,
+          "reservations": 500
+        },
+        {
+          "bucket": "2025-08-14",
+          "highchairs": 110,
+          "reservations_with_highchair": 77,
+          "reservations": 462
+        },
+        {
+          "bucket": "2025-08-15",
+          "highchairs": 121,
+          "reservations_with_highchair": 79,
+          "reservations": 489
+        },
+        {
+          "bucket": "2025-08-16",
+          "highchairs": 112,
+          "reservations_with_highchair": 80,
+          "reservations": 660
+        },
+        {
+          "bucket": "2025-08-17",
+          "highchairs": 122,
+          "reservations_with_highchair": 91,
+          "reservations": 668
+        },
+        {
+          "bucket": "2025-08-18",
+          "highchairs": 81,
+          "reservations_with_highchair": 59,
+          "reservations": 460
+        },
+        {
+          "bucket": "2025-08-19",
+          "highchairs": 130,
+          "reservations_with_highchair": 94,
+          "reservations": 514
+        },
+        {
+          "bucket": "2025-08-20",
+          "highchairs": 80,
+          "reservations_with_highchair": 63,
+          "reservations": 488
+        },
+        {
+          "bucket": "2025-08-21",
+          "highchairs": 105,
+          "reservations_with_highchair": 76,
+          "reservations": 488
+        },
+        {
+          "bucket": "2025-08-22",
+          "highchairs": 118,
+          "reservations_with_highchair": 80,
+          "reservations": 479
+        },
+        {
+          "bucket": "2025-08-23",
+          "highchairs": 149,
+          "reservations_with_highchair": 106,
+          "reservations": 692
+        },
+        {
+          "bucket": "2025-08-24",
+          "highchairs": 139,
+          "reservations_with_highchair": 100,
+          "reservations": 676
+        },
+        {
+          "bucket": "2025-08-25",
+          "highchairs": 106,
+          "reservations_with_highchair": 74,
+          "reservations": 484
+        },
+        {
+          "bucket": "2025-08-26",
+          "highchairs": 120,
+          "reservations_with_highchair": 84,
+          "reservations": 502
+        },
+        {
+          "bucket": "2025-08-27",
+          "highchairs": 116,
+          "reservations_with_highchair": 81,
+          "reservations": 498
+        },
+        {
+          "bucket": "2025-08-28",
+          "highchairs": 106,
+          "reservations_with_highchair": 69,
+          "reservations": 504
+        },
+        {
+          "bucket": "2025-08-29",
+          "highchairs": 121,
+          "reservations_with_highchair": 86,
+          "reservations": 486
+        },
+        {
+          "bucket": "2025-08-30",
+          "highchairs": 141,
+          "reservations_with_highchair": 94,
+          "reservations": 627
+        },
+        {
+          "bucket": "2025-08-31",
+          "highchairs": 126,
+          "reservations_with_highchair": 89,
+          "reservations": 656
+        },
+        {
+          "bucket": "2025-09-01",
+          "highchairs": 120,
+          "reservations_with_highchair": 82,
+          "reservations": 510
+        },
+        {
+          "bucket": "2025-09-02",
+          "highchairs": 115,
+          "reservations_with_highchair": 86,
+          "reservations": 481
+        },
+        {
+          "bucket": "2025-09-03",
+          "highchairs": 108,
+          "reservations_with_highchair": 81,
+          "reservations": 471
+        },
+        {
+          "bucket": "2025-09-04",
+          "highchairs": 86,
+          "reservations_with_highchair": 65,
+          "reservations": 514
+        },
+        {
+          "bucket": "2025-09-05",
+          "highchairs": 88,
+          "reservations_with_highchair": 64,
+          "reservations": 471
+        },
+        {
+          "bucket": "2025-09-06",
+          "highchairs": 147,
+          "reservations_with_highchair": 105,
+          "reservations": 686
+        },
+        {
+          "bucket": "2025-09-07",
+          "highchairs": 132,
+          "reservations_with_highchair": 92,
+          "reservations": 695
+        },
+        {
+          "bucket": "2025-09-08",
+          "highchairs": 88,
+          "reservations_with_highchair": 64,
+          "reservations": 472
+        },
+        {
+          "bucket": "2025-09-09",
+          "highchairs": 118,
+          "reservations_with_highchair": 83,
+          "reservations": 515
+        },
+        {
+          "bucket": "2025-09-10",
+          "highchairs": 124,
+          "reservations_with_highchair": 89,
+          "reservations": 466
+        },
+        {
+          "bucket": "2025-09-11",
+          "highchairs": 102,
+          "reservations_with_highchair": 71,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-09-12",
+          "highchairs": 88,
+          "reservations_with_highchair": 64,
+          "reservations": 503
+        },
+        {
+          "bucket": "2025-09-13",
+          "highchairs": 134,
+          "reservations_with_highchair": 96,
+          "reservations": 728
+        },
+        {
+          "bucket": "2025-09-14",
+          "highchairs": 132,
+          "reservations_with_highchair": 91,
+          "reservations": 668
+        },
+        {
+          "bucket": "2025-09-15",
+          "highchairs": 102,
+          "reservations_with_highchair": 68,
+          "reservations": 475
+        },
+        {
+          "bucket": "2025-09-16",
+          "highchairs": 108,
+          "reservations_with_highchair": 80,
+          "reservations": 486
+        },
+        {
+          "bucket": "2025-09-17",
+          "highchairs": 110,
+          "reservations_with_highchair": 78,
+          "reservations": 469
+        },
+        {
+          "bucket": "2025-09-18",
+          "highchairs": 109,
+          "reservations_with_highchair": 77,
+          "reservations": 500
+        },
+        {
+          "bucket": "2025-09-19",
+          "highchairs": 114,
+          "reservations_with_highchair": 79,
+          "reservations": 508
+        },
+        {
+          "bucket": "2025-09-20",
+          "highchairs": 140,
+          "reservations_with_highchair": 98,
+          "reservations": 659
+        },
+        {
+          "bucket": "2025-09-21",
+          "highchairs": 178,
+          "reservations_with_highchair": 131,
+          "reservations": 718
+        },
+        {
+          "bucket": "2025-09-22",
+          "highchairs": 107,
+          "reservations_with_highchair": 71,
+          "reservations": 462
+        },
+        {
+          "bucket": "2025-09-23",
+          "highchairs": 93,
+          "reservations_with_highchair": 67,
+          "reservations": 479
+        },
+        {
+          "bucket": "2025-09-24",
+          "highchairs": 119,
+          "reservations_with_highchair": 84,
+          "reservations": 485
+        },
+        {
+          "bucket": "2025-09-25",
+          "highchairs": 124,
+          "reservations_with_highchair": 85,
+          "reservations": 472
+        },
+        {
+          "bucket": "2025-09-26",
+          "highchairs": 113,
+          "reservations_with_highchair": 78,
+          "reservations": 517
+        },
+        {
+          "bucket": "2025-09-27",
+          "highchairs": 151,
+          "reservations_with_highchair": 105,
+          "reservations": 700
+        },
+        {
+          "bucket": "2025-09-28",
+          "highchairs": 149,
+          "reservations_with_highchair": 108,
+          "reservations": 677
+        },
+        {
+          "bucket": "2025-09-29",
+          "highchairs": 103,
+          "reservations_with_highchair": 73,
+          "reservations": 534
+        },
+        {
+          "bucket": "2025-09-30",
+          "highchairs": 117,
+          "reservations_with_highchair": 88,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-10-01",
+          "highchairs": 105,
+          "reservations_with_highchair": 72,
+          "reservations": 498
+        },
+        {
+          "bucket": "2025-10-02",
+          "highchairs": 127,
+          "reservations_with_highchair": 93,
+          "reservations": 503
+        },
+        {
+          "bucket": "2025-10-03",
+          "highchairs": 94,
+          "reservations_with_highchair": 63,
+          "reservations": 497
+        },
+        {
+          "bucket": "2025-10-04",
+          "highchairs": 152,
+          "reservations_with_highchair": 110,
+          "reservations": 698
+        },
+        {
+          "bucket": "2025-10-05",
+          "highchairs": 133,
+          "reservations_with_highchair": 96,
+          "reservations": 674
+        },
+        {
+          "bucket": "2025-10-06",
+          "highchairs": 102,
+          "reservations_with_highchair": 73,
+          "reservations": 462
+        },
+        {
+          "bucket": "2025-10-07",
+          "highchairs": 102,
+          "reservations_with_highchair": 74,
+          "reservations": 502
+        },
+        {
+          "bucket": "2025-10-08",
+          "highchairs": 93,
+          "reservations_with_highchair": 65,
+          "reservations": 489
+        },
+        {
+          "bucket": "2025-10-09",
+          "highchairs": 115,
+          "reservations_with_highchair": 76,
+          "reservations": 443
+        },
+        {
+          "bucket": "2025-10-10",
+          "highchairs": 102,
+          "reservations_with_highchair": 75,
+          "reservations": 535
+        },
+        {
+          "bucket": "2025-10-11",
+          "highchairs": 175,
+          "reservations_with_highchair": 123,
+          "reservations": 694
+        },
+        {
+          "bucket": "2025-10-12",
+          "highchairs": 151,
+          "reservations_with_highchair": 100,
+          "reservations": 688
+        },
+        {
+          "bucket": "2025-10-13",
+          "highchairs": 80,
+          "reservations_with_highchair": 57,
+          "reservations": 466
+        },
+        {
+          "bucket": "2025-10-14",
+          "highchairs": 112,
+          "reservations_with_highchair": 80,
+          "reservations": 518
+        },
+        {
+          "bucket": "2025-10-15",
+          "highchairs": 106,
+          "reservations_with_highchair": 76,
+          "reservations": 498
+        },
+        {
+          "bucket": "2025-10-16",
+          "highchairs": 112,
+          "reservations_with_highchair": 79,
+          "reservations": 449
+        },
+        {
+          "bucket": "2025-10-17",
+          "highchairs": 114,
+          "reservations_with_highchair": 83,
+          "reservations": 474
+        },
+        {
+          "bucket": "2025-10-18",
+          "highchairs": 158,
+          "reservations_with_highchair": 109,
+          "reservations": 678
+        },
+        {
+          "bucket": "2025-10-19",
+          "highchairs": 132,
+          "reservations_with_highchair": 98,
+          "reservations": 688
+        },
+        {
+          "bucket": "2025-10-20",
+          "highchairs": 87,
+          "reservations_with_highchair": 63,
+          "reservations": 501
+        },
+        {
+          "bucket": "2025-10-21",
+          "highchairs": 110,
+          "reservations_with_highchair": 78,
+          "reservations": 493
+        },
+        {
+          "bucket": "2025-10-22",
+          "highchairs": 103,
+          "reservations_with_highchair": 64,
+          "reservations": 473
+        },
+        {
+          "bucket": "2025-10-23",
+          "highchairs": 112,
+          "reservations_with_highchair": 75,
+          "reservations": 494
+        },
+        {
+          "bucket": "2025-10-24",
+          "highchairs": 108,
+          "reservations_with_highchair": 77,
+          "reservations": 537
+        },
+        {
+          "bucket": "2025-10-25",
+          "highchairs": 172,
+          "reservations_with_highchair": 113,
+          "reservations": 708
+        },
+        {
+          "bucket": "2025-10-26",
+          "highchairs": 143,
+          "reservations_with_highchair": 95,
+          "reservations": 677
+        },
+        {
+          "bucket": "2025-10-27",
+          "highchairs": 95,
+          "reservations_with_highchair": 69,
+          "reservations": 467
+        },
+        {
+          "bucket": "2025-10-28",
+          "highchairs": 100,
+          "reservations_with_highchair": 69,
+          "reservations": 493
+        },
+        {
+          "bucket": "2025-10-29",
+          "highchairs": 135,
+          "reservations_with_highchair": 89,
+          "reservations": 484
+        },
+        {
+          "bucket": "2025-10-30",
+          "highchairs": 111,
+          "reservations_with_highchair": 76,
+          "reservations": 508
+        },
+        {
+          "bucket": "2025-10-31",
+          "highchairs": 100,
+          "reservations_with_highchair": 71,
+          "reservations": 459
+        },
+        {
+          "bucket": "2025-11-01",
+          "highchairs": 159,
+          "reservations_with_highchair": 113,
+          "reservations": 731
+        },
+        {
+          "bucket": "2025-11-02",
+          "highchairs": 144,
+          "reservations_with_highchair": 96,
+          "reservations": 657
+        },
+        {
+          "bucket": "2025-11-03",
+          "highchairs": 76,
+          "reservations_with_highchair": 57,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-11-04",
+          "highchairs": 102,
+          "reservations_with_highchair": 79,
+          "reservations": 490
+        },
+        {
+          "bucket": "2025-11-05",
+          "highchairs": 120,
+          "reservations_with_highchair": 84,
+          "reservations": 507
+        },
+        {
+          "bucket": "2025-11-06",
+          "highchairs": 101,
+          "reservations_with_highchair": 72,
+          "reservations": 470
+        },
+        {
+          "bucket": "2025-11-07",
+          "highchairs": 97,
+          "reservations_with_highchair": 70,
+          "reservations": 483
+        },
+        {
+          "bucket": "2025-11-08",
+          "highchairs": 113,
+          "reservations_with_highchair": 80,
+          "reservations": 633
+        },
+        {
+          "bucket": "2025-11-09",
+          "highchairs": 134,
+          "reservations_with_highchair": 95,
+          "reservations": 639
+        },
+        {
+          "bucket": "2025-11-10",
+          "highchairs": 100,
+          "reservations_with_highchair": 68,
+          "reservations": 507
+        },
+        {
+          "bucket": "2025-11-11",
+          "highchairs": 88,
+          "reservations_with_highchair": 67,
+          "reservations": 492
+        },
+        {
+          "bucket": "2025-11-12",
+          "highchairs": 79,
+          "reservations_with_highchair": 58,
+          "reservations": 447
+        },
+        {
+          "bucket": "2025-11-13",
+          "highchairs": 142,
+          "reservations_with_highchair": 98,
+          "reservations": 521
+        },
+        {
+          "bucket": "2025-11-14",
+          "highchairs": 123,
+          "reservations_with_highchair": 83,
+          "reservations": 500
+        },
+        {
+          "bucket": "2025-11-15",
+          "highchairs": 160,
+          "reservations_with_highchair": 113,
+          "reservations": 690
+        },
+        {
+          "bucket": "2025-11-16",
+          "highchairs": 144,
+          "reservations_with_highchair": 100,
+          "reservations": 679
+        },
+        {
+          "bucket": "2025-11-17",
+          "highchairs": 127,
+          "reservations_with_highchair": 87,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-11-18",
+          "highchairs": 98,
+          "reservations_with_highchair": 68,
+          "reservations": 458
+        },
+        {
+          "bucket": "2025-11-19",
+          "highchairs": 98,
+          "reservations_with_highchair": 70,
+          "reservations": 499
+        },
+        {
+          "bucket": "2025-11-20",
+          "highchairs": 87,
+          "reservations_with_highchair": 62,
+          "reservations": 464
+        },
+        {
+          "bucket": "2025-11-21",
+          "highchairs": 107,
+          "reservations_with_highchair": 81,
+          "reservations": 488
+        },
+        {
+          "bucket": "2025-11-22",
+          "highchairs": 142,
+          "reservations_with_highchair": 101,
+          "reservations": 653
+        },
+        {
+          "bucket": "2025-11-23",
+          "highchairs": 104,
+          "reservations_with_highchair": 72,
+          "reservations": 635
+        },
+        {
+          "bucket": "2025-11-24",
+          "highchairs": 100,
+          "reservations_with_highchair": 73,
+          "reservations": 503
+        },
+        {
+          "bucket": "2025-11-25",
+          "highchairs": 94,
+          "reservations_with_highchair": 66,
+          "reservations": 479
+        },
+        {
+          "bucket": "2025-11-26",
+          "highchairs": 113,
+          "reservations_with_highchair": 78,
+          "reservations": 491
+        },
+        {
+          "bucket": "2025-11-27",
+          "highchairs": 91,
+          "reservations_with_highchair": 64,
+          "reservations": 488
+        },
+        {
+          "bucket": "2025-11-28",
+          "highchairs": 104,
+          "reservations_with_highchair": 70,
+          "reservations": 484
+        },
+        {
+          "bucket": "2025-11-29",
+          "highchairs": 145,
+          "reservations_with_highchair": 104,
+          "reservations": 647
+        },
+        {
+          "bucket": "2025-11-30",
+          "highchairs": 129,
+          "reservations_with_highchair": 91,
+          "reservations": 664
+        },
+        {
+          "bucket": "2025-12-01",
+          "highchairs": 101,
+          "reservations_with_highchair": 76,
+          "reservations": 458
+        },
+        {
+          "bucket": "2025-12-02",
+          "highchairs": 91,
+          "reservations_with_highchair": 68,
+          "reservations": 506
+        },
+        {
+          "bucket": "2025-12-03",
+          "highchairs": 81,
+          "reservations_with_highchair": 59,
+          "reservations": 440
+        },
+        {
+          "bucket": "2025-12-04",
+          "highchairs": 116,
+          "reservations_with_highchair": 86,
+          "reservations": 465
+        },
+        {
+          "bucket": "2025-12-05",
+          "highchairs": 94,
+          "reservations_with_highchair": 67,
+          "reservations": 464
+        },
+        {
+          "bucket": "2025-12-06",
+          "highchairs": 123,
+          "reservations_with_highchair": 90,
+          "reservations": 649
+        },
+        {
+          "bucket": "2025-12-07",
+          "highchairs": 123,
+          "reservations_with_highchair": 87,
+          "reservations": 693
+        },
+        {
+          "bucket": "2025-12-08",
+          "highchairs": 111,
+          "reservations_with_highchair": 73,
+          "reservations": 491
+        },
+        {
+          "bucket": "2025-12-09",
+          "highchairs": 108,
+          "reservations_with_highchair": 72,
+          "reservations": 496
+        },
+        {
+          "bucket": "2025-12-10",
+          "highchairs": 86,
+          "reservations_with_highchair": 59,
+          "reservations": 478
+        },
+        {
+          "bucket": "2025-12-11",
+          "highchairs": 88,
+          "reservations_with_highchair": 66,
+          "reservations": 476
+        },
+        {
+          "bucket": "2025-12-12",
+          "highchairs": 99,
+          "reservations_with_highchair": 69,
+          "reservations": 508
+        },
+        {
+          "bucket": "2025-12-13",
+          "highchairs": 168,
+          "reservations_with_highchair": 120,
+          "reservations": 668
+        },
+        {
+          "bucket": "2025-12-14",
+          "highchairs": 144,
+          "reservations_with_highchair": 103,
+          "reservations": 670
+        },
+        {
+          "bucket": "2025-12-15",
+          "highchairs": 108,
+          "reservations_with_highchair": 72,
+          "reservations": 480
+        },
+        {
+          "bucket": "2025-12-16",
+          "highchairs": 120,
+          "reservations_with_highchair": 81,
+          "reservations": 482
+        },
+        {
+          "bucket": "2025-12-17",
+          "highchairs": 93,
+          "reservations_with_highchair": 70,
+          "reservations": 477
+        },
+        {
+          "bucket": "2025-12-18",
+          "highchairs": 115,
+          "reservations_with_highchair": 82,
+          "reservations": 524
+        },
+        {
+          "bucket": "2025-12-19",
+          "highchairs": 114,
+          "reservations_with_highchair": 74,
+          "reservations": 478
+        },
+        {
+          "bucket": "2025-12-20",
+          "highchairs": 178,
+          "reservations_with_highchair": 122,
+          "reservations": 663
+        },
+        {
+          "bucket": "2025-12-21",
+          "highchairs": 142,
+          "reservations_with_highchair": 96,
+          "reservations": 634
+        },
+        {
+          "bucket": "2025-12-22",
+          "highchairs": 104,
+          "reservations_with_highchair": 70,
+          "reservations": 475
+        },
+        {
+          "bucket": "2025-12-23",
+          "highchairs": 92,
+          "reservations_with_highchair": 62,
+          "reservations": 459
+        },
+        {
+          "bucket": "2025-12-24",
+          "highchairs": 106,
+          "reservations_with_highchair": 73,
+          "reservations": 462
+        },
+        {
+          "bucket": "2025-12-25",
+          "highchairs": 80,
+          "reservations_with_highchair": 58,
+          "reservations": 485
+        },
+        {
+          "bucket": "2025-12-26",
+          "highchairs": 98,
+          "reservations_with_highchair": 73,
+          "reservations": 454
+        },
+        {
+          "bucket": "2025-12-27",
+          "highchairs": 148,
+          "reservations_with_highchair": 106,
+          "reservations": 669
+        },
+        {
+          "bucket": "2025-12-28",
+          "highchairs": 141,
+          "reservations_with_highchair": 102,
+          "reservations": 650
+        },
+        {
+          "bucket": "2025-12-29",
+          "highchairs": 114,
+          "reservations_with_highchair": 75,
+          "reservations": 527
+        },
+        {
+          "bucket": "2025-12-30",
+          "highchairs": 112,
+          "reservations_with_highchair": 82,
+          "reservations": 478
+        },
+        {
+          "bucket": "2025-12-31",
+          "highchairs": 108,
+          "reservations_with_highchair": 71,
+          "reservations": 482
+        },
+        {
+          "bucket": "2026-01-01",
+          "highchairs": 101,
+          "reservations_with_highchair": 71,
+          "reservations": 508
+        },
+        {
+          "bucket": "2026-01-02",
+          "highchairs": 104,
+          "reservations_with_highchair": 75,
+          "reservations": 479
+        },
+        {
+          "bucket": "2026-01-03",
+          "highchairs": 151,
+          "reservations_with_highchair": 109,
+          "reservations": 673
+        },
+        {
+          "bucket": "2026-01-04",
+          "highchairs": 141,
+          "reservations_with_highchair": 106,
+          "reservations": 712
+        },
+        {
+          "bucket": "2026-01-05",
+          "highchairs": 111,
+          "reservations_with_highchair": 75,
+          "reservations": 478
+        },
+        {
+          "bucket": "2026-01-06",
+          "highchairs": 101,
+          "reservations_with_highchair": 71,
+          "reservations": 461
+        },
+        {
+          "bucket": "2026-01-07",
+          "highchairs": 105,
+          "reservations_with_highchair": 72,
+          "reservations": 477
+        },
+        {
+          "bucket": "2026-01-08",
+          "highchairs": 90,
+          "reservations_with_highchair": 69,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-01-09",
+          "highchairs": 91,
+          "reservations_with_highchair": 68,
+          "reservations": 482
+        },
+        {
+          "bucket": "2026-01-10",
+          "highchairs": 165,
+          "reservations_with_highchair": 114,
+          "reservations": 690
+        },
+        {
+          "bucket": "2026-01-11",
+          "highchairs": 147,
+          "reservations_with_highchair": 103,
+          "reservations": 714
+        },
+        {
+          "bucket": "2026-01-12",
+          "highchairs": 120,
+          "reservations_with_highchair": 82,
+          "reservations": 491
+        },
+        {
+          "bucket": "2026-01-13",
+          "highchairs": 103,
+          "reservations_with_highchair": 70,
+          "reservations": 494
+        },
+        {
+          "bucket": "2026-01-14",
+          "highchairs": 113,
+          "reservations_with_highchair": 78,
+          "reservations": 505
+        },
+        {
+          "bucket": "2026-01-15",
+          "highchairs": 94,
+          "reservations_with_highchair": 63,
+          "reservations": 522
+        },
+        {
+          "bucket": "2026-01-16",
+          "highchairs": 92,
+          "reservations_with_highchair": 69,
+          "reservations": 498
+        },
+        {
+          "bucket": "2026-01-17",
+          "highchairs": 149,
+          "reservations_with_highchair": 103,
+          "reservations": 734
+        },
+        {
+          "bucket": "2026-01-18",
+          "highchairs": 138,
+          "reservations_with_highchair": 95,
+          "reservations": 732
+        },
+        {
+          "bucket": "2026-01-19",
+          "highchairs": 80,
+          "reservations_with_highchair": 55,
+          "reservations": 458
+        },
+        {
+          "bucket": "2026-01-20",
+          "highchairs": 94,
+          "reservations_with_highchair": 67,
+          "reservations": 469
+        },
+        {
+          "bucket": "2026-01-21",
+          "highchairs": 94,
+          "reservations_with_highchair": 67,
+          "reservations": 489
+        },
+        {
+          "bucket": "2026-01-22",
+          "highchairs": 114,
+          "reservations_with_highchair": 84,
+          "reservations": 484
+        },
+        {
+          "bucket": "2026-01-23",
+          "highchairs": 119,
+          "reservations_with_highchair": 77,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-01-24",
+          "highchairs": 138,
+          "reservations_with_highchair": 99,
+          "reservations": 677
+        },
+        {
+          "bucket": "2026-01-25",
+          "highchairs": 128,
+          "reservations_with_highchair": 93,
+          "reservations": 639
+        },
+        {
+          "bucket": "2026-01-26",
+          "highchairs": 106,
+          "reservations_with_highchair": 73,
+          "reservations": 502
+        },
+        {
+          "bucket": "2026-01-27",
+          "highchairs": 112,
+          "reservations_with_highchair": 81,
+          "reservations": 492
+        },
+        {
+          "bucket": "2026-01-28",
+          "highchairs": 105,
+          "reservations_with_highchair": 72,
+          "reservations": 479
+        },
+        {
+          "bucket": "2026-01-29",
+          "highchairs": 109,
+          "reservations_with_highchair": 72,
+          "reservations": 497
+        },
+        {
+          "bucket": "2026-01-30",
+          "highchairs": 119,
+          "reservations_with_highchair": 84,
+          "reservations": 526
+        },
+        {
+          "bucket": "2026-01-31",
+          "highchairs": 171,
+          "reservations_with_highchair": 117,
+          "reservations": 678
+        },
+        {
+          "bucket": "2026-02-01",
+          "highchairs": 132,
+          "reservations_with_highchair": 91,
+          "reservations": 677
+        },
+        {
+          "bucket": "2026-02-02",
+          "highchairs": 96,
+          "reservations_with_highchair": 68,
+          "reservations": 496
+        },
+        {
+          "bucket": "2026-02-03",
+          "highchairs": 107,
+          "reservations_with_highchair": 71,
+          "reservations": 463
+        },
+        {
+          "bucket": "2026-02-04",
+          "highchairs": 131,
+          "reservations_with_highchair": 85,
+          "reservations": 499
+        },
+        {
+          "bucket": "2026-02-05",
+          "highchairs": 124,
+          "reservations_with_highchair": 88,
+          "reservations": 512
+        },
+        {
+          "bucket": "2026-02-06",
+          "highchairs": 88,
+          "reservations_with_highchair": 59,
+          "reservations": 479
+        },
+        {
+          "bucket": "2026-02-07",
+          "highchairs": 134,
+          "reservations_with_highchair": 93,
+          "reservations": 663
+        },
+        {
+          "bucket": "2026-02-08",
+          "highchairs": 161,
+          "reservations_with_highchair": 115,
+          "reservations": 682
+        },
+        {
+          "bucket": "2026-02-09",
+          "highchairs": 97,
+          "reservations_with_highchair": 67,
+          "reservations": 468
+        },
+        {
+          "bucket": "2026-02-10",
+          "highchairs": 99,
+          "reservations_with_highchair": 65,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-02-11",
+          "highchairs": 103,
+          "reservations_with_highchair": 73,
+          "reservations": 504
+        },
+        {
+          "bucket": "2026-02-12",
+          "highchairs": 113,
+          "reservations_with_highchair": 79,
+          "reservations": 476
+        },
+        {
+          "bucket": "2026-02-13",
+          "highchairs": 88,
+          "reservations_with_highchair": 60,
+          "reservations": 466
+        },
+        {
+          "bucket": "2026-02-14",
+          "highchairs": 152,
+          "reservations_with_highchair": 106,
+          "reservations": 683
+        },
+        {
+          "bucket": "2026-02-15",
+          "highchairs": 140,
+          "reservations_with_highchair": 100,
+          "reservations": 687
+        },
+        {
+          "bucket": "2026-02-16",
+          "highchairs": 94,
+          "reservations_with_highchair": 74,
+          "reservations": 494
+        },
+        {
+          "bucket": "2026-02-17",
+          "highchairs": 76,
+          "reservations_with_highchair": 56,
+          "reservations": 475
+        },
+        {
+          "bucket": "2026-02-18",
+          "highchairs": 149,
+          "reservations_with_highchair": 101,
+          "reservations": 510
+        },
+        {
+          "bucket": "2026-02-19",
+          "highchairs": 107,
+          "reservations_with_highchair": 75,
+          "reservations": 507
+        },
+        {
+          "bucket": "2026-02-20",
+          "highchairs": 95,
+          "reservations_with_highchair": 67,
+          "reservations": 530
+        },
+        {
+          "bucket": "2026-02-21",
+          "highchairs": 128,
+          "reservations_with_highchair": 92,
+          "reservations": 689
+        },
+        {
+          "bucket": "2026-02-22",
+          "highchairs": 165,
+          "reservations_with_highchair": 107,
+          "reservations": 647
+        },
+        {
+          "bucket": "2026-02-23",
+          "highchairs": 108,
+          "reservations_with_highchair": 74,
+          "reservations": 497
+        },
+        {
+          "bucket": "2026-02-24",
+          "highchairs": 107,
+          "reservations_with_highchair": 80,
+          "reservations": 505
+        },
+        {
+          "bucket": "2026-02-25",
+          "highchairs": 102,
+          "reservations_with_highchair": 74,
+          "reservations": 490
+        },
+        {
+          "bucket": "2026-02-26",
+          "highchairs": 106,
+          "reservations_with_highchair": 76,
+          "reservations": 500
+        },
+        {
+          "bucket": "2026-02-27",
+          "highchairs": 84,
+          "reservations_with_highchair": 61,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-02-28",
+          "highchairs": 117,
+          "reservations_with_highchair": 84,
+          "reservations": 649
+        },
+        {
+          "bucket": "2026-03-01",
+          "highchairs": 153,
+          "reservations_with_highchair": 109,
+          "reservations": 700
+        },
+        {
+          "bucket": "2026-03-02",
+          "highchairs": 96,
+          "reservations_with_highchair": 68,
+          "reservations": 481
+        },
+        {
+          "bucket": "2026-03-03",
+          "highchairs": 130,
+          "reservations_with_highchair": 91,
+          "reservations": 524
+        },
+        {
+          "bucket": "2026-03-04",
+          "highchairs": 98,
+          "reservations_with_highchair": 71,
+          "reservations": 483
+        },
+        {
+          "bucket": "2026-03-05",
+          "highchairs": 100,
+          "reservations_with_highchair": 73,
+          "reservations": 503
+        },
+        {
+          "bucket": "2026-03-06",
+          "highchairs": 93,
+          "reservations_with_highchair": 61,
+          "reservations": 463
+        },
+        {
+          "bucket": "2026-03-07",
+          "highchairs": 132,
+          "reservations_with_highchair": 94,
+          "reservations": 680
+        },
+        {
+          "bucket": "2026-03-08",
+          "highchairs": 147,
+          "reservations_with_highchair": 101,
+          "reservations": 690
+        },
+        {
+          "bucket": "2026-03-09",
+          "highchairs": 85,
+          "reservations_with_highchair": 63,
+          "reservations": 478
+        },
+        {
+          "bucket": "2026-03-10",
+          "highchairs": 111,
+          "reservations_with_highchair": 83,
+          "reservations": 485
+        },
+        {
+          "bucket": "2026-03-11",
+          "highchairs": 93,
+          "reservations_with_highchair": 68,
+          "reservations": 487
+        },
+        {
+          "bucket": "2026-03-12",
+          "highchairs": 98,
+          "reservations_with_highchair": 70,
+          "reservations": 508
+        },
+        {
+          "bucket": "2026-03-13",
+          "highchairs": 113,
+          "reservations_with_highchair": 82,
+          "reservations": 487
+        },
+        {
+          "bucket": "2026-03-14",
+          "highchairs": 135,
+          "reservations_with_highchair": 97,
+          "reservations": 680
+        },
+        {
+          "bucket": "2026-03-15",
+          "highchairs": 149,
+          "reservations_with_highchair": 107,
+          "reservations": 663
+        },
+        {
+          "bucket": "2026-03-16",
+          "highchairs": 88,
+          "reservations_with_highchair": 59,
+          "reservations": 460
+        },
+        {
+          "bucket": "2026-03-17",
+          "highchairs": 108,
+          "reservations_with_highchair": 82,
+          "reservations": 516
+        },
+        {
+          "bucket": "2026-03-18",
+          "highchairs": 109,
+          "reservations_with_highchair": 75,
+          "reservations": 500
+        },
+        {
+          "bucket": "2026-03-19",
+          "highchairs": 98,
+          "reservations_with_highchair": 72,
+          "reservations": 464
+        },
+        {
+          "bucket": "2026-03-20",
+          "highchairs": 117,
+          "reservations_with_highchair": 80,
+          "reservations": 493
+        },
+        {
+          "bucket": "2026-03-21",
+          "highchairs": 149,
+          "reservations_with_highchair": 105,
+          "reservations": 672
+        },
+        {
+          "bucket": "2026-03-22",
+          "highchairs": 127,
+          "reservations_with_highchair": 98,
+          "reservations": 681
+        },
+        {
+          "bucket": "2026-03-23",
+          "highchairs": 114,
+          "reservations_with_highchair": 83,
+          "reservations": 528
+        },
+        {
+          "bucket": "2026-03-24",
+          "highchairs": 112,
+          "reservations_with_highchair": 76,
+          "reservations": 491
+        },
+        {
+          "bucket": "2026-03-25",
+          "highchairs": 75,
+          "reservations_with_highchair": 55,
+          "reservations": 470
+        },
+        {
+          "bucket": "2026-03-26",
+          "highchairs": 83,
+          "reservations_with_highchair": 58,
+          "reservations": 479
+        },
+        {
+          "bucket": "2026-03-27",
+          "highchairs": 103,
+          "reservations_with_highchair": 73,
+          "reservations": 492
+        },
+        {
+          "bucket": "2026-03-28",
+          "highchairs": 139,
+          "reservations_with_highchair": 99,
+          "reservations": 708
+        },
+        {
+          "bucket": "2026-03-29",
+          "highchairs": 152,
+          "reservations_with_highchair": 108,
+          "reservations": 693
+        },
+        {
+          "bucket": "2026-03-30",
+          "highchairs": 99,
+          "reservations_with_highchair": 70,
+          "reservations": 488
+        },
+        {
+          "bucket": "2026-03-31",
+          "highchairs": 84,
+          "reservations_with_highchair": 64,
+          "reservations": 485
+        },
+        {
+          "bucket": "2026-04-01",
+          "highchairs": 99,
+          "reservations_with_highchair": 67,
+          "reservations": 442
+        },
+        {
+          "bucket": "2026-04-02",
+          "highchairs": 79,
+          "reservations_with_highchair": 56,
+          "reservations": 467
+        },
+        {
+          "bucket": "2026-04-03",
+          "highchairs": 100,
+          "reservations_with_highchair": 69,
+          "reservations": 473
+        },
+        {
+          "bucket": "2026-04-04",
+          "highchairs": 142,
+          "reservations_with_highchair": 99,
+          "reservations": 687
+        },
+        {
+          "bucket": "2026-04-05",
+          "highchairs": 146,
+          "reservations_with_highchair": 104,
+          "reservations": 632
+        },
+        {
+          "bucket": "2026-04-06",
+          "highchairs": 96,
+          "reservations_with_highchair": 65,
+          "reservations": 488
+        },
+        {
+          "bucket": "2026-04-07",
+          "highchairs": 119,
+          "reservations_with_highchair": 80,
+          "reservations": 491
+        },
+        {
+          "bucket": "2026-04-08",
+          "highchairs": 102,
+          "reservations_with_highchair": 71,
+          "reservations": 520
+        },
+        {
+          "bucket": "2026-04-09",
+          "highchairs": 91,
+          "reservations_with_highchair": 70,
+          "reservations": 497
+        },
+        {
+          "bucket": "2026-04-10",
+          "highchairs": 112,
+          "reservations_with_highchair": 80,
+          "reservations": 469
+        },
+        {
+          "bucket": "2026-04-11",
+          "highchairs": 160,
+          "reservations_with_highchair": 113,
+          "reservations": 656
+        },
+        {
+          "bucket": "2026-04-12",
+          "highchairs": 139,
+          "reservations_with_highchair": 98,
+          "reservations": 663
+        },
+        {
+          "bucket": "2026-04-13",
+          "highchairs": 87,
+          "reservations_with_highchair": 64,
+          "reservations": 457
+        },
+        {
+          "bucket": "2026-04-14",
+          "highchairs": 143,
+          "reservations_with_highchair": 95,
+          "reservations": 489
+        },
+        {
+          "bucket": "2026-04-15",
+          "highchairs": 111,
+          "reservations_with_highchair": 76,
+          "reservations": 485
+        },
+        {
+          "bucket": "2026-04-16",
+          "highchairs": 92,
+          "reservations_with_highchair": 71,
+          "reservations": 504
+        },
+        {
+          "bucket": "2026-04-17",
+          "highchairs": 93,
+          "reservations_with_highchair": 68,
+          "reservations": 447
+        },
+        {
+          "bucket": "2026-04-18",
+          "highchairs": 143,
+          "reservations_with_highchair": 102,
+          "reservations": 633
+        },
+        {
+          "bucket": "2026-04-19",
+          "highchairs": 160,
+          "reservations_with_highchair": 113,
+          "reservations": 645
+        },
+        {
+          "bucket": "2026-04-20",
+          "highchairs": 112,
+          "reservations_with_highchair": 80,
+          "reservations": 471
+        },
+        {
+          "bucket": "2026-04-21",
+          "highchairs": 124,
+          "reservations_with_highchair": 86,
+          "reservations": 492
+        },
+        {
+          "bucket": "2026-04-22",
+          "highchairs": 106,
+          "reservations_with_highchair": 74,
+          "reservations": 441
+        },
+        {
+          "bucket": "2026-04-23",
+          "highchairs": 115,
+          "reservations_with_highchair": 80,
+          "reservations": 496
+        },
+        {
+          "bucket": "2026-04-24",
+          "highchairs": 99,
+          "reservations_with_highchair": 66,
+          "reservations": 438
+        },
+        {
+          "bucket": "2026-04-25",
+          "highchairs": 155,
+          "reservations_with_highchair": 112,
+          "reservations": 659
+        },
+        {
+          "bucket": "2026-04-26",
+          "highchairs": 150,
+          "reservations_with_highchair": 108,
+          "reservations": 677
+        },
+        {
+          "bucket": "2026-04-27",
+          "highchairs": 87,
+          "reservations_with_highchair": 62,
+          "reservations": 469
+        },
+        {
+          "bucket": "2026-04-28",
+          "highchairs": 115,
+          "reservations_with_highchair": 76,
+          "reservations": 475
+        },
+        {
+          "bucket": "2026-04-29",
+          "highchairs": 94,
+          "reservations_with_highchair": 73,
+          "reservations": 496
+        },
+        {
+          "bucket": "2026-04-30",
+          "highchairs": 117,
+          "reservations_with_highchair": 83,
+          "reservations": 481
+        },
+        {
+          "bucket": "2026-05-01",
+          "highchairs": 104,
+          "reservations_with_highchair": 71,
+          "reservations": 480
+        },
+        {
+          "bucket": "2026-05-02",
+          "highchairs": 142,
+          "reservations_with_highchair": 101,
+          "reservations": 649
+        },
+        {
+          "bucket": "2026-05-03",
+          "highchairs": 144,
+          "reservations_with_highchair": 99,
+          "reservations": 676
+        },
+        {
+          "bucket": "2026-05-04",
+          "highchairs": 110,
+          "reservations_with_highchair": 79,
+          "reservations": 490
+        },
+        {
+          "bucket": "2026-05-05",
+          "highchairs": 106,
+          "reservations_with_highchair": 74,
+          "reservations": 474
+        },
+        {
+          "bucket": "2026-05-06",
+          "highchairs": 96,
+          "reservations_with_highchair": 71,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-05-07",
+          "highchairs": 97,
+          "reservations_with_highchair": 70,
+          "reservations": 504
+        },
+        {
+          "bucket": "2026-05-08",
+          "highchairs": 110,
+          "reservations_with_highchair": 77,
+          "reservations": 475
+        },
+        {
+          "bucket": "2026-05-09",
+          "highchairs": 128,
+          "reservations_with_highchair": 85,
+          "reservations": 690
+        },
+        {
+          "bucket": "2026-05-10",
+          "highchairs": 158,
+          "reservations_with_highchair": 117,
+          "reservations": 705
+        },
+        {
+          "bucket": "2026-05-11",
+          "highchairs": 93,
+          "reservations_with_highchair": 63,
+          "reservations": 463
+        },
+        {
+          "bucket": "2026-05-12",
+          "highchairs": 110,
+          "reservations_with_highchair": 75,
+          "reservations": 457
+        },
+        {
+          "bucket": "2026-05-13",
+          "highchairs": 105,
+          "reservations_with_highchair": 75,
+          "reservations": 477
+        },
+        {
+          "bucket": "2026-05-14",
+          "highchairs": 105,
+          "reservations_with_highchair": 78,
+          "reservations": 504
+        },
+        {
+          "bucket": "2026-05-15",
+          "highchairs": 108,
+          "reservations_with_highchair": 77,
+          "reservations": 490
+        },
+        {
+          "bucket": "2026-05-16",
+          "highchairs": 165,
+          "reservations_with_highchair": 118,
+          "reservations": 656
+        },
+        {
+          "bucket": "2026-05-17",
+          "highchairs": 142,
+          "reservations_with_highchair": 103,
+          "reservations": 696
+        },
+        {
+          "bucket": "2026-05-18",
+          "highchairs": 114,
+          "reservations_with_highchair": 80,
+          "reservations": 474
+        },
+        {
+          "bucket": "2026-05-19",
+          "highchairs": 109,
+          "reservations_with_highchair": 83,
+          "reservations": 484
+        },
+        {
+          "bucket": "2026-05-20",
+          "highchairs": 117,
+          "reservations_with_highchair": 83,
+          "reservations": 536
+        },
+        {
+          "bucket": "2026-05-21",
+          "highchairs": 121,
+          "reservations_with_highchair": 83,
+          "reservations": 462
+        },
+        {
+          "bucket": "2026-05-22",
+          "highchairs": 107,
+          "reservations_with_highchair": 73,
+          "reservations": 480
+        },
+        {
+          "bucket": "2026-05-23",
+          "highchairs": 127,
+          "reservations_with_highchair": 95,
+          "reservations": 638
+        },
+        {
+          "bucket": "2026-05-24",
+          "highchairs": 137,
+          "reservations_with_highchair": 98,
+          "reservations": 643
+        },
+        {
+          "bucket": "2026-05-25",
+          "highchairs": 102,
+          "reservations_with_highchair": 78,
+          "reservations": 502
+        },
+        {
+          "bucket": "2026-05-26",
+          "highchairs": 95,
+          "reservations_with_highchair": 69,
+          "reservations": 485
+        },
+        {
+          "bucket": "2026-05-27",
+          "highchairs": 104,
+          "reservations_with_highchair": 73,
+          "reservations": 510
+        },
+        {
+          "bucket": "2026-05-28",
+          "highchairs": 86,
+          "reservations_with_highchair": 63,
+          "reservations": 499
+        },
+        {
+          "bucket": "2026-05-29",
+          "highchairs": 102,
+          "reservations_with_highchair": 70,
+          "reservations": 478
+        },
+        {
+          "bucket": "2026-05-30",
+          "highchairs": 148,
+          "reservations_with_highchair": 106,
+          "reservations": 650
+        },
+        {
+          "bucket": "2026-05-31",
+          "highchairs": 136,
+          "reservations_with_highchair": 96,
+          "reservations": 661
+        },
+        {
+          "bucket": "2026-06-01",
+          "highchairs": 118,
+          "reservations_with_highchair": 83,
+          "reservations": 499
+        },
+        {
+          "bucket": "2026-06-02",
+          "highchairs": 103,
+          "reservations_with_highchair": 74,
+          "reservations": 497
+        },
+        {
+          "bucket": "2026-06-03",
+          "highchairs": 101,
+          "reservations_with_highchair": 67,
+          "reservations": 504
+        },
+        {
+          "bucket": "2026-06-04",
+          "highchairs": 100,
+          "reservations_with_highchair": 69,
+          "reservations": 497
+        },
+        {
+          "bucket": "2026-06-05",
+          "highchairs": 106,
+          "reservations_with_highchair": 71,
+          "reservations": 465
+        },
+        {
+          "bucket": "2026-06-06",
+          "highchairs": 138,
+          "reservations_with_highchair": 98,
+          "reservations": 643
+        },
+        {
+          "bucket": "2026-06-07",
+          "highchairs": 151,
+          "reservations_with_highchair": 109,
+          "reservations": 691
+        },
+        {
+          "bucket": "2026-06-08",
+          "highchairs": 98,
+          "reservations_with_highchair": 68,
+          "reservations": 451
+        },
+        {
+          "bucket": "2026-06-09",
+          "highchairs": 111,
+          "reservations_with_highchair": 78,
+          "reservations": 475
+        },
+        {
+          "bucket": "2026-06-10",
+          "highchairs": 97,
+          "reservations_with_highchair": 73,
+          "reservations": 500
+        },
+        {
+          "bucket": "2026-06-11",
+          "highchairs": 106,
+          "reservations_with_highchair": 76,
+          "reservations": 482
+        },
+        {
+          "bucket": "2026-06-12",
+          "highchairs": 102,
+          "reservations_with_highchair": 72,
+          "reservations": 494
+        },
+        {
+          "bucket": "2026-06-13",
+          "highchairs": 140,
+          "reservations_with_highchair": 103,
+          "reservations": 704
+        },
+        {
+          "bucket": "2026-06-14",
+          "highchairs": 139,
+          "reservations_with_highchair": 106,
+          "reservations": 681
+        },
+        {
+          "bucket": "2026-06-15",
+          "highchairs": 106,
+          "reservations_with_highchair": 74,
+          "reservations": 460
+        },
+        {
+          "bucket": "2026-06-16",
+          "highchairs": 89,
+          "reservations_with_highchair": 59,
+          "reservations": 490
+        },
+        {
+          "bucket": "2026-06-17",
+          "highchairs": 104,
+          "reservations_with_highchair": 72,
+          "reservations": 480
+        },
+        {
+          "bucket": "2026-06-18",
+          "highchairs": 108,
+          "reservations_with_highchair": 76,
+          "reservations": 480
+        },
+        {
+          "bucket": "2026-06-19",
+          "highchairs": 86,
+          "reservations_with_highchair": 62,
+          "reservations": 463
+        },
+        {
+          "bucket": "2026-06-20",
+          "highchairs": 136,
+          "reservations_with_highchair": 95,
+          "reservations": 652
+        },
+        {
+          "bucket": "2026-06-21",
+          "highchairs": 150,
+          "reservations_with_highchair": 104,
+          "reservations": 620
+        },
+        {
+          "bucket": "2026-06-22",
+          "highchairs": 117,
+          "reservations_with_highchair": 80,
+          "reservations": 485
+        },
+        {
+          "bucket": "2026-06-23",
+          "highchairs": 106,
+          "reservations_with_highchair": 75,
+          "reservations": 475
+        },
+        {
+          "bucket": "2026-06-24",
+          "highchairs": 114,
+          "reservations_with_highchair": 78,
+          "reservations": 458
+        },
+        {
+          "bucket": "2026-06-25",
+          "highchairs": 109,
+          "reservations_with_highchair": 77,
+          "reservations": 486
+        },
+        {
+          "bucket": "2026-06-26",
+          "highchairs": 100,
+          "reservations_with_highchair": 71,
+          "reservations": 493
+        },
+        {
+          "bucket": "2026-06-27",
+          "highchairs": 142,
+          "reservations_with_highchair": 98,
+          "reservations": 652
+        },
+        {
+          "bucket": "2026-06-28",
+          "highchairs": 157,
+          "reservations_with_highchair": 101,
+          "reservations": 688
+        },
+        {
+          "bucket": "2026-06-29",
+          "highchairs": 118,
+          "reservations_with_highchair": 85,
+          "reservations": 476
+        },
+        {
+          "bucket": "2026-06-30",
+          "highchairs": 99,
+          "reservations_with_highchair": 71,
+          "reservations": 503
+        },
+        {
+          "bucket": "2026-07-01",
+          "highchairs": 112,
+          "reservations_with_highchair": 78,
+          "reservations": 495
+        },
+        {
+          "bucket": "2026-07-02",
+          "highchairs": 108,
+          "reservations_with_highchair": 74,
+          "reservations": 500
+        },
+        {
+          "bucket": "2026-07-03",
+          "highchairs": 93,
+          "reservations_with_highchair": 69,
+          "reservations": 476
+        },
+        {
+          "bucket": "2026-07-04",
+          "highchairs": 138,
+          "reservations_with_highchair": 100,
+          "reservations": 656
+        },
+        {
+          "bucket": "2026-07-05",
+          "highchairs": 138,
+          "reservations_with_highchair": 96,
+          "reservations": 716
+        },
+        {
+          "bucket": "2026-07-06",
+          "highchairs": 88,
+          "reservations_with_highchair": 66,
+          "reservations": 469
+        },
+        {
+          "bucket": "2026-07-07",
+          "highchairs": 86,
+          "reservations_with_highchair": 65,
+          "reservations": 496
+        },
+        {
+          "bucket": "2026-07-08",
+          "highchairs": 108,
+          "reservations_with_highchair": 78,
+          "reservations": 508
+        }
+      ],
+      "cancellations": [
+        {
+          "bucket": "2025-07-09",
+          "cancelled": 45,
+          "total": 522
+        },
+        {
+          "bucket": "2025-07-10",
+          "cancelled": 40,
+          "total": 573
+        },
+        {
+          "bucket": "2025-07-11",
+          "cancelled": 54,
+          "total": 551
+        },
+        {
+          "bucket": "2025-07-12",
+          "cancelled": 48,
+          "total": 732
+        },
+        {
+          "bucket": "2025-07-13",
+          "cancelled": 60,
+          "total": 719
+        },
+        {
+          "bucket": "2025-07-14",
+          "cancelled": 55,
+          "total": 532
+        },
+        {
+          "bucket": "2025-07-15",
+          "cancelled": 40,
+          "total": 530
+        },
+        {
+          "bucket": "2025-07-16",
+          "cancelled": 39,
+          "total": 509
+        },
+        {
+          "bucket": "2025-07-17",
+          "cancelled": 52,
+          "total": 550
+        },
+        {
+          "bucket": "2025-07-18",
+          "cancelled": 51,
+          "total": 558
+        },
+        {
+          "bucket": "2025-07-19",
+          "cancelled": 59,
+          "total": 733
+        },
+        {
+          "bucket": "2025-07-20",
+          "cancelled": 46,
+          "total": 712
+        },
+        {
+          "bucket": "2025-07-21",
+          "cancelled": 30,
+          "total": 530
+        },
+        {
+          "bucket": "2025-07-22",
+          "cancelled": 48,
+          "total": 495
+        },
+        {
+          "bucket": "2025-07-23",
+          "cancelled": 31,
+          "total": 507
+        },
+        {
+          "bucket": "2025-07-24",
+          "cancelled": 49,
+          "total": 571
+        },
+        {
+          "bucket": "2025-07-25",
+          "cancelled": 40,
+          "total": 528
+        },
+        {
+          "bucket": "2025-07-26",
+          "cancelled": 50,
+          "total": 752
+        },
+        {
+          "bucket": "2025-07-27",
+          "cancelled": 66,
+          "total": 714
+        },
+        {
+          "bucket": "2025-07-28",
+          "cancelled": 33,
+          "total": 540
+        },
+        {
+          "bucket": "2025-07-29",
+          "cancelled": 42,
+          "total": 532
+        },
+        {
+          "bucket": "2025-07-30",
+          "cancelled": 34,
+          "total": 500
+        },
+        {
+          "bucket": "2025-07-31",
+          "cancelled": 51,
+          "total": 537
+        },
+        {
+          "bucket": "2025-08-01",
+          "cancelled": 37,
+          "total": 533
+        },
+        {
+          "bucket": "2025-08-02",
+          "cancelled": 59,
+          "total": 706
+        },
+        {
+          "bucket": "2025-08-03",
+          "cancelled": 62,
+          "total": 743
+        },
+        {
+          "bucket": "2025-08-04",
+          "cancelled": 31,
+          "total": 504
+        },
+        {
+          "bucket": "2025-08-05",
+          "cancelled": 42,
+          "total": 513
+        },
+        {
+          "bucket": "2025-08-06",
+          "cancelled": 41,
+          "total": 542
+        },
+        {
+          "bucket": "2025-08-07",
+          "cancelled": 43,
+          "total": 480
+        },
+        {
+          "bucket": "2025-08-08",
+          "cancelled": 41,
+          "total": 541
+        },
+        {
+          "bucket": "2025-08-09",
+          "cancelled": 51,
+          "total": 689
+        },
+        {
+          "bucket": "2025-08-10",
+          "cancelled": 50,
+          "total": 690
+        },
+        {
+          "bucket": "2025-08-11",
+          "cancelled": 39,
+          "total": 491
+        },
+        {
+          "bucket": "2025-08-12",
+          "cancelled": 47,
+          "total": 543
+        },
+        {
+          "bucket": "2025-08-13",
+          "cancelled": 41,
+          "total": 541
+        },
+        {
+          "bucket": "2025-08-14",
+          "cancelled": 44,
+          "total": 506
+        },
+        {
+          "bucket": "2025-08-15",
+          "cancelled": 46,
+          "total": 535
+        },
+        {
+          "bucket": "2025-08-16",
+          "cancelled": 62,
+          "total": 722
+        },
+        {
+          "bucket": "2025-08-17",
+          "cancelled": 41,
+          "total": 709
+        },
+        {
+          "bucket": "2025-08-18",
+          "cancelled": 51,
+          "total": 511
+        },
+        {
+          "bucket": "2025-08-19",
+          "cancelled": 49,
+          "total": 563
+        },
+        {
+          "bucket": "2025-08-20",
+          "cancelled": 30,
+          "total": 518
+        },
+        {
+          "bucket": "2025-08-21",
+          "cancelled": 33,
+          "total": 521
+        },
+        {
+          "bucket": "2025-08-22",
+          "cancelled": 49,
+          "total": 528
+        },
+        {
+          "bucket": "2025-08-23",
+          "cancelled": 68,
+          "total": 760
+        },
+        {
+          "bucket": "2025-08-24",
+          "cancelled": 64,
+          "total": 740
+        },
+        {
+          "bucket": "2025-08-25",
+          "cancelled": 35,
+          "total": 519
+        },
+        {
+          "bucket": "2025-08-26",
+          "cancelled": 44,
+          "total": 546
+        },
+        {
+          "bucket": "2025-08-27",
+          "cancelled": 35,
+          "total": 533
+        },
+        {
+          "bucket": "2025-08-28",
+          "cancelled": 33,
+          "total": 537
+        },
+        {
+          "bucket": "2025-08-29",
+          "cancelled": 55,
+          "total": 541
+        },
+        {
+          "bucket": "2025-08-30",
+          "cancelled": 62,
+          "total": 689
+        },
+        {
+          "bucket": "2025-08-31",
+          "cancelled": 67,
+          "total": 723
+        },
+        {
+          "bucket": "2025-09-01",
+          "cancelled": 35,
+          "total": 545
+        },
+        {
+          "bucket": "2025-09-02",
+          "cancelled": 42,
+          "total": 523
+        },
+        {
+          "bucket": "2025-09-03",
+          "cancelled": 36,
+          "total": 507
+        },
+        {
+          "bucket": "2025-09-04",
+          "cancelled": 47,
+          "total": 561
+        },
+        {
+          "bucket": "2025-09-05",
+          "cancelled": 41,
+          "total": 512
+        },
+        {
+          "bucket": "2025-09-06",
+          "cancelled": 52,
+          "total": 738
+        },
+        {
+          "bucket": "2025-09-07",
+          "cancelled": 63,
+          "total": 758
+        },
+        {
+          "bucket": "2025-09-08",
+          "cancelled": 39,
+          "total": 511
+        },
+        {
+          "bucket": "2025-09-09",
+          "cancelled": 41,
+          "total": 556
+        },
+        {
+          "bucket": "2025-09-10",
+          "cancelled": 36,
+          "total": 502
+        },
+        {
+          "bucket": "2025-09-11",
+          "cancelled": 39,
+          "total": 535
+        },
+        {
+          "bucket": "2025-09-12",
+          "cancelled": 48,
+          "total": 551
+        },
+        {
+          "bucket": "2025-09-13",
+          "cancelled": 52,
+          "total": 780
+        },
+        {
+          "bucket": "2025-09-14",
+          "cancelled": 44,
+          "total": 712
+        },
+        {
+          "bucket": "2025-09-15",
+          "cancelled": 41,
+          "total": 516
+        },
+        {
+          "bucket": "2025-09-16",
+          "cancelled": 41,
+          "total": 527
+        },
+        {
+          "bucket": "2025-09-17",
+          "cancelled": 39,
+          "total": 508
+        },
+        {
+          "bucket": "2025-09-18",
+          "cancelled": 56,
+          "total": 556
+        },
+        {
+          "bucket": "2025-09-19",
+          "cancelled": 42,
+          "total": 550
+        },
+        {
+          "bucket": "2025-09-20",
+          "cancelled": 55,
+          "total": 714
+        },
+        {
+          "bucket": "2025-09-21",
+          "cancelled": 71,
+          "total": 789
+        },
+        {
+          "bucket": "2025-09-22",
+          "cancelled": 50,
+          "total": 512
+        },
+        {
+          "bucket": "2025-09-23",
+          "cancelled": 34,
+          "total": 513
+        },
+        {
+          "bucket": "2025-09-24",
+          "cancelled": 50,
+          "total": 535
+        },
+        {
+          "bucket": "2025-09-25",
+          "cancelled": 33,
+          "total": 505
+        },
+        {
+          "bucket": "2025-09-26",
+          "cancelled": 31,
+          "total": 548
+        },
+        {
+          "bucket": "2025-09-27",
+          "cancelled": 57,
+          "total": 757
+        },
+        {
+          "bucket": "2025-09-28",
+          "cancelled": 60,
+          "total": 737
+        },
+        {
+          "bucket": "2025-09-29",
+          "cancelled": 43,
+          "total": 577
+        },
+        {
+          "bucket": "2025-09-30",
+          "cancelled": 46,
+          "total": 542
+        },
+        {
+          "bucket": "2025-10-01",
+          "cancelled": 47,
+          "total": 545
+        },
+        {
+          "bucket": "2025-10-02",
+          "cancelled": 45,
+          "total": 548
+        },
+        {
+          "bucket": "2025-10-03",
+          "cancelled": 39,
+          "total": 536
+        },
+        {
+          "bucket": "2025-10-04",
+          "cancelled": 68,
+          "total": 766
+        },
+        {
+          "bucket": "2025-10-05",
+          "cancelled": 53,
+          "total": 727
+        },
+        {
+          "bucket": "2025-10-06",
+          "cancelled": 32,
+          "total": 494
+        },
+        {
+          "bucket": "2025-10-07",
+          "cancelled": 41,
+          "total": 543
+        },
+        {
+          "bucket": "2025-10-08",
+          "cancelled": 38,
+          "total": 527
+        },
+        {
+          "bucket": "2025-10-09",
+          "cancelled": 45,
+          "total": 488
+        },
+        {
+          "bucket": "2025-10-10",
+          "cancelled": 51,
+          "total": 586
+        },
+        {
+          "bucket": "2025-10-11",
+          "cancelled": 63,
+          "total": 757
+        },
+        {
+          "bucket": "2025-10-12",
+          "cancelled": 70,
+          "total": 758
+        },
+        {
+          "bucket": "2025-10-13",
+          "cancelled": 47,
+          "total": 513
+        },
+        {
+          "bucket": "2025-10-14",
+          "cancelled": 58,
+          "total": 576
+        },
+        {
+          "bucket": "2025-10-15",
+          "cancelled": 41,
+          "total": 539
+        },
+        {
+          "bucket": "2025-10-16",
+          "cancelled": 41,
+          "total": 490
+        },
+        {
+          "bucket": "2025-10-17",
+          "cancelled": 57,
+          "total": 531
+        },
+        {
+          "bucket": "2025-10-18",
+          "cancelled": 50,
+          "total": 728
+        },
+        {
+          "bucket": "2025-10-19",
+          "cancelled": 60,
+          "total": 748
+        },
+        {
+          "bucket": "2025-10-20",
+          "cancelled": 46,
+          "total": 547
+        },
+        {
+          "bucket": "2025-10-21",
+          "cancelled": 34,
+          "total": 527
+        },
+        {
+          "bucket": "2025-10-22",
+          "cancelled": 32,
+          "total": 505
+        },
+        {
+          "bucket": "2025-10-23",
+          "cancelled": 41,
+          "total": 535
+        },
+        {
+          "bucket": "2025-10-24",
+          "cancelled": 51,
+          "total": 588
+        },
+        {
+          "bucket": "2025-10-25",
+          "cancelled": 68,
+          "total": 776
+        },
+        {
+          "bucket": "2025-10-26",
+          "cancelled": 56,
+          "total": 733
+        },
+        {
+          "bucket": "2025-10-27",
+          "cancelled": 42,
+          "total": 509
+        },
+        {
+          "bucket": "2025-10-28",
+          "cancelled": 33,
+          "total": 526
+        },
+        {
+          "bucket": "2025-10-29",
+          "cancelled": 35,
+          "total": 519
+        },
+        {
+          "bucket": "2025-10-30",
+          "cancelled": 27,
+          "total": 535
+        },
+        {
+          "bucket": "2025-10-31",
+          "cancelled": 45,
+          "total": 504
+        },
+        {
+          "bucket": "2025-11-01",
+          "cancelled": 78,
+          "total": 809
+        },
+        {
+          "bucket": "2025-11-02",
+          "cancelled": 56,
+          "total": 713
+        },
+        {
+          "bucket": "2025-11-03",
+          "cancelled": 36,
+          "total": 532
+        },
+        {
+          "bucket": "2025-11-04",
+          "cancelled": 39,
+          "total": 529
+        },
+        {
+          "bucket": "2025-11-05",
+          "cancelled": 42,
+          "total": 549
+        },
+        {
+          "bucket": "2025-11-06",
+          "cancelled": 44,
+          "total": 514
+        },
+        {
+          "bucket": "2025-11-07",
+          "cancelled": 48,
+          "total": 531
+        },
+        {
+          "bucket": "2025-11-08",
+          "cancelled": 53,
+          "total": 686
+        },
+        {
+          "bucket": "2025-11-09",
+          "cancelled": 50,
+          "total": 689
+        },
+        {
+          "bucket": "2025-11-10",
+          "cancelled": 44,
+          "total": 551
+        },
+        {
+          "bucket": "2025-11-11",
+          "cancelled": 27,
+          "total": 519
+        },
+        {
+          "bucket": "2025-11-12",
+          "cancelled": 33,
+          "total": 480
+        },
+        {
+          "bucket": "2025-11-13",
+          "cancelled": 52,
+          "total": 573
+        },
+        {
+          "bucket": "2025-11-14",
+          "cancelled": 46,
+          "total": 546
+        },
+        {
+          "bucket": "2025-11-15",
+          "cancelled": 55,
+          "total": 745
+        },
+        {
+          "bucket": "2025-11-16",
+          "cancelled": 71,
+          "total": 750
+        },
+        {
+          "bucket": "2025-11-17",
+          "cancelled": 44,
+          "total": 540
+        },
+        {
+          "bucket": "2025-11-18",
+          "cancelled": 37,
+          "total": 495
+        },
+        {
+          "bucket": "2025-11-19",
+          "cancelled": 53,
+          "total": 552
+        },
+        {
+          "bucket": "2025-11-20",
+          "cancelled": 53,
+          "total": 517
+        },
+        {
+          "bucket": "2025-11-21",
+          "cancelled": 49,
+          "total": 537
+        },
+        {
+          "bucket": "2025-11-22",
+          "cancelled": 68,
+          "total": 721
+        },
+        {
+          "bucket": "2025-11-23",
+          "cancelled": 59,
+          "total": 694
+        },
+        {
+          "bucket": "2025-11-24",
+          "cancelled": 44,
+          "total": 547
+        },
+        {
+          "bucket": "2025-11-25",
+          "cancelled": 46,
+          "total": 525
+        },
+        {
+          "bucket": "2025-11-26",
+          "cancelled": 32,
+          "total": 523
+        },
+        {
+          "bucket": "2025-11-27",
+          "cancelled": 35,
+          "total": 523
+        },
+        {
+          "bucket": "2025-11-28",
+          "cancelled": 39,
+          "total": 523
+        },
+        {
+          "bucket": "2025-11-29",
+          "cancelled": 50,
+          "total": 697
+        },
+        {
+          "bucket": "2025-11-30",
+          "cancelled": 48,
+          "total": 712
+        },
+        {
+          "bucket": "2025-12-01",
+          "cancelled": 44,
+          "total": 502
+        },
+        {
+          "bucket": "2025-12-02",
+          "cancelled": 45,
+          "total": 551
+        },
+        {
+          "bucket": "2025-12-03",
+          "cancelled": 31,
+          "total": 471
+        },
+        {
+          "bucket": "2025-12-04",
+          "cancelled": 49,
+          "total": 514
+        },
+        {
+          "bucket": "2025-12-05",
+          "cancelled": 54,
+          "total": 518
+        },
+        {
+          "bucket": "2025-12-06",
+          "cancelled": 54,
+          "total": 703
+        },
+        {
+          "bucket": "2025-12-07",
+          "cancelled": 65,
+          "total": 758
+        },
+        {
+          "bucket": "2025-12-08",
+          "cancelled": 45,
+          "total": 536
+        },
+        {
+          "bucket": "2025-12-09",
+          "cancelled": 43,
+          "total": 539
+        },
+        {
+          "bucket": "2025-12-10",
+          "cancelled": 46,
+          "total": 524
+        },
+        {
+          "bucket": "2025-12-11",
+          "cancelled": 41,
+          "total": 517
+        },
+        {
+          "bucket": "2025-12-12",
+          "cancelled": 43,
+          "total": 551
+        },
+        {
+          "bucket": "2025-12-13",
+          "cancelled": 55,
+          "total": 723
+        },
+        {
+          "bucket": "2025-12-14",
+          "cancelled": 47,
+          "total": 717
+        },
+        {
+          "bucket": "2025-12-15",
+          "cancelled": 41,
+          "total": 521
+        },
+        {
+          "bucket": "2025-12-16",
+          "cancelled": 44,
+          "total": 526
+        },
+        {
+          "bucket": "2025-12-17",
+          "cancelled": 31,
+          "total": 508
+        },
+        {
+          "bucket": "2025-12-18",
+          "cancelled": 42,
+          "total": 566
+        },
+        {
+          "bucket": "2025-12-19",
+          "cancelled": 41,
+          "total": 519
+        },
+        {
+          "bucket": "2025-12-20",
+          "cancelled": 72,
+          "total": 735
+        },
+        {
+          "bucket": "2025-12-21",
+          "cancelled": 53,
+          "total": 687
+        },
+        {
+          "bucket": "2025-12-22",
+          "cancelled": 32,
+          "total": 507
+        },
+        {
+          "bucket": "2025-12-23",
+          "cancelled": 42,
+          "total": 501
+        },
+        {
+          "bucket": "2025-12-24",
+          "cancelled": 41,
+          "total": 503
+        },
+        {
+          "bucket": "2025-12-25",
+          "cancelled": 30,
+          "total": 515
+        },
+        {
+          "bucket": "2025-12-26",
+          "cancelled": 38,
+          "total": 492
+        },
+        {
+          "bucket": "2025-12-27",
+          "cancelled": 38,
+          "total": 707
+        },
+        {
+          "bucket": "2025-12-28",
+          "cancelled": 48,
+          "total": 698
+        },
+        {
+          "bucket": "2025-12-29",
+          "cancelled": 38,
+          "total": 565
+        },
+        {
+          "bucket": "2025-12-30",
+          "cancelled": 40,
+          "total": 518
+        },
+        {
+          "bucket": "2025-12-31",
+          "cancelled": 33,
+          "total": 515
+        },
+        {
+          "bucket": "2026-01-01",
+          "cancelled": 45,
+          "total": 553
+        },
+        {
+          "bucket": "2026-01-02",
+          "cancelled": 42,
+          "total": 521
+        },
+        {
+          "bucket": "2026-01-03",
+          "cancelled": 63,
+          "total": 736
+        },
+        {
+          "bucket": "2026-01-04",
+          "cancelled": 70,
+          "total": 782
+        },
+        {
+          "bucket": "2026-01-05",
+          "cancelled": 39,
+          "total": 517
+        },
+        {
+          "bucket": "2026-01-06",
+          "cancelled": 50,
+          "total": 511
+        },
+        {
+          "bucket": "2026-01-07",
+          "cancelled": 41,
+          "total": 518
+        },
+        {
+          "bucket": "2026-01-08",
+          "cancelled": 48,
+          "total": 534
+        },
+        {
+          "bucket": "2026-01-09",
+          "cancelled": 41,
+          "total": 523
+        },
+        {
+          "bucket": "2026-01-10",
+          "cancelled": 72,
+          "total": 762
+        },
+        {
+          "bucket": "2026-01-11",
+          "cancelled": 72,
+          "total": 786
+        },
+        {
+          "bucket": "2026-01-12",
+          "cancelled": 40,
+          "total": 531
+        },
+        {
+          "bucket": "2026-01-13",
+          "cancelled": 47,
+          "total": 541
+        },
+        {
+          "bucket": "2026-01-14",
+          "cancelled": 44,
+          "total": 549
+        },
+        {
+          "bucket": "2026-01-15",
+          "cancelled": 48,
+          "total": 570
+        },
+        {
+          "bucket": "2026-01-16",
+          "cancelled": 41,
+          "total": 539
+        },
+        {
+          "bucket": "2026-01-17",
+          "cancelled": 59,
+          "total": 793
+        },
+        {
+          "bucket": "2026-01-18",
+          "cancelled": 77,
+          "total": 809
+        },
+        {
+          "bucket": "2026-01-19",
+          "cancelled": 30,
+          "total": 488
+        },
+        {
+          "bucket": "2026-01-20",
+          "cancelled": 47,
+          "total": 516
+        },
+        {
+          "bucket": "2026-01-21",
+          "cancelled": 42,
+          "total": 531
+        },
+        {
+          "bucket": "2026-01-22",
+          "cancelled": 42,
+          "total": 526
+        },
+        {
+          "bucket": "2026-01-23",
+          "cancelled": 36,
+          "total": 522
+        },
+        {
+          "bucket": "2026-01-24",
+          "cancelled": 81,
+          "total": 758
+        },
+        {
+          "bucket": "2026-01-25",
+          "cancelled": 54,
+          "total": 693
+        },
+        {
+          "bucket": "2026-01-26",
+          "cancelled": 43,
+          "total": 545
+        },
+        {
+          "bucket": "2026-01-27",
+          "cancelled": 37,
+          "total": 529
+        },
+        {
+          "bucket": "2026-01-28",
+          "cancelled": 45,
+          "total": 524
+        },
+        {
+          "bucket": "2026-01-29",
+          "cancelled": 47,
+          "total": 544
+        },
+        {
+          "bucket": "2026-01-30",
+          "cancelled": 49,
+          "total": 575
+        },
+        {
+          "bucket": "2026-01-31",
+          "cancelled": 60,
+          "total": 738
+        },
+        {
+          "bucket": "2026-02-01",
+          "cancelled": 61,
+          "total": 738
+        },
+        {
+          "bucket": "2026-02-02",
+          "cancelled": 35,
+          "total": 531
+        },
+        {
+          "bucket": "2026-02-03",
+          "cancelled": 41,
+          "total": 504
+        },
+        {
+          "bucket": "2026-02-04",
+          "cancelled": 38,
+          "total": 537
+        },
+        {
+          "bucket": "2026-02-05",
+          "cancelled": 39,
+          "total": 551
+        },
+        {
+          "bucket": "2026-02-06",
+          "cancelled": 45,
+          "total": 524
+        },
+        {
+          "bucket": "2026-02-07",
+          "cancelled": 52,
+          "total": 715
+        },
+        {
+          "bucket": "2026-02-08",
+          "cancelled": 68,
+          "total": 750
+        },
+        {
+          "bucket": "2026-02-09",
+          "cancelled": 36,
+          "total": 504
+        },
+        {
+          "bucket": "2026-02-10",
+          "cancelled": 49,
+          "total": 535
+        },
+        {
+          "bucket": "2026-02-11",
+          "cancelled": 42,
+          "total": 546
+        },
+        {
+          "bucket": "2026-02-12",
+          "cancelled": 34,
+          "total": 510
+        },
+        {
+          "bucket": "2026-02-13",
+          "cancelled": 52,
+          "total": 518
+        },
+        {
+          "bucket": "2026-02-14",
+          "cancelled": 70,
+          "total": 753
+        },
+        {
+          "bucket": "2026-02-15",
+          "cancelled": 39,
+          "total": 726
+        },
+        {
+          "bucket": "2026-02-16",
+          "cancelled": 38,
+          "total": 532
+        },
+        {
+          "bucket": "2026-02-17",
+          "cancelled": 51,
+          "total": 526
+        },
+        {
+          "bucket": "2026-02-18",
+          "cancelled": 48,
+          "total": 558
+        },
+        {
+          "bucket": "2026-02-19",
+          "cancelled": 42,
+          "total": 549
+        },
+        {
+          "bucket": "2026-02-20",
+          "cancelled": 48,
+          "total": 578
+        },
+        {
+          "bucket": "2026-02-21",
+          "cancelled": 53,
+          "total": 742
+        },
+        {
+          "bucket": "2026-02-22",
+          "cancelled": 57,
+          "total": 704
+        },
+        {
+          "bucket": "2026-02-23",
+          "cancelled": 42,
+          "total": 539
+        },
+        {
+          "bucket": "2026-02-24",
+          "cancelled": 50,
+          "total": 555
+        },
+        {
+          "bucket": "2026-02-25",
+          "cancelled": 29,
+          "total": 519
+        },
+        {
+          "bucket": "2026-02-26",
+          "cancelled": 45,
+          "total": 545
+        },
+        {
+          "bucket": "2026-02-27",
+          "cancelled": 42,
+          "total": 528
+        },
+        {
+          "bucket": "2026-02-28",
+          "cancelled": 63,
+          "total": 712
+        },
+        {
+          "bucket": "2026-03-01",
+          "cancelled": 64,
+          "total": 764
+        },
+        {
+          "bucket": "2026-03-02",
+          "cancelled": 33,
+          "total": 514
+        },
+        {
+          "bucket": "2026-03-03",
+          "cancelled": 50,
+          "total": 574
+        },
+        {
+          "bucket": "2026-03-04",
+          "cancelled": 32,
+          "total": 515
+        },
+        {
+          "bucket": "2026-03-05",
+          "cancelled": 33,
+          "total": 536
+        },
+        {
+          "bucket": "2026-03-06",
+          "cancelled": 31,
+          "total": 494
+        },
+        {
+          "bucket": "2026-03-07",
+          "cancelled": 64,
+          "total": 744
+        },
+        {
+          "bucket": "2026-03-08",
+          "cancelled": 58,
+          "total": 748
+        },
+        {
+          "bucket": "2026-03-09",
+          "cancelled": 42,
+          "total": 520
+        },
+        {
+          "bucket": "2026-03-10",
+          "cancelled": 42,
+          "total": 527
+        },
+        {
+          "bucket": "2026-03-11",
+          "cancelled": 33,
+          "total": 520
+        },
+        {
+          "bucket": "2026-03-12",
+          "cancelled": 37,
+          "total": 545
+        },
+        {
+          "bucket": "2026-03-13",
+          "cancelled": 37,
+          "total": 524
+        },
+        {
+          "bucket": "2026-03-14",
+          "cancelled": 60,
+          "total": 740
+        },
+        {
+          "bucket": "2026-03-15",
+          "cancelled": 56,
+          "total": 719
+        },
+        {
+          "bucket": "2026-03-16",
+          "cancelled": 44,
+          "total": 504
+        },
+        {
+          "bucket": "2026-03-17",
+          "cancelled": 43,
+          "total": 559
+        },
+        {
+          "bucket": "2026-03-18",
+          "cancelled": 33,
+          "total": 533
+        },
+        {
+          "bucket": "2026-03-19",
+          "cancelled": 44,
+          "total": 508
+        },
+        {
+          "bucket": "2026-03-20",
+          "cancelled": 55,
+          "total": 548
+        },
+        {
+          "bucket": "2026-03-21",
+          "cancelled": 41,
+          "total": 713
+        },
+        {
+          "bucket": "2026-03-22",
+          "cancelled": 50,
+          "total": 731
+        },
+        {
+          "bucket": "2026-03-23",
+          "cancelled": 51,
+          "total": 579
+        },
+        {
+          "bucket": "2026-03-24",
+          "cancelled": 54,
+          "total": 545
+        },
+        {
+          "bucket": "2026-03-25",
+          "cancelled": 37,
+          "total": 507
+        },
+        {
+          "bucket": "2026-03-26",
+          "cancelled": 53,
+          "total": 532
+        },
+        {
+          "bucket": "2026-03-27",
+          "cancelled": 36,
+          "total": 528
+        },
+        {
+          "bucket": "2026-03-28",
+          "cancelled": 78,
+          "total": 786
+        },
+        {
+          "bucket": "2026-03-29",
+          "cancelled": 73,
+          "total": 766
+        },
+        {
+          "bucket": "2026-03-30",
+          "cancelled": 37,
+          "total": 525
+        },
+        {
+          "bucket": "2026-03-31",
+          "cancelled": 38,
+          "total": 523
+        },
+        {
+          "bucket": "2026-04-01",
+          "cancelled": 42,
+          "total": 484
+        },
+        {
+          "bucket": "2026-04-02",
+          "cancelled": 34,
+          "total": 501
+        },
+        {
+          "bucket": "2026-04-03",
+          "cancelled": 40,
+          "total": 513
+        },
+        {
+          "bucket": "2026-04-04",
+          "cancelled": 55,
+          "total": 742
+        },
+        {
+          "bucket": "2026-04-05",
+          "cancelled": 53,
+          "total": 685
+        },
+        {
+          "bucket": "2026-04-06",
+          "cancelled": 31,
+          "total": 519
+        },
+        {
+          "bucket": "2026-04-07",
+          "cancelled": 32,
+          "total": 523
+        },
+        {
+          "bucket": "2026-04-08",
+          "cancelled": 53,
+          "total": 573
+        },
+        {
+          "bucket": "2026-04-09",
+          "cancelled": 43,
+          "total": 540
+        },
+        {
+          "bucket": "2026-04-10",
+          "cancelled": 41,
+          "total": 510
+        },
+        {
+          "bucket": "2026-04-11",
+          "cancelled": 52,
+          "total": 708
+        },
+        {
+          "bucket": "2026-04-12",
+          "cancelled": 79,
+          "total": 742
+        },
+        {
+          "bucket": "2026-04-13",
+          "cancelled": 39,
+          "total": 496
+        },
+        {
+          "bucket": "2026-04-14",
+          "cancelled": 39,
+          "total": 528
+        },
+        {
+          "bucket": "2026-04-15",
+          "cancelled": 42,
+          "total": 527
+        },
+        {
+          "bucket": "2026-04-16",
+          "cancelled": 47,
+          "total": 551
+        },
+        {
+          "bucket": "2026-04-17",
+          "cancelled": 33,
+          "total": 480
+        },
+        {
+          "bucket": "2026-04-18",
+          "cancelled": 53,
+          "total": 686
+        },
+        {
+          "bucket": "2026-04-19",
+          "cancelled": 62,
+          "total": 707
+        },
+        {
+          "bucket": "2026-04-20",
+          "cancelled": 39,
+          "total": 510
+        },
+        {
+          "bucket": "2026-04-21",
+          "cancelled": 50,
+          "total": 542
+        },
+        {
+          "bucket": "2026-04-22",
+          "cancelled": 37,
+          "total": 478
+        },
+        {
+          "bucket": "2026-04-23",
+          "cancelled": 39,
+          "total": 535
+        },
+        {
+          "bucket": "2026-04-24",
+          "cancelled": 48,
+          "total": 486
+        },
+        {
+          "bucket": "2026-04-25",
+          "cancelled": 57,
+          "total": 716
+        },
+        {
+          "bucket": "2026-04-26",
+          "cancelled": 65,
+          "total": 742
+        },
+        {
+          "bucket": "2026-04-27",
+          "cancelled": 41,
+          "total": 510
+        },
+        {
+          "bucket": "2026-04-28",
+          "cancelled": 39,
+          "total": 514
+        },
+        {
+          "bucket": "2026-04-29",
+          "cancelled": 47,
+          "total": 543
+        },
+        {
+          "bucket": "2026-04-30",
+          "cancelled": 46,
+          "total": 527
+        },
+        {
+          "bucket": "2026-05-01",
+          "cancelled": 40,
+          "total": 520
+        },
+        {
+          "bucket": "2026-05-02",
+          "cancelled": 49,
+          "total": 698
+        },
+        {
+          "bucket": "2026-05-03",
+          "cancelled": 64,
+          "total": 740
+        },
+        {
+          "bucket": "2026-05-04",
+          "cancelled": 44,
+          "total": 534
+        },
+        {
+          "bucket": "2026-05-05",
+          "cancelled": 45,
+          "total": 519
+        },
+        {
+          "bucket": "2026-05-06",
+          "cancelled": 54,
+          "total": 540
+        },
+        {
+          "bucket": "2026-05-07",
+          "cancelled": 50,
+          "total": 554
+        },
+        {
+          "bucket": "2026-05-08",
+          "cancelled": 43,
+          "total": 518
+        },
+        {
+          "bucket": "2026-05-09",
+          "cancelled": 52,
+          "total": 742
+        },
+        {
+          "bucket": "2026-05-10",
+          "cancelled": 44,
+          "total": 749
+        },
+        {
+          "bucket": "2026-05-11",
+          "cancelled": 49,
+          "total": 512
+        },
+        {
+          "bucket": "2026-05-12",
+          "cancelled": 40,
+          "total": 497
+        },
+        {
+          "bucket": "2026-05-13",
+          "cancelled": 49,
+          "total": 526
+        },
+        {
+          "bucket": "2026-05-14",
+          "cancelled": 41,
+          "total": 545
+        },
+        {
+          "bucket": "2026-05-15",
+          "cancelled": 44,
+          "total": 534
+        },
+        {
+          "bucket": "2026-05-16",
+          "cancelled": 55,
+          "total": 711
+        },
+        {
+          "bucket": "2026-05-17",
+          "cancelled": 52,
+          "total": 748
+        },
+        {
+          "bucket": "2026-05-18",
+          "cancelled": 50,
+          "total": 524
+        },
+        {
+          "bucket": "2026-05-19",
+          "cancelled": 48,
+          "total": 532
+        },
+        {
+          "bucket": "2026-05-20",
+          "cancelled": 44,
+          "total": 580
+        },
+        {
+          "bucket": "2026-05-21",
+          "cancelled": 49,
+          "total": 511
+        },
+        {
+          "bucket": "2026-05-22",
+          "cancelled": 45,
+          "total": 525
+        },
+        {
+          "bucket": "2026-05-23",
+          "cancelled": 56,
+          "total": 694
+        },
+        {
+          "bucket": "2026-05-24",
+          "cancelled": 46,
+          "total": 689
+        },
+        {
+          "bucket": "2026-05-25",
+          "cancelled": 45,
+          "total": 547
+        },
+        {
+          "bucket": "2026-05-26",
+          "cancelled": 44,
+          "total": 529
+        },
+        {
+          "bucket": "2026-05-27",
+          "cancelled": 38,
+          "total": 548
+        },
+        {
+          "bucket": "2026-05-28",
+          "cancelled": 44,
+          "total": 543
+        },
+        {
+          "bucket": "2026-05-29",
+          "cancelled": 46,
+          "total": 524
+        },
+        {
+          "bucket": "2026-05-30",
+          "cancelled": 58,
+          "total": 708
+        },
+        {
+          "bucket": "2026-05-31",
+          "cancelled": 59,
+          "total": 720
+        },
+        {
+          "bucket": "2026-06-01",
+          "cancelled": 49,
+          "total": 548
+        },
+        {
+          "bucket": "2026-06-02",
+          "cancelled": 51,
+          "total": 548
+        },
+        {
+          "bucket": "2026-06-03",
+          "cancelled": 38,
+          "total": 542
+        },
+        {
+          "bucket": "2026-06-04",
+          "cancelled": 40,
+          "total": 537
+        },
+        {
+          "bucket": "2026-06-05",
+          "cancelled": 41,
+          "total": 506
+        },
+        {
+          "bucket": "2026-06-06",
+          "cancelled": 53,
+          "total": 696
+        },
+        {
+          "bucket": "2026-06-07",
+          "cancelled": 55,
+          "total": 746
+        },
+        {
+          "bucket": "2026-06-08",
+          "cancelled": 41,
+          "total": 492
+        },
+        {
+          "bucket": "2026-06-09",
+          "cancelled": 35,
+          "total": 510
+        },
+        {
+          "bucket": "2026-06-10",
+          "cancelled": 29,
+          "total": 529
+        },
+        {
+          "bucket": "2026-06-11",
+          "cancelled": 35,
+          "total": 517
+        },
+        {
+          "bucket": "2026-06-12",
+          "cancelled": 51,
+          "total": 545
+        },
+        {
+          "bucket": "2026-06-13",
+          "cancelled": 52,
+          "total": 756
+        },
+        {
+          "bucket": "2026-06-14",
+          "cancelled": 73,
+          "total": 754
+        },
+        {
+          "bucket": "2026-06-15",
+          "cancelled": 44,
+          "total": 504
+        },
+        {
+          "bucket": "2026-06-16",
+          "cancelled": 36,
+          "total": 526
+        },
+        {
+          "bucket": "2026-06-17",
+          "cancelled": 39,
+          "total": 519
+        },
+        {
+          "bucket": "2026-06-18",
+          "cancelled": 33,
+          "total": 513
+        },
+        {
+          "bucket": "2026-06-19",
+          "cancelled": 36,
+          "total": 499
+        },
+        {
+          "bucket": "2026-06-20",
+          "cancelled": 56,
+          "total": 708
+        },
+        {
+          "bucket": "2026-06-21",
+          "cancelled": 62,
+          "total": 682
+        },
+        {
+          "bucket": "2026-06-22",
+          "cancelled": 41,
+          "total": 526
+        },
+        {
+          "bucket": "2026-06-23",
+          "cancelled": 47,
+          "total": 522
+        },
+        {
+          "bucket": "2026-06-24",
+          "cancelled": 45,
+          "total": 503
+        },
+        {
+          "bucket": "2026-06-25",
+          "cancelled": 47,
+          "total": 533
+        },
+        {
+          "bucket": "2026-06-26",
+          "cancelled": 34,
+          "total": 527
+        },
+        {
+          "bucket": "2026-06-27",
+          "cancelled": 64,
+          "total": 716
+        },
+        {
+          "bucket": "2026-06-28",
+          "cancelled": 60,
+          "total": 748
+        },
+        {
+          "bucket": "2026-06-29",
+          "cancelled": 49,
+          "total": 525
+        },
+        {
+          "bucket": "2026-06-30",
+          "cancelled": 54,
+          "total": 557
+        },
+        {
+          "bucket": "2026-07-01",
+          "cancelled": 54,
+          "total": 549
+        },
+        {
+          "bucket": "2026-07-02",
+          "cancelled": 40,
+          "total": 540
+        },
+        {
+          "bucket": "2026-07-03",
+          "cancelled": 38,
+          "total": 514
+        },
+        {
+          "bucket": "2026-07-04",
+          "cancelled": 52,
+          "total": 708
+        },
+        {
+          "bucket": "2026-07-05",
+          "cancelled": 60,
+          "total": 776
+        },
+        {
+          "bucket": "2026-07-06",
+          "cancelled": 47,
+          "total": 516
+        },
+        {
+          "bucket": "2026-07-07",
+          "cancelled": 29,
+          "total": 525
+        },
+        {
+          "bucket": "2026-07-08",
+          "cancelled": 41,
+          "total": 549
+        }
+      ]
+    },
+    "week": {
+      "revenue": [
+        {
+          "bucket": "2025-W27",
+          "revenue_minor": 78308000,
+          "reservations": 2850,
+          "guests": 9767
+        },
+        {
+          "bucket": "2025-W28",
+          "revenue_minor": 101846000,
+          "reservations": 3782,
+          "guests": 13187
+        },
+        {
+          "bucket": "2025-W29",
+          "revenue_minor": 100741000,
+          "reservations": 3783,
+          "guests": 13128
+        },
+        {
+          "bucket": "2025-W30",
+          "revenue_minor": 99180500,
+          "reservations": 3773,
+          "guests": 13239
+        },
+        {
+          "bucket": "2025-W31",
+          "revenue_minor": 101695500,
+          "reservations": 3660,
+          "guests": 12835
+        },
+        {
+          "bucket": "2025-W32",
+          "revenue_minor": 102702500,
+          "reservations": 3727,
+          "guests": 13115
+        },
+        {
+          "bucket": "2025-W33",
+          "revenue_minor": 103576500,
+          "reservations": 3797,
+          "guests": 13231
+        },
+        {
+          "bucket": "2025-W34",
+          "revenue_minor": 98718000,
+          "reservations": 3757,
+          "guests": 13222
+        },
+        {
+          "bucket": "2025-W35",
+          "revenue_minor": 104527500,
+          "reservations": 3828,
+          "guests": 13354
+        },
+        {
+          "bucket": "2025-W36",
+          "revenue_minor": 103058000,
+          "reservations": 3848,
+          "guests": 13443
+        },
+        {
+          "bucket": "2025-W37",
+          "revenue_minor": 104342000,
+          "reservations": 3815,
+          "guests": 13286
+        },
+        {
+          "bucket": "2025-W38",
+          "revenue_minor": 103223500,
+          "reservations": 3792,
+          "guests": 13147
+        },
+        {
+          "bucket": "2025-W39",
+          "revenue_minor": 107104000,
+          "reservations": 3900,
+          "guests": 13481
+        },
+        {
+          "bucket": "2025-W40",
+          "revenue_minor": 103292500,
+          "reservations": 3813,
+          "guests": 13332
+        },
+        {
+          "bucket": "2025-W41",
+          "revenue_minor": 101839000,
+          "reservations": 3771,
+          "guests": 13122
+        },
+        {
+          "bucket": "2025-W42",
+          "revenue_minor": 108131500,
+          "reservations": 3883,
+          "guests": 13474
+        },
+        {
+          "bucket": "2025-W43",
+          "revenue_minor": 105352500,
+          "reservations": 3799,
+          "guests": 13407
+        },
+        {
+          "bucket": "2025-W44",
+          "revenue_minor": 101607500,
+          "reservations": 3718,
+          "guests": 13108
+        },
+        {
+          "bucket": "2025-W45",
+          "revenue_minor": 103836000,
+          "reservations": 3836,
+          "guests": 13493
+        },
+        {
+          "bucket": "2025-W46",
+          "revenue_minor": 102632000,
+          "reservations": 3693,
+          "guests": 12967
+        },
+        {
+          "bucket": "2025-W47",
+          "revenue_minor": 100169500,
+          "reservations": 3756,
+          "guests": 13262
+        },
+        {
+          "bucket": "2025-W48",
+          "revenue_minor": 98123500,
+          "reservations": 3675,
+          "guests": 12944
+        },
+        {
+          "bucket": "2025-W49",
+          "revenue_minor": 101985000,
+          "reservations": 3787,
+          "guests": 13249
+        },
+        {
+          "bucket": "2025-W50",
+          "revenue_minor": 104145500,
+          "reservations": 3738,
+          "guests": 13370
+        },
+        {
+          "bucket": "2025-W51",
+          "revenue_minor": 101243000,
+          "reservations": 3654,
+          "guests": 12797
+        },
+        {
+          "bucket": "2025-W52",
+          "revenue_minor": 39512000,
+          "reservations": 1487,
+          "guests": 5164
+        },
+        {
+          "bucket": "2026-W00",
+          "revenue_minor": 66108000,
+          "reservations": 2372,
+          "guests": 8340
+        },
+        {
+          "bucket": "2026-W01",
+          "revenue_minor": 103362500,
+          "reservations": 3788,
+          "guests": 13391
+        },
+        {
+          "bucket": "2026-W02",
+          "revenue_minor": 104260500,
+          "reservations": 3976,
+          "guests": 13705
+        },
+        {
+          "bucket": "2026-W03",
+          "revenue_minor": 103073500,
+          "reservations": 3702,
+          "guests": 12911
+        },
+        {
+          "bucket": "2026-W04",
+          "revenue_minor": 105157000,
+          "reservations": 3851,
+          "guests": 13434
+        },
+        {
+          "bucket": "2026-W05",
+          "revenue_minor": 103963500,
+          "reservations": 3794,
+          "guests": 13175
+        },
+        {
+          "bucket": "2026-W06",
+          "revenue_minor": 102973000,
+          "reservations": 3770,
+          "guests": 13187
+        },
+        {
+          "bucket": "2026-W07",
+          "revenue_minor": 108044000,
+          "reservations": 3852,
+          "guests": 13508
+        },
+        {
+          "bucket": "2026-W08",
+          "revenue_minor": 104641500,
+          "reservations": 3827,
+          "guests": 13353
+        },
+        {
+          "bucket": "2026-W09",
+          "revenue_minor": 105780000,
+          "reservations": 3824,
+          "guests": 13404
+        },
+        {
+          "bucket": "2026-W10",
+          "revenue_minor": 99420500,
+          "reservations": 3788,
+          "guests": 13345
+        },
+        {
+          "bucket": "2026-W11",
+          "revenue_minor": 106573000,
+          "reservations": 3786,
+          "guests": 13269
+        },
+        {
+          "bucket": "2026-W12",
+          "revenue_minor": 101737500,
+          "reservations": 3861,
+          "guests": 13509
+        },
+        {
+          "bucket": "2026-W13",
+          "revenue_minor": 103412500,
+          "reservations": 3674,
+          "guests": 13158
+        },
+        {
+          "bucket": "2026-W14",
+          "revenue_minor": 104278000,
+          "reservations": 3784,
+          "guests": 13224
+        },
+        {
+          "bucket": "2026-W15",
+          "revenue_minor": 102231500,
+          "reservations": 3660,
+          "guests": 12944
+        },
+        {
+          "bucket": "2026-W16",
+          "revenue_minor": 97010500,
+          "reservations": 3674,
+          "guests": 13095
+        },
+        {
+          "bucket": "2026-W17",
+          "revenue_minor": 99753000,
+          "reservations": 3726,
+          "guests": 12974
+        },
+        {
+          "bucket": "2026-W18",
+          "revenue_minor": 104228000,
+          "reservations": 3824,
+          "guests": 13341
+        },
+        {
+          "bucket": "2026-W19",
+          "revenue_minor": 105154000,
+          "reservations": 3743,
+          "guests": 13041
+        },
+        {
+          "bucket": "2026-W20",
+          "revenue_minor": 105968000,
+          "reservations": 3717,
+          "guests": 13060
+        },
+        {
+          "bucket": "2026-W21",
+          "revenue_minor": 101209500,
+          "reservations": 3785,
+          "guests": 13202
+        },
+        {
+          "bucket": "2026-W22",
+          "revenue_minor": 107237000,
+          "reservations": 3796,
+          "guests": 13223
+        },
+        {
+          "bucket": "2026-W23",
+          "revenue_minor": 103005000,
+          "reservations": 3787,
+          "guests": 13171
+        },
+        {
+          "bucket": "2026-W24",
+          "revenue_minor": 97750000,
+          "reservations": 3645,
+          "guests": 12816
+        },
+        {
+          "bucket": "2026-W25",
+          "revenue_minor": 101735000,
+          "reservations": 3737,
+          "guests": 13132
+        },
+        {
+          "bucket": "2026-W26",
+          "revenue_minor": 107741000,
+          "reservations": 3822,
+          "guests": 13258
+        },
+        {
+          "bucket": "2026-W27",
+          "revenue_minor": 40284000,
+          "reservations": 1473,
+          "guests": 5206
+        }
+      ],
+      "highchair": [
+        {
+          "bucket": "2025-W27",
+          "highchairs": 586,
+          "reservations_with_highchair": 422,
+          "reservations": 2850
+        },
+        {
+          "bucket": "2025-W28",
+          "highchairs": 789,
+          "reservations_with_highchair": 557,
+          "reservations": 3782
+        },
+        {
+          "bucket": "2025-W29",
+          "highchairs": 811,
+          "reservations_with_highchair": 595,
+          "reservations": 3783
+        },
+        {
+          "bucket": "2025-W30",
+          "highchairs": 837,
+          "reservations_with_highchair": 583,
+          "reservations": 3773
+        },
+        {
+          "bucket": "2025-W31",
+          "highchairs": 795,
+          "reservations_with_highchair": 566,
+          "reservations": 3660
+        },
+        {
+          "bucket": "2025-W32",
+          "highchairs": 797,
+          "reservations_with_highchair": 565,
+          "reservations": 3727
+        },
+        {
+          "bucket": "2025-W33",
+          "highchairs": 802,
+          "reservations_with_highchair": 578,
+          "reservations": 3797
+        },
+        {
+          "bucket": "2025-W34",
+          "highchairs": 836,
+          "reservations_with_highchair": 577,
+          "reservations": 3757
+        },
+        {
+          "bucket": "2025-W35",
+          "highchairs": 796,
+          "reservations_with_highchair": 575,
+          "reservations": 3828
+        },
+        {
+          "bucket": "2025-W36",
+          "highchairs": 786,
+          "reservations_with_highchair": 558,
+          "reservations": 3848
+        },
+        {
+          "bucket": "2025-W37",
+          "highchairs": 861,
+          "reservations_with_highchair": 611,
+          "reservations": 3815
+        },
+        {
+          "bucket": "2025-W38",
+          "highchairs": 856,
+          "reservations_with_highchair": 598,
+          "reservations": 3792
+        },
+        {
+          "bucket": "2025-W39",
+          "highchairs": 831,
+          "reservations_with_highchair": 595,
+          "reservations": 3900
+        },
+        {
+          "bucket": "2025-W40",
+          "highchairs": 840,
+          "reservations_with_highchair": 586,
+          "reservations": 3813
+        },
+        {
+          "bucket": "2025-W41",
+          "highchairs": 814,
+          "reservations_with_highchair": 582,
+          "reservations": 3771
+        },
+        {
+          "bucket": "2025-W42",
+          "highchairs": 835,
+          "reservations_with_highchair": 565,
+          "reservations": 3883
+        },
+        {
+          "bucket": "2025-W43",
+          "highchairs": 844,
+          "reservations_with_highchair": 583,
+          "reservations": 3799
+        },
+        {
+          "bucket": "2025-W44",
+          "highchairs": 743,
+          "reservations_with_highchair": 537,
+          "reservations": 3718
+        },
+        {
+          "bucket": "2025-W45",
+          "highchairs": 836,
+          "reservations_with_highchair": 587,
+          "reservations": 3836
+        },
+        {
+          "bucket": "2025-W46",
+          "highchairs": 763,
+          "reservations_with_highchair": 541,
+          "reservations": 3693
+        },
+        {
+          "bucket": "2025-W47",
+          "highchairs": 776,
+          "reservations_with_highchair": 546,
+          "reservations": 3756
+        },
+        {
+          "bucket": "2025-W48",
+          "highchairs": 729,
+          "reservations_with_highchair": 533,
+          "reservations": 3675
+        },
+        {
+          "bucket": "2025-W49",
+          "highchairs": 804,
+          "reservations_with_highchair": 562,
+          "reservations": 3787
+        },
+        {
+          "bucket": "2025-W50",
+          "highchairs": 870,
+          "reservations_with_highchair": 597,
+          "reservations": 3738
+        },
+        {
+          "bucket": "2025-W51",
+          "highchairs": 769,
+          "reservations_with_highchair": 544,
+          "reservations": 3654
+        },
+        {
+          "bucket": "2025-W52",
+          "highchairs": 334,
+          "reservations_with_highchair": 228,
+          "reservations": 1487
+        },
+        {
+          "bucket": "2026-W00",
+          "highchairs": 497,
+          "reservations_with_highchair": 361,
+          "reservations": 2372
+        },
+        {
+          "bucket": "2026-W01",
+          "highchairs": 810,
+          "reservations_with_highchair": 572,
+          "reservations": 3788
+        },
+        {
+          "bucket": "2026-W02",
+          "highchairs": 809,
+          "reservations_with_highchair": 560,
+          "reservations": 3976
+        },
+        {
+          "bucket": "2026-W03",
+          "highchairs": 767,
+          "reservations_with_highchair": 542,
+          "reservations": 3702
+        },
+        {
+          "bucket": "2026-W04",
+          "highchairs": 854,
+          "reservations_with_highchair": 590,
+          "reservations": 3851
+        },
+        {
+          "bucket": "2026-W05",
+          "highchairs": 841,
+          "reservations_with_highchair": 579,
+          "reservations": 3794
+        },
+        {
+          "bucket": "2026-W06",
+          "highchairs": 792,
+          "reservations_with_highchair": 550,
+          "reservations": 3770
+        },
+        {
+          "bucket": "2026-W07",
+          "highchairs": 814,
+          "reservations_with_highchair": 572,
+          "reservations": 3852
+        },
+        {
+          "bucket": "2026-W08",
+          "highchairs": 777,
+          "reservations_with_highchair": 558,
+          "reservations": 3827
+        },
+        {
+          "bucket": "2026-W09",
+          "highchairs": 796,
+          "reservations_with_highchair": 559,
+          "reservations": 3824
+        },
+        {
+          "bucket": "2026-W10",
+          "highchairs": 784,
+          "reservations_with_highchair": 570,
+          "reservations": 3788
+        },
+        {
+          "bucket": "2026-W11",
+          "highchairs": 796,
+          "reservations_with_highchair": 571,
+          "reservations": 3786
+        },
+        {
+          "bucket": "2026-W12",
+          "highchairs": 778,
+          "reservations_with_highchair": 552,
+          "reservations": 3861
+        },
+        {
+          "bucket": "2026-W13",
+          "highchairs": 749,
+          "reservations_with_highchair": 529,
+          "reservations": 3674
+        },
+        {
+          "bucket": "2026-W14",
+          "highchairs": 819,
+          "reservations_with_highchair": 577,
+          "reservations": 3784
+        },
+        {
+          "bucket": "2026-W15",
+          "highchairs": 829,
+          "reservations_with_highchair": 589,
+          "reservations": 3660
+        },
+        {
+          "bucket": "2026-W16",
+          "highchairs": 861,
+          "reservations_with_highchair": 606,
+          "reservations": 3674
+        },
+        {
+          "bucket": "2026-W17",
+          "highchairs": 803,
+          "reservations_with_highchair": 565,
+          "reservations": 3726
+        },
+        {
+          "bucket": "2026-W18",
+          "highchairs": 805,
+          "reservations_with_highchair": 573,
+          "reservations": 3824
+        },
+        {
+          "bucket": "2026-W19",
+          "highchairs": 828,
+          "reservations_with_highchair": 589,
+          "reservations": 3743
+        },
+        {
+          "bucket": "2026-W20",
+          "highchairs": 832,
+          "reservations_with_highchair": 595,
+          "reservations": 3717
+        },
+        {
+          "bucket": "2026-W21",
+          "highchairs": 773,
+          "reservations_with_highchair": 555,
+          "reservations": 3785
+        },
+        {
+          "bucket": "2026-W22",
+          "highchairs": 817,
+          "reservations_with_highchair": 571,
+          "reservations": 3796
+        },
+        {
+          "bucket": "2026-W23",
+          "highchairs": 793,
+          "reservations_with_highchair": 576,
+          "reservations": 3787
+        },
+        {
+          "bucket": "2026-W24",
+          "highchairs": 779,
+          "reservations_with_highchair": 542,
+          "reservations": 3645
+        },
+        {
+          "bucket": "2026-W25",
+          "highchairs": 845,
+          "reservations_with_highchair": 580,
+          "reservations": 3737
+        },
+        {
+          "bucket": "2026-W26",
+          "highchairs": 806,
+          "reservations_with_highchair": 573,
+          "reservations": 3822
+        },
+        {
+          "bucket": "2026-W27",
+          "highchairs": 282,
+          "reservations_with_highchair": 209,
+          "reservations": 1473
+        }
+      ],
+      "cancellations": [
+        {
+          "bucket": "2025-W27",
+          "cancelled": 247,
+          "total": 3097
+        },
+        {
+          "bucket": "2025-W28",
+          "cancelled": 342,
+          "total": 4124
+        },
+        {
+          "bucket": "2025-W29",
+          "cancelled": 314,
+          "total": 4097
+        },
+        {
+          "bucket": "2025-W30",
+          "cancelled": 318,
+          "total": 4091
+        },
+        {
+          "bucket": "2025-W31",
+          "cancelled": 299,
+          "total": 3959
+        },
+        {
+          "bucket": "2025-W32",
+          "cancelled": 320,
+          "total": 4047
+        },
+        {
+          "bucket": "2025-W33",
+          "cancelled": 344,
+          "total": 4141
+        },
+        {
+          "bucket": "2025-W34",
+          "cancelled": 331,
+          "total": 4088
+        },
+        {
+          "bucket": "2025-W35",
+          "cancelled": 316,
+          "total": 4144
+        },
+        {
+          "bucket": "2025-W36",
+          "cancelled": 299,
+          "total": 4147
+        },
+        {
+          "bucket": "2025-W37",
+          "cancelled": 345,
+          "total": 4160
+        },
+        {
+          "bucket": "2025-W38",
+          "cancelled": 315,
+          "total": 4107
+        },
+        {
+          "bucket": "2025-W39",
+          "cancelled": 341,
+          "total": 4241
+        },
+        {
+          "bucket": "2025-W40",
+          "cancelled": 340,
+          "total": 4153
+        },
+        {
+          "bucket": "2025-W41",
+          "cancelled": 354,
+          "total": 4125
+        },
+        {
+          "bucket": "2025-W42",
+          "cancelled": 328,
+          "total": 4211
+        },
+        {
+          "bucket": "2025-W43",
+          "cancelled": 316,
+          "total": 4115
+        },
+        {
+          "bucket": "2025-W44",
+          "cancelled": 312,
+          "total": 4030
+        },
+        {
+          "bucket": "2025-W45",
+          "cancelled": 328,
+          "total": 4164
+        },
+        {
+          "bucket": "2025-W46",
+          "cancelled": 363,
+          "total": 4056
+        },
+        {
+          "bucket": "2025-W47",
+          "cancelled": 294,
+          "total": 4050
+        },
+        {
+          "bucket": "2025-W48",
+          "cancelled": 342,
+          "total": 4017
+        },
+        {
+          "bucket": "2025-W49",
+          "cancelled": 320,
+          "total": 4107
+        },
+        {
+          "bucket": "2025-W50",
+          "cancelled": 324,
+          "total": 4062
+        },
+        {
+          "bucket": "2025-W51",
+          "cancelled": 269,
+          "total": 3923
+        },
+        {
+          "bucket": "2025-W52",
+          "cancelled": 111,
+          "total": 1598
+        },
+        {
+          "bucket": "2026-W00",
+          "cancelled": 220,
+          "total": 2592
+        },
+        {
+          "bucket": "2026-W01",
+          "cancelled": 363,
+          "total": 4151
+        },
+        {
+          "bucket": "2026-W02",
+          "cancelled": 356,
+          "total": 4332
+        },
+        {
+          "bucket": "2026-W03",
+          "cancelled": 332,
+          "total": 4034
+        },
+        {
+          "bucket": "2026-W04",
+          "cancelled": 342,
+          "total": 4193
+        },
+        {
+          "bucket": "2026-W05",
+          "cancelled": 318,
+          "total": 4112
+        },
+        {
+          "bucket": "2026-W06",
+          "cancelled": 322,
+          "total": 4092
+        },
+        {
+          "bucket": "2026-W07",
+          "cancelled": 337,
+          "total": 4189
+        },
+        {
+          "bucket": "2026-W08",
+          "cancelled": 335,
+          "total": 4162
+        },
+        {
+          "bucket": "2026-W09",
+          "cancelled": 301,
+          "total": 4125
+        },
+        {
+          "bucket": "2026-W10",
+          "cancelled": 307,
+          "total": 4095
+        },
+        {
+          "bucket": "2026-W11",
+          "cancelled": 310,
+          "total": 4096
+        },
+        {
+          "bucket": "2026-W12",
+          "cancelled": 382,
+          "total": 4243
+        },
+        {
+          "bucket": "2026-W13",
+          "cancelled": 299,
+          "total": 3973
+        },
+        {
+          "bucket": "2026-W14",
+          "cancelled": 331,
+          "total": 4115
+        },
+        {
+          "bucket": "2026-W15",
+          "cancelled": 315,
+          "total": 3975
+        },
+        {
+          "bucket": "2026-W16",
+          "cancelled": 335,
+          "total": 4009
+        },
+        {
+          "bucket": "2026-W17",
+          "cancelled": 326,
+          "total": 4052
+        },
+        {
+          "bucket": "2026-W18",
+          "cancelled": 332,
+          "total": 4156
+        },
+        {
+          "bucket": "2026-W19",
+          "cancelled": 330,
+          "total": 4073
+        },
+        {
+          "bucket": "2026-W20",
+          "cancelled": 338,
+          "total": 4055
+        },
+        {
+          "bucket": "2026-W21",
+          "cancelled": 334,
+          "total": 4119
+        },
+        {
+          "bucket": "2026-W22",
+          "cancelled": 327,
+          "total": 4123
+        },
+        {
+          "bucket": "2026-W23",
+          "cancelled": 316,
+          "total": 4103
+        },
+        {
+          "bucket": "2026-W24",
+          "cancelled": 306,
+          "total": 3951
+        },
+        {
+          "bucket": "2026-W25",
+          "cancelled": 338,
+          "total": 4075
+        },
+        {
+          "bucket": "2026-W26",
+          "cancelled": 347,
+          "total": 4169
+        },
+        {
+          "bucket": "2026-W27",
+          "cancelled": 117,
+          "total": 1590
+        }
+      ]
+    },
+    "month": {
+      "revenue": [
+        {
+          "bucket": "2025-07",
+          "revenue_minor": 332690000,
+          "reservations": 12364,
+          "guests": 42969
+        },
+        {
+          "bucket": "2025-08",
+          "revenue_minor": 454078000,
+          "reservations": 16765,
+          "guests": 58755
+        },
+        {
+          "bucket": "2025-09",
+          "revenue_minor": 443119000,
+          "reservations": 16313,
+          "guests": 56767
+        },
+        {
+          "bucket": "2025-10",
+          "revenue_minor": 458468500,
+          "reservations": 16748,
+          "guests": 58409
+        },
+        {
+          "bucket": "2025-11",
+          "revenue_minor": 447528000,
+          "reservations": 16391,
+          "guests": 57700
+        },
+        {
+          "bucket": "2025-12",
+          "revenue_minor": 445009000,
+          "reservations": 16341,
+          "guests": 57524
+        },
+        {
+          "bucket": "2026-01",
+          "revenue_minor": 464402000,
+          "reservations": 17012,
+          "guests": 59392
+        },
+        {
+          "bucket": "2026-02",
+          "revenue_minor": 417727000,
+          "reservations": 15220,
+          "guests": 53238
+        },
+        {
+          "bucket": "2026-03",
+          "revenue_minor": 459434000,
+          "reservations": 16932,
+          "guests": 59396
+        },
+        {
+          "bucket": "2026-04",
+          "revenue_minor": 432229500,
+          "reservations": 15740,
+          "guests": 55669
+        },
+        {
+          "bucket": "2026-05",
+          "revenue_minor": 464547000,
+          "reservations": 16874,
+          "guests": 58875
+        },
+        {
+          "bucket": "2026-06",
+          "revenue_minor": 436714500,
+          "reservations": 15944,
+          "guests": 55670
+        },
+        {
+          "bucket": "2026-07",
+          "revenue_minor": 121037500,
+          "reservations": 4316,
+          "guests": 15136
+        }
+      ],
+      "highchair": [
+        {
+          "bucket": "2025-07",
+          "highchairs": 2617,
+          "reservations_with_highchair": 1872,
+          "reservations": 12364
+        },
+        {
+          "bucket": "2025-08",
+          "highchairs": 3636,
+          "reservations_with_highchair": 2571,
+          "reservations": 16765
+        },
+        {
+          "bucket": "2025-09",
+          "highchairs": 3519,
+          "reservations_with_highchair": 2503,
+          "reservations": 16313
+        },
+        {
+          "bucket": "2025-10",
+          "highchairs": 3641,
+          "reservations_with_highchair": 2541,
+          "reservations": 16748
+        },
+        {
+          "bucket": "2025-11",
+          "highchairs": 3421,
+          "reservations_with_highchair": 2420,
+          "reservations": 16391
+        },
+        {
+          "bucket": "2025-12",
+          "highchairs": 3506,
+          "reservations_with_highchair": 2464,
+          "reservations": 16341
+        },
+        {
+          "bucket": "2026-01",
+          "highchairs": 3605,
+          "reservations_with_highchair": 2534,
+          "reservations": 17012
+        },
+        {
+          "bucket": "2026-02",
+          "highchairs": 3203,
+          "reservations_with_highchair": 2241,
+          "reservations": 15220
+        },
+        {
+          "bucket": "2026-03",
+          "highchairs": 3490,
+          "reservations_with_highchair": 2495,
+          "reservations": 16932
+        },
+        {
+          "bucket": "2026-04",
+          "highchairs": 3488,
+          "reservations_with_highchair": 2461,
+          "reservations": 15740
+        },
+        {
+          "bucket": "2026-05",
+          "highchairs": 3628,
+          "reservations_with_highchair": 2583,
+          "reservations": 16874
+        },
+        {
+          "bucket": "2026-06",
+          "highchairs": 3451,
+          "reservations_with_highchair": 2425,
+          "reservations": 15944
+        },
+        {
+          "bucket": "2026-07",
+          "highchairs": 871,
+          "reservations_with_highchair": 626,
+          "reservations": 4316
+        }
+      ],
+      "cancellations": [
+        {
+          "bucket": "2025-07",
+          "cancelled": 1063,
+          "total": 13427
+        },
+        {
+          "bucket": "2025-08",
+          "cancelled": 1452,
+          "total": 18217
+        },
+        {
+          "bucket": "2025-09",
+          "cancelled": 1364,
+          "total": 17677
+        },
+        {
+          "bucket": "2025-10",
+          "cancelled": 1456,
+          "total": 18204
+        },
+        {
+          "bucket": "2025-11",
+          "cancelled": 1431,
+          "total": 17822
+        },
+        {
+          "bucket": "2025-12",
+          "cancelled": 1366,
+          "total": 17707
+        },
+        {
+          "bucket": "2026-01",
+          "cancelled": 1552,
+          "total": 18564
+        },
+        {
+          "bucket": "2026-02",
+          "cancelled": 1309,
+          "total": 16529
+        },
+        {
+          "bucket": "2026-03",
+          "cancelled": 1439,
+          "total": 18371
+        },
+        {
+          "bucket": "2026-04",
+          "cancelled": 1378,
+          "total": 17118
+        },
+        {
+          "bucket": "2026-05",
+          "cancelled": 1487,
+          "total": 18361
+        },
+        {
+          "bucket": "2026-06",
+          "cancelled": 1390,
+          "total": 17334
+        },
+        {
+          "bucket": "2026-07",
+          "cancelled": 361,
+          "total": 4677
+        }
+      ]
+    },
+    "year": {
+      "revenue": [
+        {
+          "bucket": "2025",
+          "revenue_minor": 2580892500,
+          "reservations": 94922,
+          "guests": 332124
+        },
+        {
+          "bucket": "2026",
+          "revenue_minor": 2796091500,
+          "reservations": 102038,
+          "guests": 357376
+        }
+      ],
+      "highchair": [
+        {
+          "bucket": "2025",
+          "highchairs": 20340,
+          "reservations_with_highchair": 14371,
+          "reservations": 94922
+        },
+        {
+          "bucket": "2026",
+          "highchairs": 21736,
+          "reservations_with_highchair": 15365,
+          "reservations": 102038
+        }
+      ],
+      "cancellations": [
+        {
+          "bucket": "2025",
+          "cancelled": 8132,
+          "total": 103054
+        },
+        {
+          "bucket": "2026",
+          "cancelled": 8916,
+          "total": 110954
+        }
+      ]
+    }
+  }
+}

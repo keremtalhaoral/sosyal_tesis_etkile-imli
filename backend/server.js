@@ -13,6 +13,7 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const analytics = require('./analytics');
 const { signJwt, verifyJwt, signReservation } = require('./security');
 const { validateReservationInput } = require('./validate');
 const http = require('http');
@@ -174,6 +175,17 @@ app.post('/api/ispark/:facilityId/release', requireAuth, (req, res) => {
   if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
   db.releaseIsparkSpot(facilityId);
   res.json(db.getIsparkStatus(facilityId));
+});
+
+// --- Analytics API (canlı; Pages snapshot ile aynı şekil) ---------------------
+const VALID_GRANULARITY = ['day', 'week', 'month', 'year'];
+app.get('/api/analytics/dashboard', (req, res) => {
+  const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
+  res.json(analytics.dashboard(g));
+});
+app.get('/api/analytics/revenue', (req, res) => {
+  const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
+  res.json(analytics.revenueTimeSeries(g));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms
