@@ -56,6 +56,18 @@ def run_seed():
             fac.get("transit_transfer", "Mevcut Değil"), fac.get("route_description", "Mevcut Değil")
         ))
 
+    # Menu: tek sablon her tesise uygulanir (DRY). UNIQUE(facility_id, name) + IGNORE = idempotent.
+    menu_template = data.get("menu_template", [])
+    if menu_template:
+        print("Seeding menu items (template applied per facility)...")
+        facility_ids = [row["id"] for row in cursor.execute("SELECT id FROM facilities")]
+        for fid in facility_ids:
+            for m in menu_template:
+                cursor.execute("""
+                    INSERT OR IGNORE INTO menu_items (facility_id, name, category, price_minor)
+                    VALUES (?, ?, ?, ?)
+                """, (fid, m["name"], m.get("category", "Genel"), m["price_minor"]))
+
     conn.commit()
     conn.close()
     print("Central database seeding completed successfully.")
