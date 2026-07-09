@@ -54,4 +54,29 @@ const validateReservationInput = (body, { today = new Date().toISOString().slice
   };
 };
 
-module.exports = { validateReservationInput, SLOTS, PAYMENT_TYPES };
+// Sipariş girdisini doğrula: reservationId, boş olmayan items[], her kalem geçerli, paymentType.
+const validateOrderInput = (body) => {
+  const b = body || {};
+  if (!Number.isInteger(b.reservationId) || b.reservationId <= 0) {
+    return { ok: false, error: 'reservationId pozitif tamsayı olmalı.' };
+  }
+  if (!Array.isArray(b.items) || b.items.length === 0) {
+    return { ok: false, error: 'Sepet boş olamaz.' };
+  }
+  const items = [];
+  for (const it of b.items) {
+    if (!it || !Number.isInteger(it.menuItemId) || it.menuItemId <= 0) {
+      return { ok: false, error: 'Geçersiz menü kalemi.' };
+    }
+    if (!Number.isInteger(it.quantity) || it.quantity <= 0) {
+      return { ok: false, error: 'Kalem adedi pozitif tamsayı olmalı.' };
+    }
+    items.push({ menuItemId: it.menuItemId, quantity: it.quantity });
+  }
+  if (!PAYMENT_TYPES.includes(b.paymentType)) {
+    return { ok: false, error: `paymentType şunlardan biri olmalı: ${PAYMENT_TYPES.join(', ')}` };
+  }
+  return { ok: true, value: { reservationId: b.reservationId, items, paymentType: b.paymentType } };
+};
+
+module.exports = { validateReservationInput, validateOrderInput, SLOTS, PAYMENT_TYPES };

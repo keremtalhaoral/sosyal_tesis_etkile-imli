@@ -14,8 +14,8 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const analytics = require('./analytics');
-const { signJwt, verifyJwt, signReservation } = require('./security');
-const { validateReservationInput } = require('./validate');
+const { signJwt, verifyJwt, signReservation, signOrder } = require('./security');
+const { validateReservationInput, validateOrderInput } = require('./validate');
 const http = require('http');
 const crypto = require('crypto');
 
@@ -152,6 +152,34 @@ app.post('/api/reservations', requireAuth, (req, res) => {
 
 app.get('/api/reservations', requireAuth, (req, res) => {
   res.json(db.getReservationsByUserId(req.user.id));
+});
+
+// --- Menü + Sipariş API (Faz v2-05) ------------------------------------------
+app.get('/api/menu', (req, res) => {
+  const facilityId = Number(req.query.facilityId);
+  if (!Number.isInteger(facilityId) || facilityId <= 0) {
+    return res.status(400).json({ error: 'facilityId gereklidir.' });
+  }
+  res.json(db.getMenu(facilityId));
+});
+
+app.post('/api/orders', requireAuth, (req, res) => {
+  const v = validateOrderInput(req.body);
+  if (!v.ok) return res.status(400).json({ error: v.error });
+  const { reservationId, items, paymentType } = v.value;
+  try {
+    const signature = signOrder(req.user.id, reservationId, 0, items); // ön-imza (istemci bütünlüğü)
+    const result = db.createOrder({ userId: req.user.id, reservationId, items, paymentType, cryptoSignature: signature });
+    res.status(201).json({ id: result.id, total_minor: result.total_minor, status: result.status, item_count: result.item_count, signature });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reservations/:id/orders', requireAuth, (req, res) => {
+  const orders = db.getOrdersByReservation(Number(req.params.id), req.user.id);
+  if (orders === null) return res.status(403).json({ error: 'Bu rezervasyon size ait değil.' });
+  res.json(orders);
 });
 
 // --- İSPARK API (bağımsız otopark kaynağı, atomik yer kapma) -------------------
