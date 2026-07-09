@@ -278,6 +278,66 @@ const getReservationsByUserId = (userId) =>
     ORDER BY r.reserve_date, r.reserve_time
   `).all(userId);
 
+// --- Menü + Sipariş (Faz v2-05) ---------------------------------------------
+const getMenu = (facilityId) =>
+  getDb().prepare(
+    'SELECT id, facility_id, name, category, price_minor FROM menu_items WHERE facility_id = ? AND is_available = 1 ORDER BY category, name'
+  ).all(facilityId);
+
+/**
+ * Sipariş oluşturma - TEK atomik transaction (DDIA Böl. 7).
+ * - Rezervasyon kullanıcıya ait mi? (sahiplik)
+ * - Her kalem AYNI tesisin menüsünden mi?
+ * - Fiyat menu_items'tan SNAPSHOT'lanır (captured vs derived, Böl. 11): sonradan menü fiyatı
+ *   değişse bile bu siparişin tutarı değişmez.
+ * - total sunucuda hesaplanır (istemciye güvenilmez). Basit akış: status 'paid'.
+ */
+const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignature }) =>
+  transaction((conn) => {
+    const reservation = conn.prepare('SELECT id, user_id, facility_id FROM reservations WHERE id = ?').get(reservationId);
+    if (!reservation) { const e = new Error('Rezervasyon bulunamadı.'); e.statusCode = 404; throw e; }
+    if (reservation.user_id !== userId) { const e = new Error('Bu rezervasyon size ait değil.'); e.statusCode = 403; throw e; }
+
+    // Tesisin menüsünü id->fiyat haritası olarak al (kalemler bu tesise ait olmalı)
+    const menu = {};
+    for (const m of conn.prepare('SELECT id, price_minor FROM menu_items WHERE facility_id = ? AND is_available = 1').all(reservation.facility_id)) {
+      menu[m.id] = m.price_minor;
+    }
+
+    let total = 0;
+    const resolved = [];
+    for (const it of items) {
+      const price = menu[it.menuItemId];
+      if (price === undefined) { const e = new Error(`Menü kalemi bu tesiste yok veya mevcut değil: ${it.menuItemId}`); e.statusCode = 409; throw e; }
+      resolved.push({ menuItemId: it.menuItemId, quantity: it.quantity, unitPrice: price });
+      total += price * it.quantity;
+    }
+
+    const orderRes = conn.prepare(
+      "INSERT INTO orders (reservation_id, status, total_minor, crypto_signature, payment_type) VALUES (?, 'paid', ?, ?, ?)"
+    ).run(reservationId, total, cryptoSignature, paymentType);
+    const orderId = Number(orderRes.lastInsertRowid);
+
+    const insItem = conn.prepare('INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price_minor) VALUES (?, ?, ?, ?)');
+    for (const r of resolved) insItem.run(orderId, r.menuItemId, r.quantity, r.unitPrice);
+
+    // Rezervasyon tutarına siparişi ekle (kümülatif harcama)
+    conn.prepare('UPDATE reservations SET amount_minor = amount_minor + ? WHERE id = ?').run(total, reservationId);
+
+    return { id: orderId, total_minor: total, status: 'paid', item_count: resolved.length };
+  });
+
+const getOrdersByReservation = (reservationId, userId) => {
+  const owns = getDb().prepare('SELECT user_id FROM reservations WHERE id = ?').get(reservationId);
+  if (!owns || owns.user_id !== userId) return null; // sahiplik yoksa null
+  const orders = getDb().prepare('SELECT * FROM orders WHERE reservation_id = ? ORDER BY created_at DESC').all(reservationId);
+  const itemStmt = getDb().prepare(`
+    SELECT oi.quantity, oi.unit_price_minor, m.name, m.category
+    FROM order_items oi JOIN menu_items m ON m.id = oi.menu_item_id WHERE oi.order_id = ?
+  `);
+  return orders.map(o => ({ ...o, items: itemStmt.all(o.id) }));
+};
+
 module.exports = {
   getFacilities,
   getFacilityById,
@@ -292,5 +352,8 @@ module.exports = {
   getReservationsByUserId,
   getIsparkStatus,
   takeIsparkSpot,
-  releaseIsparkSpot
+  releaseIsparkSpot,
+  getMenu,
+  createOrder,
+  getOrdersByReservation
 };

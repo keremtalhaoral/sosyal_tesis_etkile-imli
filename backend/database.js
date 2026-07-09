@@ -244,6 +244,17 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reserve_date);
       `);
     }
+  },
+  {
+    // Migration v5 (Faz v2-05: Sipariş akışı). Siparişin ödeme yöntemi.
+    // Gerekçe: docs/adr/ADR-005-siparis.md
+    version: 5,
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE orders ADD COLUMN payment_type TEXT
+          CHECK (payment_type IN ('cash', 'card', 'online'));
+      `);
+    }
   }
 ];
 

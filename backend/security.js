@@ -65,4 +65,12 @@ const signReservation = (userId, facilityId, reserveDate, reserveTime, guests) =
     .update(`${userId}:${facilityId}:${reserveDate}:${reserveTime}:${guests}`)
     .digest('hex');
 
-module.exports = { signJwt, verifyJwt, signReservation };
+// Sipariş bütünlük imzası: kullanıcı + rezervasyon + tutar + kalemler (menuItemId:qty).
+const signOrder = (userId, reservationId, totalMinor, items) => {
+  const itemsStr = items.map(i => `${i.menuItemId}x${i.quantity}`).join(',');
+  return crypto.createHmac('sha256', JWT_SECRET)
+    .update(`${userId}:${reservationId}:${totalMinor}:${itemsStr}`)
+    .digest('hex');
+};
+
+module.exports = { signJwt, verifyJwt, signReservation, signOrder };

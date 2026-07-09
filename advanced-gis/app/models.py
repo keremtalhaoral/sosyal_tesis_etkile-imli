@@ -159,6 +159,12 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reserve_date)")
 
+    # --- Migration v5 (Faz v2-05): siparisin odeme yontemi ------------------------
+    # backend/database.js migration v5 ile ayni. SQLite ADD COLUMN idempotent degil -> kontrol et.
+    order_cols = {row["name"] for row in cursor.execute("PRAGMA table_info(orders)")}
+    if "payment_type" not in order_cols:
+        cursor.execute("ALTER TABLE orders ADD COLUMN payment_type TEXT CHECK (payment_type IN ('cash', 'card', 'online'))")
+
     conn.commit()
     conn.close()
 

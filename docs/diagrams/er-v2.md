@@ -69,7 +69,8 @@ erDiagram
         int id PK
         int reservation_id FK "siparişi rezervasyona bağlar"
         string status "open|submitted|served|paid|cancelled"
-        int total_minor "kuruş"
+        int total_minor "kuruş (sunucu hesaplar)"
+        string payment_type "cash|card|online (v5)"
         string crypto_signature
         string created_at
     }

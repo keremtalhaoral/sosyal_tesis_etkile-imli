@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Müfettiş · Sipariş</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  <meta name="color-scheme" content="light dark">
+  <script>(function(){var t=localStorage.getItem('color-scheme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();</script>
+  <style>
+    :root {
+      --surface-1:#fcfcfb; --page:#f9f9f7; --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
+      --border:rgba(11,11,11,0.10); --s1:#2a78d6; --s2:#1baf7a; --good:#0ca30c; --line:#e1e0d9;
+    }
+    :root[data-theme="dark"] {
+      --surface-1:#1a1a19; --page:#0d0d0d; --text-primary:#fff; --text-secondary:#c3c2b7; --muted:#898781;
+      --border:rgba(255,255,255,0.10); --s1:#3987e5; --s2:#199e70; --good:#0ca30c; --line:#2c2c2a;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--page); color:var(--text-primary); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+    header { display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:14px 24px; border-bottom:1px solid var(--border); background:var(--surface-1); position:sticky; top:0; z-index:10; }
+    header h1 { font-size:18px; margin:0; }
+    .spacer { flex:1; }
+    .btn { border:1px solid var(--border); background:var(--surface-1); color:var(--text-secondary); padding:8px 13px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; text-decoration:none; display:inline-block; }
+    .btn.primary { background:var(--s1); color:#fff; border-color:transparent; }
+    .btn.primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn.ghost { background:transparent; }
+    main { max-width:1200px; margin:0 auto; padding:20px 24px 60px; }
+    .banner { font-size:12px; color:var(--text-secondary); margin-bottom:14px; }
+    .tabs { display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:18px; }
+    .tabs button { border:0; background:transparent; color:var(--text-secondary); padding:9px 18px; font-size:14px; font-weight:600; cursor:pointer; }
+    .tabs button.active { background:var(--s1); color:#fff; }
+    .card { background:var(--surface-1); border:1px solid var(--border); border-radius:16px; padding:18px 20px; margin-bottom:16px; }
+    .card h2 { font-size:15px; margin:0 0 12px; }
+    label { display:block; font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px; text-transform:uppercase; letter-spacing:.04em; }
+    select, input { width:100%; padding:9px 11px; border:1px solid var(--border); border-radius:10px; background:var(--page); color:var(--text-primary); font-size:14px; font-family:inherit; }
+    .row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+    .layout { display:grid; grid-template-columns:1fr 340px; gap:16px; }
+    @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+    .menu-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+    .mi { border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+    .mi .name { font-weight:650; font-size:14px; }
+    .mi .cat { font-size:11px; color:var(--muted); }
+    .mi .price { color:var(--s1); font-weight:700; }
+    .mi .add { display:flex; align-items:center; gap:8px; margin-top:auto; }
+    .qbtn { width:28px; height:28px; border-radius:8px; border:1px solid var(--border); background:var(--page); color:var(--text-primary); font-size:16px; cursor:pointer; font-weight:700; }
+    .cart { position:sticky; top:80px; align-self:start; }
+    .cart .line { display:flex; justify-content:space-between; gap:8px; font-size:14px; padding:6px 0; border-bottom:1px solid var(--line); }
+    .cart .total { display:flex; justify-content:space-between; font-size:18px; font-weight:750; margin:12px 0; }
+    .empty { color:var(--muted); font-size:14px; padding:10px 0; }
+    .resv { border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; }
+    .resv .top { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .resv .meta { font-size:13px; color:var(--text-secondary); }
+    .badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; background:color-mix(in srgb, var(--good) 18%, transparent); color:var(--good); }
+    .ord { font-size:13px; color:var(--text-secondary); margin-top:8px; padding-left:10px; border-left:2px solid var(--line); }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--good); color:#fff; padding:12px 22px; border-radius:12px; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.2); opacity:0; transition:opacity .3s; pointer-events:none; }
+    .toast.show { opacity:1; }
+    .hidden { display:none !important; }
+    .authbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .authbar input { width:auto; }
+    .muted-note { font-size:12px; color:var(--muted); margin-top:6px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🛒 Sipariş</h1>
+    <div class="spacer"></div>
+    <div class="authbar" id="authbar"></div>
+    <button class="btn ghost" id="theme-toggle" title="Tema">🌓</button>
+    <a class="btn" href="dashboard.html">📊 Panel</a>
+    <a class="btn" href="index.html">🗺️ Harita</a>
+  </header>
+  <main>
+    <div class="banner" id="banner">Yükleniyor…</div>
+    <div id="app" class="hidden">
+      <div class="tabs">
+        <button data-tab="new" class="active">Yeni Sipariş</button>
+        <button data-tab="mine">Siparişlerim</button>
+      </div>
+
+      <!-- Yeni Sipariş (hızlı akış: rezervasyon + sipariş) -->
+      <div id="tab-new">
+        <div class="card">
+          <h2>Rezervasyon Bilgileri</h2>
+          <div class="row">
+            <div><label>Tesis</label><select id="f-facility"></select></div>
+            <div><label>Tarih</label><input type="date" id="f-date"></div>
+            <div><label>Saat (slot)</label><select id="f-slot"></select></div>
+            <div><label>Kişi</label><input type="number" id="f-guests" min="1" value="2"></div>
+          </div>
+          <div class="muted-note">Sipariş, bu bilgilerle oluşturulacak rezervasyona bağlanır (sipariş ⇄ rezervasyon).</div>
+        </div>
+        <div class="layout">
+          <div class="card"><h2>Menü</h2><div class="menu-grid" id="menu-grid"></div></div>
+          <div class="card cart">
+            <h2>Sepet</h2>
+            <div id="cart-lines"><div class="empty">Sepet boş — menüden ekleyin.</div></div>
+            <div class="total"><span>Toplam</span><span id="cart-total">₺0</span></div>
+            <label>Ödeme</label>
+            <select id="f-payment"><option value="card">Kart</option><option value="cash">Nakit</option><option value="online">Online</option></select>
+            <button class="btn primary" id="place-order" style="width:100%;margin-top:12px;" disabled>Siparişi Tamamla</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Siparişlerim (rezervasyonlar + siparişleri) -->
+      <div id="tab-mine" class="hidden">
+        <div class="card"><h2>Rezervasyonlarım & Siparişler</h2><div id="mine-list"></div></div>
+      </div>
+    </div>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="order.js?v=1"></script>
+</body>
+</html>
