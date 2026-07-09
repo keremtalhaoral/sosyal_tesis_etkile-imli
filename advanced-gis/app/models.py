@@ -142,6 +142,23 @@ def init_db():
     """)
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_slot ON reservations(facility_id, reserve_date, reserve_time)")
 
+    # --- Migration v4 (Faz v2-04): daily_stats rollup (turetilmis veri) ------------
+    # backend/database.js migration v4 ile birebir ayni. Gerekce: docs/adr/ADR-004-analytics.md
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS daily_stats (
+        stat_date TEXT NOT NULL,
+        facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+        revenue_minor INTEGER NOT NULL DEFAULT 0,
+        reservation_count INTEGER NOT NULL DEFAULT 0,
+        guest_count INTEGER NOT NULL DEFAULT 0,
+        highchair_count INTEGER NOT NULL DEFAULT 0,
+        cancelled_count INTEGER NOT NULL DEFAULT 0,
+        order_count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (stat_date, facility_id)
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reserve_date)")
+
     conn.commit()
     conn.close()
 

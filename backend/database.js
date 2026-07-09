@@ -223,6 +223,27 @@ const MIGRATIONS = [
           ON reservations(facility_id, reserve_date, reserve_time);
       `);
     }
+  },
+  {
+    // Migration v4 (Faz v2-04: Analytics). daily_stats = gün×tesis ROLLUP (türetilmiş veri).
+    // Kaynaktan yeniden hesaplanır (analytics.rebuildDailyStats). Gerekçe: docs/adr/ADR-004-analytics.md
+    version: 4,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS daily_stats (
+          stat_date TEXT NOT NULL,
+          facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+          revenue_minor INTEGER NOT NULL DEFAULT 0,
+          reservation_count INTEGER NOT NULL DEFAULT 0,
+          guest_count INTEGER NOT NULL DEFAULT 0,
+          highchair_count INTEGER NOT NULL DEFAULT 0,
+          cancelled_count INTEGER NOT NULL DEFAULT 0,
+          order_count INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (stat_date, facility_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_reservations_date ON reservations(reserve_date);
+      `);
+    }
   }
 ];
 
