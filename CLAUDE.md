@@ -18,7 +18,9 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 - **`advanced-gis/`** (Python): aynı `app.db`'yi kullanır; şema `app/models.py`'de Node ile **senkron**.
 - **`docs/`** = GitHub Pages (sunucusuz). Backend varsa canlı API, yoksa `localStorage`+`seed.json`
   mock (çift mod). Sayfalar: `index.html` (harita), `dashboard.html` (analitik), `order.html` (sipariş).
-- **`scripts/`**: `generate-data.js` (dummy veri, `--scale`), `export-analytics.js` (Pages snapshot).
+- **`scripts/`**: `generate-data.js` (dummy veri, `--scale`), `export-analytics.js` (Pages snapshot),
+  `build-routes.js` (GTFS → `docs/data/transit-routes.geojson`; ham GTFS `data/gtfs/` gitignored,
+  türetilmiş slim çıktı commit — ADR-006. `stop_times` EKSİKSİZ olmalı; kesikse kapsam kısıtlı).
 
 ## Branch stratejisi (ÖNEMLİ)
 - `main` = kullanıcı elle merge edene dek sabit.

@@ -10,6 +10,7 @@ const state = {
   facilities: [],
   districtsGeoJSON: null,
   districtsLayer: null,
+  transitRoutes: null,   // v2-06: data/transit-routes.geojson (gerçek hat geometrileri)
   markers: {},
   isparkMarkers: [],
   selectedFacility: null,
@@ -506,12 +507,14 @@ const setupUIEvents = () => {
   document.getElementById('back-to-list-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
     Routing.clear();
+    TransitRoutes.clear();
     clearShiftMarkers();
   });
 
   document.getElementById('district-back-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
     Routing.clear();
+    TransitRoutes.clear();
     clearShiftMarkers();
   });
 
@@ -670,6 +673,10 @@ const loadData = async () => {
 
     state.facilities = await facilitiesRes.json();
     state.districtsGeoJSON = districtsRes;
+
+    // v2-06: gerçek toplu taşıma güzergahları (türetilmiş slim GeoJSON; ADR-006).
+    // Çevrimdışı/Pages'te de çalışır (statik dosya; canlı API gerektirmez).
+    TransitRoutes.load();
 
     // Process Spatial Area Centroids and facility containment inside districts
     processDistrictsContainment();
@@ -1019,6 +1026,9 @@ const selectFacility = (facility) => {
   // Draw OSRM route line
   Routing.draw([state.userLocation.lat, state.userLocation.lng], facility.koordinatlar);
 
+  // v2-06: gerçek toplu taşıma güzergahları (düz çizgi yerine GTFS geometrisi; ADR-006)
+  TransitRoutes.showForFacility(facility);
+
   // Fetch Menu from Scraper backend
   fetchMenu(facility.id);
 
@@ -1238,7 +1248,9 @@ const calculateTransitOptions = (facility) => {
     card.addEventListener('click', () => {
       document.querySelectorAll('.transit-card').forEach(c => c.classList.remove('selected'));
       card.classList.add('selected');
-      Routing.drawTransitRoute(origin, dest, route.type, route.color);
+      // v2-06: gerçek geometriyi (GTFS shapes) göster — düz-çizgi interpolasyonu kaldırıldı.
+      // Hattı olmayan modlar (vapur/aktarma: operatör feed'i eksik) dürüstçe not + yürüme bacağı.
+      TransitRoutes.showForFacility(facility);
     });
 
     container.appendChild(card);
@@ -1409,6 +1421,106 @@ const Routing = (() => {
   };
 
   return { draw, drawTransitRoute, clear };
+})();
+
+// ==========================================
+// v2-06: TransitRoutes — GERÇEK hat geometrileri (GTFS shapes → slim GeoJSON)
+// Düz-çizgi interpolasyonunun (Routing.drawTransitRoute) yerini alır. Çevrimdışı çalışır.
+// Veri: data/transit-routes.geojson (build-routes.js üretir; ADR-006).
+// ==========================================
+const TransitRoutes = (() => {
+  // build-routes.js ile senkron mod renkleri (dataviz paleti; ADR-006)
+  const MODE_COLOR = { bus: '#2a78d6', metrobus: '#eb6834', ferry: '#1baf7a', rail: '#4a3aa7', walk: '#898781' };
+  const MODE_LABEL = { bus: 'Otobüs', metrobus: 'Metrobüs', ferry: 'Vapur', rail: 'Raylı', walk: 'Yürüyüş' };
+  const MODE_WEIGHT = { bus: 5, metrobus: 6, ferry: 5, rail: 5.5, walk: 3.5 };
+  let group = null;      // aktif hat/yürüme katmanı
+  let legend = null;     // Leaflet kontrol
+
+  const load = async () => {
+    try {
+      const res = await fetch('data/transit-routes.geojson', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('transit-routes HTTP ' + res.status);
+      state.transitRoutes = await res.json();
+    } catch (e) {
+      console.warn('[TransitRoutes] gerçek güzergah verisi yüklenemedi (offline mock?).', e);
+      state.transitRoutes = null;
+    }
+  };
+
+  // facility_index anahtarları "mode:ref" → eşleşen line feature'ları
+  const linesForFacility = (facility) => {
+    const gj = state.transitRoutes;
+    if (!gj) return [];
+    const keys = (gj.facility_index && gj.facility_index[facility.id]) || [];
+    return gj.features.filter(f => f.properties.kind === 'line' && keys.includes(`${f.properties.mode}:${f.properties.ref}`));
+  };
+  const walkForFacility = (facility) => {
+    const gj = state.transitRoutes;
+    if (!gj) return null;
+    return gj.features.find(f => f.properties.kind === 'walk' && f.properties.facility_id === facility.id) || null;
+  };
+
+  const clear = () => {
+    if (group && state.map) { state.map.removeLayer(group); group = null; }
+    if (legend && state.map) { state.map.removeControl(legend); legend = null; }
+  };
+
+  const renderLegend = (modesPresent, note) => {
+    if (legend && state.map) state.map.removeControl(legend);
+    legend = L.control({ position: 'topright' });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'transit-legend');
+      let html = '<div class="transit-legend-title">Gerçek Güzergah</div>';
+      modesPresent.forEach(m => {
+        html += `<div class="transit-legend-row"><span class="transit-legend-swatch" style="background:${MODE_COLOR[m]}"></span>${MODE_LABEL[m] || m}</div>`;
+      });
+      if (note) html += `<div class="transit-legend-note">${note}</div>`;
+      div.innerHTML = html;
+      return div;
+    };
+    legend.addTo(state.map);
+  };
+
+  // Bir tesis için gerçek hat polyline'larını + yürüme bacağını çiz (moda göre renk).
+  const showForFacility = (facility) => {
+    clear();
+    if (!state.transitRoutes) return;
+    group = L.layerGroup().addTo(state.map);
+
+    const lines = linesForFacility(facility);
+    const walk = walkForFacility(facility);
+    const modes = new Set();
+    const bounds = [];
+
+    lines.forEach(f => {
+      const mode = f.properties.mode;
+      modes.add(mode);
+      const latlngs = f.geometry.coordinates.map(c => [c[1], c[0]]); // [lng,lat] → [lat,lng]
+      L.polyline(latlngs, { color: f.properties.color, weight: MODE_WEIGHT[mode] || 5, opacity: 0.9, lineJoin: 'round' })
+        .bindTooltip(`${MODE_LABEL[mode] || mode} ${f.properties.ref}`, { sticky: true })
+        .addTo(group);
+      latlngs.forEach(p => bounds.push(p));
+    });
+
+    if (walk) {
+      modes.add('walk');
+      const wl = walk.geometry.coordinates.map(c => [c[1], c[0]]);
+      L.polyline(wl, { color: MODE_COLOR.walk, weight: MODE_WEIGHT.walk, opacity: 0.85, dashArray: '4, 8' })
+        .bindTooltip(`Yürüyüş → ${walk.properties.stop_name} (${walk.properties.distance_m} m)`, { sticky: true })
+        .addTo(group);
+      wl.forEach(p => bounds.push(p));
+    }
+
+    // Dürüst not: hattı olmayan tesis (stop_times eksik veya operatör feed'i yok)
+    const note = lines.length === 0
+      ? 'Bu tesis için gerçek hat verisi yok (stop_times eksik / operatör feed\'i). Yürüme bacağı gerçektir.'
+      : '';
+    renderLegend([...modes], note);
+
+    if (bounds.length > 1) state.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
+  };
+
+  return { load, showForFacility, linesForFacility, clear };
 })();
 
 // Geolocation
@@ -1801,6 +1913,7 @@ const handleShiftClick = (latlng) => {
     state.shiftStartCoords = coords;
     clearShiftMarkers();
     Routing.clear();
+    TransitRoutes.clear();
     
     state.shiftStartMarker = L.circleMarker(coords, {
       radius: 8,
@@ -1891,6 +2004,7 @@ const deleteSelectedFacility = async (facilityId) => {
       await loadData();
       switchSidebarView('list-view');
       Routing.clear();
+      TransitRoutes.clear();
     } else {
       const data = await res.json();
       alert(data.error || "Tesis silinemedi.");
@@ -1916,5 +2030,6 @@ const deleteSelectedFacility = async (facilityId) => {
     calculateCoverageShadows();
     switchSidebarView('list-view');
     Routing.clear();
+    TransitRoutes.clear();
   }
 };
