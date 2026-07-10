@@ -26,18 +26,3 @@ def log_request(method, path, status, ip="127.0.0.1"):
         api_call_counts["reservations"] += 1
         
     print(f"[{timestamp}] {ip} - {method} {path} - Status: {status}")
-
-def get_cost_estimate() -> dict:
-    # Simulated cloud provider API billing trace (e.g. OpenWeather + OSRM calls)
-    weather_cost = api_call_counts["weather_check"] * 0.0015  # $0.0015 per call
-    scraper_cost = api_call_counts["menu_scrape"] * 0.0005    # $0.0005 per parse
-    total_cost = weather_cost + scraper_cost
-    
-    return {
-        "call_counts": api_call_counts,
-        "cost_estimates_usd": {
-            "weather": round(weather_cost, 4),
-            "menu_scraper": round(scraper_cost, 4),
-            "total": round(total_cost, 4)
-        }
-    }
