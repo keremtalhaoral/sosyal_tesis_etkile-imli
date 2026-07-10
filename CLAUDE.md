@@ -60,6 +60,7 @@ cd backend && npm install && npm start        # http://localhost:8085
 # Dummy veri / analitik snapshot
 node scripts/generate-data.js [--scale=N] [--reset]
 node scripts/export-analytics.js              # -> docs/data/analytics.json
+node scripts/export-schema.js                 # -> schema.sql (türetilmiş DDL; migration'lardan)
 # Testler (geçici DB, gerçek veriye dokunmaz)
 node backend/test-db.js          # şema, kısıt, tx
 node backend/test-orders.js      # sipariş + durum makinesi (submitted→served→paid)
@@ -74,7 +75,8 @@ cd advanced-gis && python3 scripts/seed.py && python3 tests/test_crypto.py
 
 ## Sözleşmeler
 - Şema değişince **hem** `backend/database.js` MIGRATIONS **hem** `advanced-gis/app/models.py`
-  güncellenir (senkron); yeni faz = yeni migration versiyonu.
+  güncellenir (senkron); yeni faz = yeni migration versiyonu. Ardından `node scripts/export-schema.js`
+  ile **`schema.sql` yeniden üretilir** (türetilmiş DDL dokümanı; elle düzenlenmez).
 - **Yeni dosya/teknoloji eklenince** `TEKNOLOJI_VE_DOSYA_REHBERI.md` güncellenir (dosya-dosya
   katalog + değişiklik günlüğü güncel kalır).
 - Her fazın çıktısı: kod + **ADR** (`docs/adr/`) + testler + (UI ise) açık/koyu tema doğrulaması.
