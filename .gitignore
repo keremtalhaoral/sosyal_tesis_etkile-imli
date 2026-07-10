@@ -31,6 +31,7 @@ data/gtfs/
 /frequencies.csv
 /stop_times.csv
 /stop_times.txt
+/stop_times.txt.gz
 /*.crdownload
 
 # Sırlar ve yerel dev parolaları (ASLA commit edilmez - ADR-002)
