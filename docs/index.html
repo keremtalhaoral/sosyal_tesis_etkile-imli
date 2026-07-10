@@ -133,6 +133,13 @@
               <div class="progress-bar-fill" id="detail-progress-fill" style="width: 0%"></div>
             </div>
             <div class="occupancy-status-text" id="detail-occupancy-text">-</div>
+
+            <!-- Admin: doluluk hızlı-düzenleme (Faz v2-07, ADR-003 gap kapanışı) -->
+            <div class="admin-occupancy-edit hidden" id="admin-occupancy-edit">
+              <input type="number" id="admin-occupancy-input" min="0" max="100" placeholder="Yeni doluluk %">
+              <button type="button" id="admin-occupancy-update-btn" class="btn btn-secondary btn-sm">Doluluk Güncelle</button>
+              <span id="admin-occupancy-msg" class="form-status-msg mini"></span>
+            </div>
           </div>
 
           <!-- Live Price Menu Scraper Widget -->
@@ -315,6 +322,10 @@
               </div>
             </div>
             <div class="form-group">
+              <label for="admin-ispark-capacity">İSPARK Kapasitesi (opsiyonel)</label>
+              <input type="number" id="admin-ispark-capacity" min="1" max="500" placeholder="Boş bırakılırsa otopark kaydı oluşturulmaz">
+            </div>
+            <div class="form-group">
               <label for="admin-iett">En Yakın İETT Durak / Hat Bilgisi</label>
               <input type="text" id="admin-iett" placeholder="Örn: 99A, 55 (Durağı)" required>
             </div>
@@ -329,6 +340,23 @@
             <button type="submit" class="btn btn-primary btn-block">Yeni Tesisi Mekansal Olarak Kaydet</button>
           </form>
           <div id="admin-form-status" class="form-status-msg"></div>
+
+          <!-- Admin Gözetim: tüm tesislerdeki rezervasyon/sipariş listesi (Faz v2-07, ADR-007) -->
+          <div class="admin-oversight-section">
+            <h3 class="admin-section-title">📋 Rezervasyon &amp; Sipariş Gözetimi</h3>
+            <button type="button" id="admin-oversight-refresh-btn" class="btn btn-secondary btn-sm btn-block">Listeyi Yenile</button>
+            <div id="admin-oversight-list" class="admin-oversight-list">
+              <div class="admin-oversight-empty">Yenile'ye basarak tüm tesislerdeki siparişleri görüntüleyin.</div>
+            </div>
+          </div>
+
+          <!-- Audit Log: append-only işlem kaydı (DDIA Böl. 11 - event log; ADR-007) -->
+          <div class="admin-audit-section">
+            <h3 class="admin-section-title">🕓 Son İşlemler (Audit Log)</h3>
+            <div id="admin-audit-list" class="admin-audit-list">
+              <div class="admin-oversight-empty">Kayıtlar yükleniyor...</div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
@@ -362,6 +390,14 @@
 
         <!-- Floating Map Overlays & Controls -->
         <div class="floating-controls top-right">
+          <a href="dashboard.html" class="map-control-btn" title="Analiz Paneli" style="text-decoration:none;">
+            <span class="btn-icon">📊</span>
+            <span class="btn-text">Analiz Paneli</span>
+          </a>
+          <a href="order.html" class="map-control-btn" title="Sipariş Ver" style="text-decoration:none;">
+            <span class="btn-icon">🛒</span>
+            <span class="btn-text">Sipariş Ver</span>
+          </a>
           <button id="btn-my-location" class="map-control-btn" title="Konumumu Bul">
             <span class="btn-icon">📍</span>
             <span class="btn-text">Konumumu Bul</span>

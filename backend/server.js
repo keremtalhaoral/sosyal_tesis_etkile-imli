@@ -13,7 +13,9 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
-const { signJwt, verifyJwt, signReservation } = require('./security');
+const analytics = require('./analytics');
+const { signJwt, verifyJwt, signReservation, signOrder } = require('./security');
+const { validateReservationInput, validateOrderInput } = require('./validate');
 const http = require('http');
 const crypto = require('crypto');
 
@@ -71,11 +73,11 @@ app.post('/api/auth/register', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
   const { username, password } = req.body || {};
+  const { verifyPassword } = require('./database');
   const record = username ? db.getUserByUsername(String(username).trim()) : null;
-  const { hashPassword } = require('./database');
-  const candidate = hashPassword(password || '');
-  const valid = record && crypto.timingSafeEqual(Buffer.from(record.password), Buffer.from(candidate));
-  if (!valid) {
+  // verifyPassword sabit-zamanlıdır; kullanıcı yoksa da sahte doğrulama ile timing sızıntısını azaltırız.
+  const valid = verifyPassword(password || '', record ? record.password : 'pbkdf2_sha256$1$AA==$AA==');
+  if (!record || !valid) {
     return res.status(401).json({ error: 'Kullanıcı adı veya parola hatalı.' });
   }
   const user = { id: record.id, username: record.username, role: record.role };
@@ -95,7 +97,7 @@ app.post('/api/facilities', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'kod, ad, lat, lng (sayı) ve capacity (tamsayı) alanları zorunludur.' });
   }
   try {
-    res.status(201).json(db.createFacility(req.body));
+    res.status(201).json(db.createFacility(req.body, req.user.id));
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: `'${kod}' kodlu tesis zaten mevcut.` });
@@ -113,14 +115,14 @@ app.patch('/api/facilities/:id', requireAdmin, (req, res) => {
   if (!Number.isInteger(occupancy) || occupancy < 0 || occupancy > 100) {
     return res.status(400).json({ error: 'occupancy 0-100 arası tamsayı olmalıdır.' });
   }
-  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy);
+  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy, req.user.id);
   if (!updated) return res.status(404).json({ error: 'Tesis bulunamadı.' });
   res.json(updated);
 });
 
 // Endpoint: Delete facility (admin) - rezervasyonları FK cascade ile temizlenir
 app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
-  if (!db.deleteFacility(Number(req.params.id))) {
+  if (!db.deleteFacility(Number(req.params.id), req.user.id)) {
     return res.status(404).json({ error: 'Tesis bulunamadı.' });
   }
   res.status(204).end();
@@ -128,21 +130,18 @@ app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
 
 // --- Reservations API ---------------------------------------------------------
 app.post('/api/reservations', requireAuth, (req, res) => {
-  const { facilityId, reserveDate, reserveTime, guests } = req.body || {};
-  if (!Number.isInteger(facilityId) || !reserveDate || !reserveTime || !Number.isInteger(guests) || guests <= 0) {
-    return res.status(400).json({ error: 'facilityId, reserveDate, reserveTime ve guests (pozitif tamsayı) zorunludur.' });
-  }
+  // Merkezi doğrulama (slot, tarih, guests, highchair...) - DB CHECK'lerinden ÖNCE dostça hata.
+  const v = validateReservationInput(req.body);
+  if (!v.ok) return res.status(400).json({ error: v.error });
+  const { facilityId, reserveDate, reserveTime, guests, highchairCount } = v.value;
   try {
     const signature = signReservation(req.user.id, facilityId, reserveDate, reserveTime, guests);
     const result = db.createReservation({
       userId: req.user.id,
-      facilityId,
-      reserveDate,
-      reserveTime,
-      guests,
+      facilityId, reserveDate, reserveTime, guests, highchairCount,
       cryptoSignature: signature
     });
-    res.status(201).json({ id: result.id, newOccupancy: result.newOccupancy, signature });
+    res.status(201).json({ id: result.id, booked: result.booked, remaining: result.remaining, signature });
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: 'Aynı tesis, tarih ve saat için zaten rezervasyonunuz var.' });
@@ -153,6 +152,96 @@ app.post('/api/reservations', requireAuth, (req, res) => {
 
 app.get('/api/reservations', requireAuth, (req, res) => {
   res.json(db.getReservationsByUserId(req.user.id));
+});
+
+// --- Menü + Sipariş API (Faz v2-05) ------------------------------------------
+app.get('/api/menu', (req, res) => {
+  const facilityId = Number(req.query.facilityId);
+  if (!Number.isInteger(facilityId) || facilityId <= 0) {
+    return res.status(400).json({ error: 'facilityId gereklidir.' });
+  }
+  res.json(db.getMenu(facilityId));
+});
+
+app.post('/api/orders', requireAuth, (req, res) => {
+  const v = validateOrderInput(req.body);
+  if (!v.ok) return res.status(400).json({ error: v.error });
+  const { reservationId, items, paymentType } = v.value;
+  try {
+    const signature = signOrder(req.user.id, reservationId, 0, items); // ön-imza (istemci bütünlüğü)
+    const result = db.createOrder({ userId: req.user.id, reservationId, items, paymentType, cryptoSignature: signature });
+    res.status(201).json({ id: result.id, total_minor: result.total_minor, status: result.status, item_count: result.item_count, signature });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reservations/:id/orders', requireAuth, (req, res) => {
+  const orders = db.getOrdersByReservation(Number(req.params.id), req.user.id);
+  if (orders === null) return res.status(403).json({ error: 'Bu rezervasyon size ait değil.' });
+  res.json(orders);
+});
+
+// Endpoint: Sipariş durum geçişi - personel/admin akışı (Faz v2-07, ADR-007).
+// İzinli geçişler yalnız submitted→served, served→paid, (submitted|served)→cancelled.
+app.patch('/api/orders/:id/status', requireAdmin, (req, res) => {
+  const { status } = req.body || {};
+  if (!status) return res.status(400).json({ error: 'status alanı zorunludur.' });
+  try {
+    res.json(db.updateOrderStatus(Number(req.params.id), status, req.user.id));
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+});
+
+// --- Admin gözetim API (Faz v2-07) - sahiplik filtresi YOK, requireAdmin ile korunur ---
+app.get('/api/admin/reservations', requireAdmin, (req, res) => {
+  const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
+  res.json(db.getAllReservations(facilityId));
+});
+
+app.get('/api/admin/orders', requireAdmin, (req, res) => {
+  const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
+  res.json(db.getAllOrders(facilityId));
+});
+
+app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 50;
+  res.json(db.getAuditLog(limit));
+});
+
+// --- İSPARK API (bağımsız otopark kaynağı, atomik yer kapma) -------------------
+app.get('/api/ispark/:facilityId', (req, res) => {
+  const status = db.getIsparkStatus(Number(req.params.facilityId));
+  if (!status) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  res.json(status);
+});
+
+app.post('/api/ispark/:facilityId/take', requireAuth, (req, res) => {
+  const facilityId = Number(req.params.facilityId);
+  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  if (!db.takeIsparkSpot(facilityId)) {
+    return res.status(409).json({ error: 'Otopark dolu, boş yer yok.' });
+  }
+  res.status(201).json(db.getIsparkStatus(facilityId));
+});
+
+app.post('/api/ispark/:facilityId/release', requireAuth, (req, res) => {
+  const facilityId = Number(req.params.facilityId);
+  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  db.releaseIsparkSpot(facilityId);
+  res.json(db.getIsparkStatus(facilityId));
+});
+
+// --- Analytics API (canlı; Pages snapshot ile aynı şekil) ---------------------
+const VALID_GRANULARITY = ['day', 'week', 'month', 'year'];
+app.get('/api/analytics/dashboard', (req, res) => {
+  const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
+  res.json(analytics.dashboard(g));
+});
+app.get('/api/analytics/revenue', (req, res) => {
+  const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
+  res.json(analytics.revenueTimeSeries(g));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms

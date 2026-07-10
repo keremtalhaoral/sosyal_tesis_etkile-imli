@@ -18,6 +18,25 @@ data/app.db
 *.db-shm
 advanced-gis/data/database.db
 
+# Ham GTFS feed'i (İBB/İETT - büyük, üçüncü taraf ham veri). TÜRETİLMİŞ çıktı
+# docs/data/transit-routes.geojson commit edilir (ADR-006). Ham veriyi kullanıcı
+# yerelde data/gtfs/ altına koyar; build-routes.js işleyip slim geojson üretir.
+data/gtfs/
+/agency.csv
+/routes.csv
+/trips.csv
+/shapes.csv
+/stops.csv
+/calendar.csv
+/frequencies.csv
+/stop_times.csv
+/stop_times.txt
+/*.crdownload
+
+# Sırlar ve yerel dev parolaları (ASLA commit edilmez - ADR-002)
+.env
+data/dev-credentials.json
+
 # Python
 __pycache__/
 *.pyc
