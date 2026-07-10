@@ -292,7 +292,7 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                 # Retrieve all facilities to find next sequential code (ALTY-XX)
                 all_facs = get_facilities()
                 next_id = max([f['id'] for f in all_facs]) + 1 if all_facs else 1
-                code = f"ALTY-{str(next_id).padStart(2, '0')}" if hasattr(str, 'padStart') else f"ALTY-{str(next_id).zfill(2)}"
+                code = f"ALTY-{str(next_id).zfill(2)}"
                 
                 add_facility(code, name, lat, lng, capacity, occupancy, iett, transit, route)
                 
