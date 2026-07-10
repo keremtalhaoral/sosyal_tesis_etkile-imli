@@ -148,6 +148,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `adr/ADR-001…007-*.md` | ~690 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin. |
 | `diagrams/er-v2.md` | 134 | v2 varlık-ilişki diyagramı. |
 | `learning/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
+| `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |
 | `data/analytics.json` | 7872 | Analitik fallback snapshot (`dashboard.js`). |
 | `data/seed.json` | 692 | Kanonik seed'in frontend mock kopyası. |
 | `data/istanbul-districts.geojson` | ~132k | İlçe poligonları (Pages statik okur). |
@@ -173,6 +174,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `staj_sunum_rehberi.md` | Staj sunum rehberi (erken sürüm mimarisi + hâlâ geçerli tasarım prensipleri; başında sürüm notu). |
 | `data/seed.json` | Kanonik başlangıç verisi (30 tesis, 39 ilçe, kullanıcılar). |
 | `schema.sql` | **Türetilmiş** okunur DDL dokümanı (migration'lardan üretilir; `scripts/export-schema.js`). Elle düzenlenmez; mentöre/DBeaver'a şemayı tek dosyada gösterir. Kanonik değil — kaynak `database.js` MIGRATIONS. |
+| `queries.sql` | Projenin her özelliğini gösteren, DBeaver'da çalıştırılabilir SQL koleksiyonu (30 sorgu). Anlatımlı hâli `docs/sorgu-defteri.md`. |
 | `.env.example` | Ortam değişkeni şablonu (JWT_SECRET, OPENWEATHER_API_KEY, …). |
 | `.agents/AGENTS.md` | Çalışma alanı kuralları (kod okurken fark edilen risk/koku bildirilir). |
 | `.github/workflows/deploy-pages.yml` | GitHub Pages otomatik yayın. |
@@ -219,4 +221,8 @@ Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temi
   okunur DDL dokümanı `schema.sql` üretiyor (kanonik değil, migration'lardan türetilmiş; şema değişince
   yeniden üretilir — CLAUDE.md sözleşmesi). Amaç: SQL şemasını tek dosyada gösterebilmek (DBeaver/mentör).
   Tam veri dökümü `data/full.sql` gitignored. `schema.sql` (yalnız yapı) dokümantasyon olarak commit'lenir.
+- **2026-07-10 — Sorgu defteri + test verisi havuzu.** `docs/sorgu-defteri.md` (10 bölüm, ~35 sorgu:
+  KNN/Haversine, kapasite, sipariş snapshot, analitik, rollup, İSPARK, güvenlik, EXPLAIN) ve çalıştırılabilir
+  kök `queries.sql` (30 ifade, hepsi gerçek şemada doğrulandı) eklendi. Test verisi havuzu `scripts/generate-data.js
+  --reset --scale=N` ile üretiliyor (scale=3 → ~642K rezervasyon; kapasite/benchmark için). `app.db` gitignored kalır.
 - *(Sonraki fazlar buraya birer satır ekler.)*
