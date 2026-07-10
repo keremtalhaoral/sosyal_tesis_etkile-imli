@@ -97,7 +97,7 @@ app.post('/api/facilities', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'kod, ad, lat, lng (sayı) ve capacity (tamsayı) alanları zorunludur.' });
   }
   try {
-    res.status(201).json(db.createFacility(req.body));
+    res.status(201).json(db.createFacility(req.body, req.user.id));
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
       return res.status(409).json({ error: `'${kod}' kodlu tesis zaten mevcut.` });
@@ -115,14 +115,14 @@ app.patch('/api/facilities/:id', requireAdmin, (req, res) => {
   if (!Number.isInteger(occupancy) || occupancy < 0 || occupancy > 100) {
     return res.status(400).json({ error: 'occupancy 0-100 arası tamsayı olmalıdır.' });
   }
-  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy);
+  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy, req.user.id);
   if (!updated) return res.status(404).json({ error: 'Tesis bulunamadı.' });
   res.json(updated);
 });
 
 // Endpoint: Delete facility (admin) - rezervasyonları FK cascade ile temizlenir
 app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
-  if (!db.deleteFacility(Number(req.params.id))) {
+  if (!db.deleteFacility(Number(req.params.id), req.user.id)) {
     return res.status(404).json({ error: 'Tesis bulunamadı.' });
   }
   res.status(204).end();
@@ -180,6 +180,34 @@ app.get('/api/reservations/:id/orders', requireAuth, (req, res) => {
   const orders = db.getOrdersByReservation(Number(req.params.id), req.user.id);
   if (orders === null) return res.status(403).json({ error: 'Bu rezervasyon size ait değil.' });
   res.json(orders);
+});
+
+// Endpoint: Sipariş durum geçişi - personel/admin akışı (Faz v2-07, ADR-007).
+// İzinli geçişler yalnız submitted→served, served→paid, (submitted|served)→cancelled.
+app.patch('/api/orders/:id/status', requireAdmin, (req, res) => {
+  const { status } = req.body || {};
+  if (!status) return res.status(400).json({ error: 'status alanı zorunludur.' });
+  try {
+    res.json(db.updateOrderStatus(Number(req.params.id), status, req.user.id));
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+});
+
+// --- Admin gözetim API (Faz v2-07) - sahiplik filtresi YOK, requireAdmin ile korunur ---
+app.get('/api/admin/reservations', requireAdmin, (req, res) => {
+  const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
+  res.json(db.getAllReservations(facilityId));
+});
+
+app.get('/api/admin/orders', requireAdmin, (req, res) => {
+  const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
+  res.json(db.getAllOrders(facilityId));
+});
+
+app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 50;
+  res.json(db.getAuditLog(limit));
 });
 
 // --- İSPARK API (bağımsız otopark kaynağı, atomik yer kapma) -------------------

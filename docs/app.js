@@ -40,7 +40,19 @@ const API_BASE = 'http://127.0.0.1:8085';
 // ==========================================
 const MOCK_FACILITIES_KEY = 'mufettis_mock_facilities';
 const MOCK_RESERVATIONS_KEY = 'mufettis_mock_reservations';
-const MOCK_USERS_KEY = 'mufettis_mock_users';const defaultFacilities = [
+const MOCK_USERS_KEY = 'mufettis_mock_users';
+// v2-07: order.js ile PAYLAŞILAN anahtar (docs/order.js K_ORD) - admin panel aynı siparişleri görür/değiştirir.
+const MOCK_ORDERS_KEY = 'mufettis_mock_orders';
+// v2-07: Pages/offline modda audit_log'un istemci-tarafı eşleniği (DDIA Böl. 11 ilkesi burada da
+// geçerli: yalnız append edilir, hiç silinmez/değiştirilmez).
+const MOCK_AUDIT_LOG_KEY = 'mufettis_mock_audit_log';
+const mockAuditLog = (action, entityType, entityId, detail) => {
+  const actor = (state.userSession && state.userSession.username) || 'bilinmeyen';
+  const rows = JSON.parse(localStorage.getItem(MOCK_AUDIT_LOG_KEY)) || [];
+  rows.unshift({ actor_username: actor, action, entity_type: entityType, entity_id: entityId, detail: JSON.stringify(detail || {}), created_at: new Date().toISOString() });
+  localStorage.setItem(MOCK_AUDIT_LOG_KEY, JSON.stringify(rows.slice(0, 100)));
+};
+const defaultFacilities = [
   {"id": 1, "kod": "ALTY-01", "ad": "Altınboynuz Sosyal Tesisi", "koordinatlar": [41.0578458, 28.9456101], "kapasite": 120, "dolulukOrani": 75, "transit": {"otobus": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)", "aktarma": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)", "arabayla": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"}},
   {"id": 2, "kod": "ALTY-02", "ad": "Arnavutköy Sosyal Tesisi", "koordinatlar": [41.067491, 29.0448903], "kapasite": 150, "dolulukOrani": 85, "transit": {"otobus": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)", "aktarma": "M2 Metro (Taksim) -> 40T Otobüsü", "arabayla": "Bebek Arnavutköy Cd. üzerinden"}},
   {"id": 3, "kod": "ALTY-03", "ad": "Avcılar Sosyal Tesisi", "koordinatlar": [40.976648, 28.743912], "kapasite": 200, "dolulukOrani": 55, "transit": {"otobus": "76O, 146, 76C (Denizköşkler Durağı)", "aktarma": "Metrobüs (Şükrübey Durağı) -> 10 dk yürüyüş", "arabayla": "D-100 Karayolu ve Dr. Sadık Ahmet Cd. üzerinden"}},
@@ -168,6 +180,7 @@ window.fetch = async function (url, options) {
 
     let responseData = null;
     let status = 200;
+    let matched = true; // v2-07: bilinmeyen uçlar artık sahte 200 DEĞİL, gerçek ağa düşer (aşağıda)
 
     const getLoggedUser = () => {
       const authHeader = headers['Authorization'];
@@ -183,8 +196,9 @@ window.fetch = async function (url, options) {
       return null;
     };
 
-    if (cleanEndpoint === 'facilities') {
+    if (cleanEndpoint === 'facilities' || cleanEndpoint.startsWith('facilities/')) {
       const facilities = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY));
+      const facId = cleanEndpoint.includes('/') ? parseInt(cleanEndpoint.split('/')[1]) : null;
       if (method === 'GET') {
         responseData = facilities;
       } else if (method === 'POST') {
@@ -194,7 +208,7 @@ window.fetch = async function (url, options) {
           responseData = { error: 'Yetkisiz erişim.' };
         } else {
           const nextId = facilities.length ? Math.max(...facilities.map(f => f.id)) + 1 : 1;
-          const nextCode = `ALTY-${String(nextId).padStart(2, '0')}`;
+          const nextCode = body.kod || `ALTY-${String(nextId).padStart(2, '0')}`;
           const newFac = {
             id: nextId,
             kod: nextCode,
@@ -211,7 +225,27 @@ window.fetch = async function (url, options) {
           };
           facilities.push(newFac);
           localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(facilities));
-          responseData = { message: 'Tesis başarıyla eklendi.', kod: nextCode };
+          mockAuditLog('facility.create', 'facility', nextId, { kod: nextCode, ad: newFac.ad, isparkCapacity: body.isparkCapacity || null });
+          responseData = { message: 'Tesis başarıyla eklendi.', id: nextId, kod: nextCode };
+        }
+      } else if (method === 'PATCH') {
+        // v2-07: doluluk hızlı-düzenleme (ADR-003 gap kapanışı)
+        const user = getLoggedUser();
+        if (!user || user.role !== 'admin') {
+          status = 403;
+          responseData = { error: 'Yetkisiz erişim.' };
+        } else {
+          const idx = facilities.findIndex(f => f.id === facId);
+          if (idx === -1) {
+            status = 404;
+            responseData = { error: 'Tesis bulunamadı.' };
+          } else {
+            const before = facilities[idx].dolulukOrani;
+            facilities[idx].dolulukOrani = parseInt(body.occupancy);
+            localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(facilities));
+            mockAuditLog('facility.update', 'facility', facId, { occupancy_before: before, occupancy_after: body.occupancy });
+            responseData = facilities[idx];
+          }
         }
       } else if (method === 'DELETE') {
         const user = getLoggedUser();
@@ -219,18 +253,17 @@ window.fetch = async function (url, options) {
           status = 403;
           responseData = { error: 'Yetkisiz erişim.' };
         } else {
-          const urlParams = new URLSearchParams(url.split('?')[1]);
-          const fid = parseInt(urlParams.get('id'));
-          const idx = facilities.findIndex(f => f.id === fid);
+          const idx = facilities.findIndex(f => f.id === facId);
           if (idx !== -1) {
             facilities.splice(idx, 1);
             localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(facilities));
-            
+
             // Clean up related reservations
             let reservations = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY)) || [];
-            reservations = reservations.filter(r => r.facility_id !== fid);
+            reservations = reservations.filter(r => r.facility_id !== facId);
             localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(reservations));
 
+            mockAuditLog('facility.delete', 'facility', facId, {});
             responseData = { message: 'Tesis başarıyla silindi.' };
           } else {
             status = 404;
@@ -254,10 +287,10 @@ window.fetch = async function (url, options) {
         humidity: 45,
         wind: 12
       };
-    } else if (cleanEndpoint === 'login' || cleanEndpoint === 'register') {
+    } else if (cleanEndpoint === 'auth/login' || cleanEndpoint === 'auth/register') {
       const users = JSON.parse(localStorage.getItem(MOCK_USERS_KEY));
       const { username, password } = body;
-      if (cleanEndpoint === 'login') {
+      if (cleanEndpoint === 'auth/login') {
         const found = users.find(u => u.username === username && u.password_hash === (password + '_mock'));
         if (found) {
           const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -296,7 +329,7 @@ window.fetch = async function (url, options) {
           const guestCount = parseInt(body.guests) || 1;
           const currentOccupied = Math.round(facility.kapasite * (facility.dolulukOrani / 100));
           const capacityLeft = facility.kapasite - currentOccupied;
-          
+
           if (guestCount > capacityLeft) {
             status = 400;
             responseData = { error: `Kapasite yetersiz. Kalan boş yer: ${capacityLeft}` };
@@ -310,7 +343,7 @@ window.fetch = async function (url, options) {
             const facilityName = facility.ad;
             const dataStr = `${user.username}-${body.facility_id}-${body.reserve_date}-${body.reserve_time}-${body.guests}`;
             const signature = generateMockSignature(dataStr);
-            
+
             const newRes = {
               id: reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1,
               user_id: user.id,
@@ -345,7 +378,73 @@ window.fetch = async function (url, options) {
           crypto_signature: r.crypto_signature
         }));
       }
+    } else if (cleanEndpoint.startsWith('orders/') && cleanEndpoint.endsWith('/status')) {
+      // v2-07: sipariş durum makinesi (submitted→served→paid; whitelist dışı geçiş 409)
+      const user = getLoggedUser();
+      if (!user || user.role !== 'admin') {
+        status = 403;
+        responseData = { error: 'Bu işlem için admin yetkisi gerekiyor.' };
+      } else {
+        const orderId = parseInt(cleanEndpoint.split('/')[1]);
+        const orders = JSON.parse(localStorage.getItem(MOCK_ORDERS_KEY)) || [];
+        const ord = orders.find(o => o.id === orderId);
+        const allowed = { submitted: ['served', 'cancelled'], served: ['paid', 'cancelled'] };
+        if (!ord) {
+          status = 404;
+          responseData = { error: 'Sipariş bulunamadı.' };
+        } else if (!(allowed[ord.status] || []).includes(body.status)) {
+          status = 409;
+          responseData = { error: `Geçersiz durum geçişi: '${ord.status}' → '${body.status}'.` };
+        } else {
+          ord.status = body.status;
+          localStorage.setItem(MOCK_ORDERS_KEY, JSON.stringify(orders));
+          mockAuditLog('order.status_change', 'order', orderId, { to: body.status });
+          responseData = { id: orderId, status: body.status };
+        }
+      }
+    } else if (cleanEndpoint === 'admin/orders' || cleanEndpoint === 'admin/reservations') {
+      // v2-07: admin gözetim - sahiplik filtresi YOK (requireAdmin eşleniği)
+      const user = getLoggedUser();
+      if (!user || user.role !== 'admin') {
+        status = 403;
+        responseData = { error: 'Bu işlem için admin yetkisi gerekiyor.' };
+      } else {
+        const reservations = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY)) || [];
+        const facilities = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY)) || [];
+        if (cleanEndpoint === 'admin/reservations') {
+          responseData = reservations.map(r => {
+            const fac = facilities.find(f => f.id === r.facility_id);
+            return { ...r, facility_name: r.facility_name || (fac ? fac.ad : `Tesis #${r.facility_id}`), owner_username: r.owner || r.username || '-' };
+          });
+        } else {
+          const orders = JSON.parse(localStorage.getItem(MOCK_ORDERS_KEY)) || [];
+          responseData = orders.map(o => {
+            const rv = reservations.find(r => r.id === o.reservation_id) || {};
+            const fac = facilities.find(f => f.id === rv.facility_id);
+            return {
+              id: o.id, status: o.status, total_minor: o.total_minor, created_at: o.created_at,
+              facility_name: fac ? fac.ad : `Tesis #${rv.facility_id}`, owner_username: rv.owner || rv.username || '-'
+            };
+          }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+      }
+    } else if (cleanEndpoint === 'admin/audit-log') {
+      // v2-07: audit_log görüntüleme (DDIA Böl. 11 - append-only event log; ADR-007)
+      const user = getLoggedUser();
+      if (!user || user.role !== 'admin') {
+        status = 403;
+        responseData = { error: 'Bu işlem için admin yetkisi gerekiyor.' };
+      } else {
+        responseData = (JSON.parse(localStorage.getItem(MOCK_AUDIT_LOG_KEY)) || []).slice(0, 50);
+      }
+    } else {
+      matched = false;
     }
+
+    // Bilinmeyen/tanınmayan uç: sahte 200 DÖNDÜRME - gerçek ağa düş (dual-mode sözleşmesi).
+    // Backend varsa gerçek yanıtı alır; yoksa (GH Pages) bağlantı hatası -> çağıranın kendi
+    // localStorage fallback'i (submitAdminFacility, changeOrderStatus vb.) devreye girer.
+    if (!matched) return originalFetch.apply(this, arguments);
 
     return new Response(JSON.stringify(responseData), {
       status: status,
@@ -595,6 +694,17 @@ const setupUIEvents = () => {
         deleteSelectedFacility(f.id);
       }
     }
+  });
+
+  // Admin: doluluk hızlı-düzenleme butonu (Faz v2-07)
+  document.getElementById('admin-occupancy-update-btn').addEventListener('click', () => {
+    updateSelectedFacilityOccupancy();
+  });
+
+  // Admin: gözetim listesi yenile butonu (Faz v2-07)
+  document.getElementById('admin-oversight-refresh-btn').addEventListener('click', () => {
+    loadAdminOversight();
+    loadAdminAuditLog();
   });
 
   // Map Click Handler for Shift-Click Routing & Admin Placement
@@ -1019,6 +1129,12 @@ const selectFacility = (facility) => {
   const statusText = document.getElementById('detail-occupancy-text');
   statusText.className = `occupancy-status-text ${statusClass}`;
   statusText.textContent = `${statusLabel} (%${facility.dolulukOrani})`;
+
+  // Admin: doluluk hızlı-düzenleme input'unu mevcut değere sıfırla (Faz v2-07)
+  const occInput = document.getElementById('admin-occupancy-input');
+  const occMsg = document.getElementById('admin-occupancy-msg');
+  if (occInput) { occInput.value = ''; occInput.placeholder = `Şu an: %${facility.dolulukOrani}`; }
+  if (occMsg) { occMsg.textContent = ''; occMsg.className = 'form-status-msg mini'; }
 
   // Focus Map view
   state.map.flyTo(facility.koordinatlar, 14, { animate: true, duration: 1.2 });
@@ -1647,16 +1763,29 @@ const submitReservation = async () => {
 };
 
 // ADMIN CRUD OPERATIONS
+// slugify: tesis adından benzersiz bir 'kod' üretir (backend UNIQUE(kod) bekler; eski form
+// bu alanı hiç göndermiyordu - Faz v2-07'de düzeltildi).
+const slugifyFacilityCode = (name) => {
+  const base = (name || 'TESIS')
+    .toUpperCase()
+    .replace(/[İIĞÜŞÖÇ]/g, c => ({ 'İ': 'I', 'I': 'I', 'Ğ': 'G', 'Ü': 'U', 'Ş': 'S', 'Ö': 'O', 'Ç': 'C' }[c] || c))
+    .replace(/[^A-Z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 12) || 'TESIS';
+  return `${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+};
+
 const submitAdminFacility = async () => {
   const name = document.getElementById('admin-name').value;
   const lat = parseFloat(document.getElementById('admin-lat').value);
   const lng = parseFloat(document.getElementById('admin-lng').value);
   const cap = parseInt(document.getElementById('admin-capacity').value);
   const occ = parseInt(document.getElementById('admin-occupancy').value);
+  const isparkCapRaw = document.getElementById('admin-ispark-capacity').value;
+  const isparkCapacity = isparkCapRaw ? parseInt(isparkCapRaw) : undefined;
   const iett = document.getElementById('admin-iett').value;
   const transit = document.getElementById('admin-transit-transfer').value;
   const route = document.getElementById('admin-route-description').value;
   const msg = document.getElementById('admin-form-status');
+  const kod = slugifyFacilityCode(name);
 
   msg.className = 'form-status-msg';
   msg.textContent = 'Yeni tesis mekansal olarak kaydediliyor...';
@@ -1670,7 +1799,7 @@ const submitAdminFacility = async () => {
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        name, lat, lng, capacity: cap, occupancy: occ,
+        kod, ad: name, lat, lng, capacity: cap, occupancy: occ, isparkCapacity,
         iett_info: iett, transit_transfer: transit, route_description: route
       })
     });
@@ -1680,10 +1809,10 @@ const submitAdminFacility = async () => {
       msg.className = 'form-status-msg success';
       msg.textContent = 'Yeni tesis veritabanına eklendi! Harita güncelleniyor...';
       document.getElementById('admin-facility-form').reset();
-      
+
       // Reload everything
       await loadData();
-      
+
       // Switch back to list
       setTimeout(() => switchSidebarView('list-view'), 1500);
     } else {
@@ -1691,9 +1820,166 @@ const submitAdminFacility = async () => {
       msg.textContent = data.error || 'Tesis eklenemedi.';
     }
   } catch (e) {
-    msg.className = 'form-status-msg error';
-    msg.textContent = 'Bağlantı hatası.';
+    console.warn('Create facility backend connection failed, falling back to local storage.', e);
+    // Offline docs local storage fallback (dashboard/order.js ile aynı çift-mod deseni)
+    const localFacs = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY)) || state.facilities;
+    const newId = (localFacs.reduce((m, f) => Math.max(m, f.id), 0) || 0) + 1;
+    const newFac = {
+      id: newId, kod, ad: name, adres: null,
+      koordinatlar: [lat, lng], kapasite: cap, dolulukOrani: occ || 0,
+      transit: { otobus: iett || 'Mevcut Değil', vapur: 'Mevcut Değil', aktarma: transit || 'Mevcut Değil', arabayla: route || 'Mevcut Değil' }
+    };
+    localFacs.push(newFac);
+    localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(localFacs));
+    state.facilities = localFacs;
+    mockAuditLog('facility.create', 'facility', newId, { kod, ad: name, isparkCapacity: isparkCapacity || null });
+
+    msg.className = 'form-status-msg success';
+    msg.textContent = 'Yeni tesis yerel olarak kaydedildi (Offline Mod).';
+    document.getElementById('admin-facility-form').reset();
+    renderStats();
+    renderFacilityList();
+    renderFacilityMarkers();
+    calculateCoverageShadows();
+    setTimeout(() => switchSidebarView('list-view'), 1500);
   }
+};
+
+// Admin: doluluk hızlı-düzenleme (Faz v2-07, ADR-003 gap kapanışı - PATCH ucu zaten vardı, UI yoktu)
+const updateSelectedFacilityOccupancy = async () => {
+  const f = state.selectedFacility;
+  const msgEl = document.getElementById('admin-occupancy-msg');
+  if (!f) return;
+  const val = parseInt(document.getElementById('admin-occupancy-input').value);
+  if (!Number.isInteger(val) || val < 0 || val > 100) {
+    msgEl.className = 'form-status-msg mini error';
+    msgEl.textContent = '0-100 arası tamsayı girin.';
+    return;
+  }
+  msgEl.className = 'form-status-msg mini';
+  msgEl.textContent = 'Güncelleniyor...';
+  try {
+    const token = localStorage.getItem('session-token');
+    const res = await fetch(`${API_BASE}/api/facilities/${f.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ occupancy: val })
+    });
+    if (!res.ok) throw new Error('PATCH başarısız');
+    await loadData();
+    const updated = state.facilities.find(x => x.id === f.id);
+    if (updated) selectFacility(updated);
+    msgEl.className = 'form-status-msg mini success';
+    msgEl.textContent = 'Doluluk güncellendi.';
+  } catch (e) {
+    console.warn('Occupancy update backend connection failed, falling back to local storage.', e);
+    const localFacs = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY)) || state.facilities;
+    const target = localFacs.find(x => x.id === f.id);
+    if (target) target.dolulukOrani = val;
+    localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(localFacs));
+    state.facilities = localFacs;
+    mockAuditLog('facility.update', 'facility', f.id, { occupancy_after: val });
+    const updated = state.facilities.find(x => x.id === f.id);
+    if (updated) selectFacility(updated);
+    msgEl.className = 'form-status-msg mini success';
+    msgEl.textContent = 'Doluluk yerel olarak güncellendi (Offline Mod).';
+  }
+};
+
+// ==========================================
+// Admin Gözetim: tüm tesislerdeki rezervasyon/sipariş listesi + durum değiştirme (Faz v2-07)
+// ==========================================
+const ORDER_STATUS_LABEL = { submitted: 'Beklemede', served: 'Servis Edildi', paid: 'Ödendi', cancelled: 'İptal', open: 'Açık' };
+const ORDER_NEXT_ACTIONS = { submitted: [['served', 'Servis Edildi'], ['cancelled', 'İptal']], served: [['paid', 'Ödendi'], ['cancelled', 'İptal']] };
+const money = (m) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format((m || 0) / 100);
+
+const loadAdminOversight = async () => {
+  const container = document.getElementById('admin-oversight-list');
+  container.innerHTML = '<div class="admin-oversight-empty">Yükleniyor...</div>';
+  let orders;
+  try {
+    const token = localStorage.getItem('session-token');
+    const res = await fetch(`${API_BASE}/api/admin/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) throw new Error('admin/orders başarısız');
+    orders = await res.json();
+  } catch (e) {
+    console.warn('Admin oversight backend connection failed, falling back to local storage.', e);
+    const mockOrders = JSON.parse(localStorage.getItem(MOCK_ORDERS_KEY)) || [];
+    const mockRes = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY)) || [];
+    const facs = state.facilities || [];
+    orders = mockOrders.map(o => {
+      const rv = mockRes.find(r => r.id === o.reservation_id) || {};
+      const fac = facs.find(f => f.id === rv.facility_id);
+      return { id: o.id, status: o.status, total_minor: o.total_minor, created_at: o.created_at,
+        facility_name: fac ? fac.ad : `Tesis #${rv.facility_id}`, owner_username: rv.owner || '-' };
+    }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  renderAdminOversight(orders);
+};
+
+const renderAdminOversight = (orders) => {
+  const container = document.getElementById('admin-oversight-list');
+  if (!orders.length) { container.innerHTML = '<div class="admin-oversight-empty">Henüz sipariş yok.</div>'; return; }
+  container.innerHTML = orders.map(o => {
+    const actions = (ORDER_NEXT_ACTIONS[o.status] || []).map(([next, label]) =>
+      `<button type="button" class="btn btn-secondary btn-xs" data-order-id="${o.id}" data-next-status="${next}">${label}</button>`
+    ).join('');
+    return `
+      <div class="admin-oversight-row">
+        <div class="admin-oversight-main">
+          <strong>${o.facility_name}</strong>
+          <span class="admin-oversight-owner">${o.owner_username}</span>
+          <span class="order-status-badge status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
+        </div>
+        <div class="admin-oversight-sub">
+          <span>${money(o.total_minor)}</span>
+          <div class="admin-oversight-actions">${actions}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  container.querySelectorAll('button[data-order-id]').forEach(btn => {
+    btn.addEventListener('click', () => changeOrderStatus(Number(btn.dataset.orderId), btn.dataset.nextStatus));
+  });
+};
+
+const changeOrderStatus = async (orderId, newStatus) => {
+  try {
+    const token = localStorage.getItem('session-token');
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ status: newStatus })
+    });
+    if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || 'Durum güncellenemedi'); }
+  } catch (e) {
+    console.warn('Order status update backend connection failed, falling back to local storage.', e);
+    const mockOrders = JSON.parse(localStorage.getItem(MOCK_ORDERS_KEY)) || [];
+    const target = mockOrders.find(o => o.id === orderId);
+    if (target) { target.status = newStatus; localStorage.setItem(MOCK_ORDERS_KEY, JSON.stringify(mockOrders)); }
+    mockAuditLog('order.status_change', 'order', orderId, { to: newStatus });
+  }
+  await loadAdminOversight();
+  await loadAdminAuditLog();
+};
+
+// Audit Log: append-only işlem kaydı görüntüleme (DDIA Böl. 11 - event log; ADR-007)
+const loadAdminAuditLog = async () => {
+  const container = document.getElementById('admin-audit-list');
+  let rows;
+  try {
+    const token = localStorage.getItem('session-token');
+    const res = await fetch(`${API_BASE}/api/admin/audit-log?limit=20`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) throw new Error('admin/audit-log başarısız');
+    rows = await res.json();
+  } catch (e) {
+    rows = (JSON.parse(localStorage.getItem(MOCK_AUDIT_LOG_KEY)) || []).slice(0, 20);
+  }
+  if (!rows.length) { container.innerHTML = '<div class="admin-oversight-empty">Henüz işlem kaydı yok.</div>'; return; }
+  container.innerHTML = rows.map(r => {
+    const when = new Date(r.created_at).toLocaleString('tr-TR');
+    return `<div class="admin-audit-row"><strong>${r.actor_username}</strong> · ${r.action} · ${r.entity_type}#${r.entity_id} · <span class="admin-audit-time">${when}</span></div>`;
+  }).join('');
 };
 
 // AUTHENTICATION MODULE (JWT Session Controls)
@@ -1726,7 +2012,9 @@ const Auth = (() => {
     msg.className = 'form-status-msg';
     msg.textContent = 'Doğrulanıyor...';
 
-    const url = isRegister ? `${API_BASE}/api/register` : `${API_BASE}/api/login`;
+    // v2-07 düzeltmesi: backend uçları /api/auth/register ve /api/auth/login'de (bkz. server.js);
+    // eski URL'ler hiç eşleşmiyordu (404) - canlı backend'de giriş her zaman mock'a düşüyordu.
+    const url = isRegister ? `${API_BASE}/api/auth/register` : `${API_BASE}/api/auth/login`;
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -1760,13 +2048,14 @@ const Auth = (() => {
     const reserveIn = document.getElementById('reservation-logged-in');
     const adminLink = document.getElementById('menu-admin-panel');
     const deleteBtn = document.getElementById('admin-delete-facility-btn');
+    const occEditBox = document.getElementById('admin-occupancy-edit');
 
     if (token && userJson) {
       const user = JSON.parse(userJson);
       state.userSession = user;
-      
+
       document.getElementById('user-display-name').textContent = user.username;
-      
+
       anonymousPanel.classList.add('hidden');
       authenticatedPanel.classList.remove('hidden');
       reserveOut.classList.add('hidden');
@@ -1775,9 +2064,11 @@ const Auth = (() => {
       if (user.role === 'admin') {
         adminLink.classList.remove('hidden');
         if (deleteBtn) deleteBtn.classList.remove('hidden');
+        if (occEditBox) occEditBox.classList.remove('hidden');
       } else {
         adminLink.classList.add('hidden');
         if (deleteBtn) deleteBtn.classList.add('hidden');
+        if (occEditBox) occEditBox.classList.add('hidden');
       }
     } else {
       state.userSession = null;
@@ -1787,6 +2078,7 @@ const Auth = (() => {
       reserveIn.classList.add('hidden');
       adminLink.classList.add('hidden');
       if (deleteBtn) deleteBtn.classList.add('hidden');
+      if (occEditBox) occEditBox.classList.add('hidden');
     }
   };
 
@@ -1844,6 +2136,8 @@ const Auth = (() => {
 
   const openAdminPanel = () => {
     switchSidebarView('admin-view');
+    loadAdminOversight();
+    loadAdminAuditLog();
   };
 
   // Bind Form handlers
@@ -1992,13 +2286,15 @@ const autoFillTransitDetails = (lat, lng) => {
 const deleteSelectedFacility = async (facilityId) => {
   try {
     const token = localStorage.getItem('session-token');
-    const res = await fetch(`${API_BASE}/api/facilities?id=${facilityId}`, {
+    // v2-07 düzeltmesi: backend /api/facilities/:id (yol parametresi) bekliyor; eski ?id= sorgu
+    // parametresi hiçbir zaman eşleşmiyordu (canlı backend'de silme her zaman başarısız oluyordu).
+    const res = await fetch(`${API_BASE}/api/facilities/${facilityId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
-    
+
     if (res.ok) {
       alert("Tesis başarıyla silindi!");
       await loadData();
@@ -2012,17 +2308,16 @@ const deleteSelectedFacility = async (facilityId) => {
   } catch (e) {
     console.warn("Delete facility backend connection failed, falling back to local storage.", e);
     // Offline docs local storage fallback
-    const MOCK_FACILITIES_KEY = 'mufettis_mock_facilities';
     let localFacs = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY)) || state.facilities;
     localFacs = localFacs.filter(f => f.id !== facilityId);
     localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(localFacs));
-    
-    const MOCK_RESERVATIONS_KEY = 'mufettis_mock_reservations';
+
     let localRes = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY)) || [];
     localRes = localRes.filter(r => r.facility_id !== facilityId);
     localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(localRes));
 
     state.facilities = localFacs;
+    mockAuditLog('facility.delete', 'facility', facilityId, {});
     alert("Tesis yerel olarak silindi (Offline Mod).");
     renderStats();
     renderFacilityList();

@@ -77,20 +77,20 @@ assert('kısıt: kapasite aşımı reddedildi', capacityBlocked);
 // 7. CHECK kısıtları geçersiz tesisleri veritabanı seviyesinde reddetmeli
 let checkBlocked = false;
 try {
-  db.createFacility({ kod: 'TEST-XX', ad: 'Geçersiz', lat: 999, lng: 29, capacity: 10 });
+  db.createFacility({ kod: 'TEST-XX', ad: 'Geçersiz', lat: 999, lng: 29, capacity: 10 }, admin.id);
 } catch (err) {
   checkBlocked = String(err.message).includes('CHECK');
 }
 assert('kısıt: geçersiz koordinat reddedildi (CHECK)', checkBlocked);
 
 // 8. Tesis silme: FK cascade rezervasyonları da temizlemeli
-const created = db.createFacility({ kod: 'TEST-01', ad: 'Test Tesisi', lat: 41.0, lng: 29.0, capacity: 50, occupancy: 10 });
+const created = db.createFacility({ kod: 'TEST-01', ad: 'Test Tesisi', lat: 41.0, lng: 29.0, capacity: 50, occupancy: 10 }, admin.id);
 db.createReservation({
   userId: user.id, facilityId: created.id,
   reserveDate: '2026-08-03', reserveTime: '10:00', guests: 2,
   cryptoSignature: 'test-sig-4'
 });
-db.deleteFacility(created.id);
+db.deleteFacility(created.id, admin.id);
 const orphans = db.getReservationsByUserId(user.id).filter(r => r.facility_id === created.id);
 assert('FK: cascade silme yetim rezervasyon bırakmadı', orphans.length === 0);
 
@@ -100,7 +100,7 @@ assert('FK: cascade silme yetim rezervasyon bırakmadı', orphans.length === 0);
 const { validateReservationInput } = require('./validate');
 
 // 8b. Per-slot kapasite: küçük kapasiteli tesiste slotu doldur, sonraki reddedilmeli
-const smallFac = db.createFacility({ kod: 'SLOT-01', ad: 'Slot Testi', lat: 41, lng: 29, capacity: 5, occupancy: 0 });
+const smallFac = db.createFacility({ kod: 'SLOT-01', ad: 'Slot Testi', lat: 41, lng: 29, capacity: 5, occupancy: 0 }, admin.id);
 const su1 = db.createUser('slot_u1', 'p');
 const su2 = db.createUser('slot_u2', 'p');
 db.createReservation({ userId: su1.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '19:00', guests: 4, cryptoSignature: 'c' });

@@ -11,6 +11,8 @@
 
   const $ = (id) => document.getElementById(id);
   const money = (m) => new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format((m || 0) / 100);
+  // v2-07: sipariş durumu artık anlık 'paid' değil - personel/admin panelinden ilerletilir.
+  const ORDER_STATUS_LABEL = { submitted: 'Beklemede', served: 'Servis Edildi', paid: 'Ödendi', cancelled: 'İptal', open: 'Açık' };
   const jget = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } };
   const jset = (k, v) => localStorage.setItem(k, JSON.stringify(v));
   const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); };
@@ -72,10 +74,12 @@
       const rows = items.map(it => { const m = menu.find(x => x.id === it.menuItemId); total += m.price_minor * it.quantity; return { name: m.name, quantity: it.quantity, unit_price_minor: m.price_minor }; });
       const orders = jget(K_ORD, []);
       const id = (orders.reduce((mx, x) => Math.max(mx, x.id), 0) || 0) + 1;
-      orders.push({ id, reservation_id: reservationId, total_minor: total, status: 'paid', payment_type: paymentType, items: rows, created_at: new Date().toISOString() });
+      // v2-07: sipariş 'submitted' ile başlar; servis/ödeme geçişleri admin panelinden yapılır
+      // (ADR-005 borç notu, ADR-007). Artık anlık 'paid' varsayılmıyor.
+      orders.push({ id, reservation_id: reservationId, total_minor: total, status: 'submitted', payment_type: paymentType, items: rows, created_at: new Date().toISOString() });
       jset(K_ORD, orders);
       const all = jget(K_RES, []); const rv = all.find(r => r.id === reservationId); if (rv) { rv.amount_minor += total; jset(K_RES, all); }
-      return { id, total_minor: total, status: 'paid' };
+      return { id, total_minor: total, status: 'submitted' };
     },
     async ordersFor(reservationId) {
       if (mode === 'live') { const r = await fetchJson(`${API_BASE}/api/reservations/${reservationId}/orders`, { headers: auth() }); return r.body || []; }
@@ -163,7 +167,7 @@
         reservationId, facilityId, paymentType: $('f-payment').value,
         items: cart.map(c => ({ menuItemId: c.menuItemId, quantity: c.quantity }))
       });
-      toast(`Sipariş alındı! Toplam ${money(order.total_minor)} · ödendi ✅`);
+      toast(`Sipariş alındı! Toplam ${money(order.total_minor)} · beklemede 🕓`);
       cart = []; loadMenu(); renderCart();
     } catch (e) { toast('Hata: ' + e.message); }
     finally { btn.textContent = 'Siparişi Tamamla'; btn.disabled = cart.length === 0; }
@@ -178,7 +182,7 @@
     for (const r of resvs) {
       const orders = await store.ordersFor(r.id);
       const fname = r.facility_name || fmap[r.facility_id] || `Tesis ${r.facility_id}`;
-      const ordHtml = orders.length ? orders.map(o => `<div class="ord">Sipariş #${o.id} · ${money(o.total_minor)} · ${o.status}${o.items ? ' · ' + o.items.map(i => `${i.quantity}× ${i.name}`).join(', ') : ''}</div>`).join('') : '<div class="ord" style="color:var(--muted)">Sipariş yok</div>';
+      const ordHtml = orders.length ? orders.map(o => `<div class="ord">Sipariş #${o.id} · ${money(o.total_minor)} · ${ORDER_STATUS_LABEL[o.status] || o.status}${o.items ? ' · ' + o.items.map(i => `${i.quantity}× ${i.name}`).join(', ') : ''}</div>`).join('') : '<div class="ord" style="color:var(--muted)">Sipariş yok</div>';
       parts.push(`<div class="resv"><div class="top"><div><b>${fname}</b> <span class="meta">${r.reserve_date} · ${r.reserve_time} · ${r.guests} kişi</span></div><span class="badge">${money(r.amount_minor || 0)}</span></div>${ordHtml}</div>`);
     }
     list.innerHTML = parts.join('');

@@ -16,8 +16,11 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
   `transaction()`), `db.js` (repository+mekansal), `analytics.js`, `security.js`, `validate.js`,
   `server.js` (API, port 8085).
 - **`advanced-gis/`** (Python): aynı `app.db`'yi kullanır; şema `app/models.py`'de Node ile **senkron**.
-- **`docs/`** = GitHub Pages (sunucusuz). Backend varsa canlı API, yoksa `localStorage`+`seed.json`
-  mock (çift mod). Sayfalar: `index.html` (harita), `dashboard.html` (analitik), `order.html` (sipariş).
+- **`docs/`** = GitHub Pages (sunucusuz). `dashboard.html`/`order.html`: gerçek çift mod (önce canlı
+  API dener, `localStorage`+`seed.json`'a düşer). `index.html` (ana harita+admin panel): **kasıtlı
+  olarak her zaman mock** — `docs/app.js`'teki `window.fetch` override'ı bilinen uçları tarayıcı-içi
+  simüle eder (statik siteye gerçek backend parola hash'i asla gönderilmez, ADR-002/ADR-007);
+  bilinmeyen uçlar gerçek ağa düşer (`originalFetch` passthrough).
 - **`scripts/`**: `generate-data.js` (dummy veri, `--scale`), `export-analytics.js` (Pages snapshot),
   `build-routes.js` (GTFS → `docs/data/transit-routes.geojson`; ham GTFS `data/gtfs/` gitignored,
   türetilmiş slim çıktı commit — ADR-006. `stop_times` EKSİKSİZ olmalı; kesikse kapsam kısıtlı).
@@ -27,7 +30,8 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 - `v_2` = main'den dallanan entegrasyon dalı. Her faz `v2-0X-...` olarak **v_2'den** dallanır,
   PR ile v_2'ye döner. İleride `v_3` yine main'den başlar.
 - **Granülerlik = faz** (bir dal = anlatılabilir bir karar). Fazlar: v2-01 veri modeli → v2-02
-  auth/kripto → v2-03 eşzamanlılık → v2-04 analytics → v2-05 sipariş → v2-06 rota → v2-07 admin.
+  auth/kripto → v2-03 eşzamanlılık → v2-04 analytics → v2-05 sipariş → v2-06 rota → v2-07 admin
+  (son faz — v_2'ye merge sonrası ileriki fazlar için kullanıcı karar verir).
 - **Merge kuralı (Option B):** merge etmeden ÖNCE kullanıcıya "merge edeyim mi?" diye sor.
 
 ## Gömülü kararlar (tekrar tartışma; ADR'lerde tam gerekçe)
@@ -39,6 +43,11 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
   compare-and-set. (ADR-003)
 - Analitik: canlı sorgu + `daily_stats` rollup (türetilmiş); ~178× hızlanma. (ADR-004)
 - Tutarlar **sunucuda** hesaplanır (istemciye güvenilmez); sahiplik zorlanır (403). (ADR-005)
+- Gerçek toplu taşıma güzergahları: GTFS `shapes` → türetilmiş slim GeoJSON (ham veri gitignored,
+  kalite kapılı — düşük güven eşleşme uydurma çizgiye düşmez). (ADR-006)
+- `audit_log` **append-only** (yalnız INSERT, mutasyonla aynı transaction); sipariş durumu
+  whitelist state machine (`submitted→served→paid`, sıçrama yasak); admin gözetim uçları
+  sahiplik filtresiz (`requireAdmin` ile korunur). (ADR-007)
 
 ## Çalıştırma & test
 ```bash
@@ -49,9 +58,11 @@ node scripts/generate-data.js [--scale=N] [--reset]
 node scripts/export-analytics.js              # -> docs/data/analytics.json
 # Testler (geçici DB, gerçek veriye dokunmaz)
 node backend/test-db.js          # şema, kısıt, tx
-node backend/test-orders.js      # sipariş
+node backend/test-orders.js      # sipariş + durum makinesi (submitted→served→paid)
 node backend/test-analytics.js   # analytics (rollup==canlı)
 node backend/test-concurrency.js # write-skew / atomik (worker_threads)
+node backend/test-routes.js      # GTFS ingest (fixture; ADR-006)
+node backend/test-admin.js       # audit log, admin gözetim, requireAdmin (ADR-007)
 # Python
 cd advanced-gis && python3 scripts/seed.py && python3 tests/test_crypto.py
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092

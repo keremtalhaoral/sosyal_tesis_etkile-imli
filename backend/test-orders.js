@@ -28,7 +28,7 @@ const expectTotal = m1.price_minor * 2 + m2.price_minor * 1;
 const order = db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'card',
   items: [{ menuItemId: m1.id, quantity: 2 }, { menuItemId: m2.id, quantity: 1 }], cryptoSignature: 's' });
 assert('sipariş: toplam snapshot fiyatlardan doğru', order.total_minor === expectTotal);
-assert('sipariş: durum paid, 2 kalem', order.status === 'paid' && order.item_count === 2);
+assert('sipariş: durum submitted (personel akışı bekler), 2 kalem', order.status === 'submitted' && order.item_count === 2);
 assert('sipariş: rezervasyon tutarına eklendi', db.getFacilityById(1) && conn.prepare('SELECT amount_minor FROM reservations WHERE id=?').get(resv.id).amount_minor === expectTotal);
 
 // 2. FİYAT SNAPSHOT: menü fiyatı değişse bile eski siparişin tutarı değişmez
@@ -60,6 +60,22 @@ assert('validate: geçerli girdi kabul', validateOrderInput({ reservationId: 1, 
 // 6. Siparişler sahiplik kontrollü sorgulanır
 assert('sorgu: sahibi siparişleri görür', db.getOrdersByReservation(resv.id, user.id).length === 1);
 assert('sorgu: başkası göremez (null)', db.getOrdersByReservation(resv.id, other.id) === null);
+
+// 6b. Sipariş durum makinesi (Faz v2-07): submitted→served→paid izinli; submitted→paid sıçraması yasak.
+const staff = db.createUser('personel1', 'p', 'admin');
+let jumpBlocked = false;
+try { db.updateOrderStatus(order.id, 'paid', staff.id); }
+catch (e) { jumpBlocked = e.statusCode === 409; }
+assert('durum makinesi: submitted→paid sıçraması reddedildi (409)', jumpBlocked);
+
+const served = db.updateOrderStatus(order.id, 'served', staff.id);
+assert('durum makinesi: submitted→served kabul edildi', served.status === 'served');
+const paid = db.updateOrderStatus(order.id, 'paid', staff.id);
+assert('durum makinesi: served→paid kabul edildi', paid.status === 'paid');
+
+const auditRows = conn.prepare("SELECT action, detail FROM audit_log WHERE entity_type='order' AND entity_id=? ORDER BY id").all(order.id);
+assert('audit log: iki geçiş de kaydedildi', auditRows.length === 2);
+assert('audit log: action=order.status_change', auditRows.every(r => r.action === 'order.status_change'));
 
 // 7. Cascade: rezervasyon silinince sipariş + kalemler gider
 conn.prepare('DELETE FROM reservations WHERE id = ?').run(resv.id);

@@ -1,9 +1,8 @@
 # v_2 Varlık-İlişki (ER) Diyagramı
 
-Bu diyagram v_2 hedef veri modelini gösterir. **Uygulanmış tablolar** (migration v1–v4):
+Bu diyagram v_2 hedef veri modelini gösterir. **Uygulanmış tablolar** (migration v1–v6):
 users, facilities, reservations, menu_items, orders, order_items, districts, **ispark_status**
-(v3), **daily_stats** (v4 rollup). **Planlanan** tablo `audit_log` (v2-07) kendi migration'ıyla
-eklenecek — şemanın önden tasarlandığını göstermek için burada.
+(v3), **daily_stats** (v4 rollup), **audit_log** (v6, Faz v2-07 - ADR-007).
 
 Para değerleri her yerde **tam sayı kuruş** (`*_minor`) olarak tutulur (float yuvarlama
 hatasından kaçınmak için — bkz. ADR-001).
@@ -114,11 +113,11 @@ erDiagram
 > `daily_stats` **türetilmiş veri**dir (kaynaktan rebuild edilir). Analitik: v1 canlı sorgu,
 > sonra bu rollup + benchmark (~178× hızlanma). Bkz. ADR-004 (DDIA Böl. 3, OLTP/OLAP; Böl. 11).
 
-## Planlanan tablo (sonraki faz — henüz migration yok)
+## Uygulanan: audit_log (v6, Faz v2-07)
 
 ```mermaid
 erDiagram
-    users ||--o{ audit_log : "işlem kaydı (Faz v2-07)"
+    users ||--o{ audit_log : "işlem kaydı"
     audit_log {
         int id PK
         int actor_user_id FK
@@ -129,3 +128,7 @@ erDiagram
         string created_at
     }
 ```
+
+> `audit_log` **APPEND-ONLY** olay kaydıdır - yalnız INSERT edilir, hiç UPDATE/DELETE edilmez
+> (DDIA Böl. 11, event-log ilkesi). Mutasyonla (tesis CRUD, sipariş durum geçişi) AYNI transaction
+> içinde yazılır. Bkz. ADR-007.

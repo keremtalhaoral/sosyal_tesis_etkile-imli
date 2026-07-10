@@ -255,6 +255,26 @@ const MIGRATIONS = [
           CHECK (payment_type IN ('cash', 'card', 'online'));
       `);
     }
+  },
+  {
+    // Migration v6 (Faz v2-07: Admin Paneli). audit_log = APPEND-ONLY olay kaydı (yalnız INSERT;
+    // UPDATE/DELETE yok — DDIA Böl. 11, gerçekleşmiş olaylar değişmez). Şema docs/diagrams/
+    // er-v2.md'de önceden tasarlanmıştı. Gerekçe: docs/adr/ADR-007-admin-yonetim.md
+    version: 6,
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS audit_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          actor_user_id INTEGER NOT NULL REFERENCES users(id),
+          action TEXT NOT NULL,
+          entity_type TEXT NOT NULL,
+          entity_id INTEGER NOT NULL,
+          detail TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
+      `);
+    }
   }
 ];
 

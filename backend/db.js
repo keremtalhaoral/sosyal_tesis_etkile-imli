@@ -172,31 +172,71 @@ const getClosestFacilities = (userLat, userLng, limit = 3) => {
 };
 
 // ---------------------------------------------------------------------------
+// Audit log (Faz v2-07, ADR-007) - APPEND-ONLY olay kaydı. Yalnız INSERT edilir;
+// mutasyonla AYNI transaction içinde çağrılır ki ikisi birlikte commit/rollback olsun
+// (DDIA Böl. 7 atomiklik + Böl. 11: gerçekleşmiş bir olay hiç yazılmamış gibi kalmamalı).
+// ---------------------------------------------------------------------------
+const logAudit = (conn, actorUserId, action, entityType, entityId, detail) => {
+  conn.prepare(
+    'INSERT INTO audit_log (actor_user_id, action, entity_type, entity_id, detail) VALUES (?, ?, ?, ?, ?)'
+  ).run(actorUserId, action, entityType, entityId, detail ? JSON.stringify(detail) : null);
+};
+
+const getAuditLog = (limit = 50) =>
+  getDb().prepare(`
+    SELECT a.*, u.username AS actor_username
+    FROM audit_log a JOIN users u ON u.id = a.actor_user_id
+    ORDER BY a.created_at DESC, a.id DESC
+    LIMIT ?
+  `).all(Math.max(1, Math.min(200, limit)));
+
+// ---------------------------------------------------------------------------
 // Yazma operasyonları - "yeni veriler" artık kalıcı olarak tek yerde tutulur.
 // ---------------------------------------------------------------------------
-const createFacility = ({ kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description }) => {
-  const result = getDb().prepare(`
-    INSERT INTO facilities (kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    kod, ad, adres || null, lat, lng, capacity, occupancy || 0,
-    iett_info || 'Mevcut Değil', vapur_info || 'Mevcut Değil',
-    transit_transfer || 'Mevcut Değil', route_description || 'Mevcut Değil'
-  );
-  return getFacilityById(Number(result.lastInsertRowid));
-};
+const createFacility = ({ kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description, isparkCapacity }, actorUserId) =>
+  transaction((conn) => {
+    const result = conn.prepare(`
+      INSERT INTO facilities (kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      kod, ad, adres || null, lat, lng, capacity, occupancy || 0,
+      iett_info || 'Mevcut Değil', vapur_info || 'Mevcut Değil',
+      transit_transfer || 'Mevcut Değil', route_description || 'Mevcut Değil'
+    );
+    const facilityId = Number(result.lastInsertRowid);
 
-const updateFacilityOccupancy = (id, occupancy) => {
-  const result = getDb().prepare(
-    "UPDATE facilities SET occupancy = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(occupancy, id);
-  if (result.changes === 0) return null;
-  return getFacilityById(id);
-};
+    // İSPARK kapasitesi opsiyonel (ADR-003 gap kapanışı, Karar: v2-07 sorusu). Verilmezse
+    // otopark kaydı hiç oluşturulmaz (mevcut 'Mevcut Değil' desenine uyumlu).
+    if (Number.isInteger(isparkCapacity) && isparkCapacity > 0) {
+      conn.prepare('INSERT INTO ispark_status (facility_id, capacity, occupied) VALUES (?, ?, 0)').run(facilityId, isparkCapacity);
+    }
 
-const deleteFacility = (id) =>
-  // Rezervasyonlar ON DELETE CASCADE ile otomatik temizlenir (referans bütünlüğü DB'de).
-  getDb().prepare('DELETE FROM facilities WHERE id = ?').run(id).changes > 0;
+    logAudit(conn, actorUserId, 'facility.create', 'facility', facilityId, { kod, ad, isparkCapacity: isparkCapacity || null });
+    return getFacilityById(facilityId);
+  });
+
+const updateFacilityOccupancy = (id, occupancy, actorUserId) =>
+  transaction((conn) => {
+    const before = conn.prepare('SELECT occupancy FROM facilities WHERE id = ?').get(id);
+    if (!before) return null;
+    const result = conn.prepare(
+      "UPDATE facilities SET occupancy = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(occupancy, id);
+    if (result.changes === 0) return null;
+    logAudit(conn, actorUserId, 'facility.update', 'facility', id, { occupancy_before: before.occupancy, occupancy_after: occupancy });
+    return getFacilityById(id);
+  });
+
+const deleteFacility = (id, actorUserId) =>
+  transaction((conn) => {
+    const facility = conn.prepare('SELECT kod, ad FROM facilities WHERE id = ?').get(id);
+    if (!facility) return false;
+    // Rezervasyonlar ON DELETE CASCADE ile otomatik temizlenir (referans bütünlüğü DB'de).
+    const changes = conn.prepare('DELETE FROM facilities WHERE id = ?').run(id).changes;
+    if (changes === 0) return false;
+    logAudit(conn, actorUserId, 'facility.delete', 'facility', id, { kod: facility.kod, ad: facility.ad });
+    return true;
+  });
 
 const getUserByUsername = (username) =>
   getDb().prepare('SELECT * FROM users WHERE username = ?').get(username) || null;
@@ -290,7 +330,8 @@ const getMenu = (facilityId) =>
  * - Her kalem AYNI tesisin menüsünden mi?
  * - Fiyat menu_items'tan SNAPSHOT'lanır (captured vs derived, Böl. 11): sonradan menü fiyatı
  *   değişse bile bu siparişin tutarı değişmez.
- * - total sunucuda hesaplanır (istemciye güvenilmez). Basit akış: status 'paid'.
+ * - total sunucuda hesaplanır (istemciye güvenilmez). Yaşam döngüsü: 'submitted' ile başlar;
+ *   personel/admin panelinden submitted→served→paid ilerletilir (Faz v2-07, ADR-007).
  */
 const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignature }) =>
   transaction((conn) => {
@@ -314,7 +355,7 @@ const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignatur
     }
 
     const orderRes = conn.prepare(
-      "INSERT INTO orders (reservation_id, status, total_minor, crypto_signature, payment_type) VALUES (?, 'paid', ?, ?, ?)"
+      "INSERT INTO orders (reservation_id, status, total_minor, crypto_signature, payment_type) VALUES (?, 'submitted', ?, ?, ?)"
     ).run(reservationId, total, cryptoSignature, paymentType);
     const orderId = Number(orderRes.lastInsertRowid);
 
@@ -324,7 +365,7 @@ const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignatur
     // Rezervasyon tutarına siparişi ekle (kümülatif harcama)
     conn.prepare('UPDATE reservations SET amount_minor = amount_minor + ? WHERE id = ?').run(total, reservationId);
 
-    return { id: orderId, total_minor: total, status: 'paid', item_count: resolved.length };
+    return { id: orderId, total_minor: total, status: 'submitted', item_count: resolved.length };
   });
 
 const getOrdersByReservation = (reservationId, userId) => {
@@ -337,6 +378,51 @@ const getOrdersByReservation = (reservationId, userId) => {
   `);
   return orders.map(o => ({ ...o, items: itemStmt.all(o.id) }));
 };
+
+// --- Sipariş durum makinesi (Faz v2-07, ADR-007) -----------------------------
+// Yalnız bu geçişlere izin verilir (DDIA state-machine disiplini: geçersiz sıçrama
+// yasak, örn. submitted'dan doğrudan paid'e atlanamaz - served aşaması atlanamaz).
+const ORDER_TRANSITIONS = {
+  submitted: ['served', 'cancelled'],
+  served: ['paid', 'cancelled']
+};
+
+const updateOrderStatus = (orderId, newStatus, actorUserId) =>
+  transaction((conn) => {
+    const order = conn.prepare('SELECT id, status FROM orders WHERE id = ?').get(orderId);
+    if (!order) { const e = new Error('Sipariş bulunamadı.'); e.statusCode = 404; throw e; }
+    const allowed = ORDER_TRANSITIONS[order.status] || [];
+    if (!allowed.includes(newStatus)) {
+      const e = new Error(`Geçersiz durum geçişi: '${order.status}' → '${newStatus}'.`);
+      e.statusCode = 409;
+      throw e;
+    }
+    conn.prepare('UPDATE orders SET status = ? WHERE id = ?').run(newStatus, orderId);
+    logAudit(conn, actorUserId, 'order.status_change', 'order', orderId, { from: order.status, to: newStatus });
+    return { id: orderId, status: newStatus };
+  });
+
+// --- Admin gözetim (requireAdmin uçlarınca kullanılır; sahiplik filtresi YOK) -
+const getAllReservations = (facilityId) =>
+  getDb().prepare(`
+    SELECT r.*, f.ad AS facility_name, u.username AS owner_username
+    FROM reservations r
+    JOIN facilities f ON f.id = r.facility_id
+    JOIN users u ON u.id = r.user_id
+    ${facilityId ? 'WHERE r.facility_id = ?' : ''}
+    ORDER BY r.reserve_date DESC, r.reserve_time DESC
+  `).all(...(facilityId ? [facilityId] : []));
+
+const getAllOrders = (facilityId) =>
+  getDb().prepare(`
+    SELECT o.*, r.facility_id, f.ad AS facility_name, u.username AS owner_username
+    FROM orders o
+    JOIN reservations r ON r.id = o.reservation_id
+    JOIN facilities f ON f.id = r.facility_id
+    JOIN users u ON u.id = r.user_id
+    ${facilityId ? 'WHERE r.facility_id = ?' : ''}
+    ORDER BY o.created_at DESC
+  `).all(...(facilityId ? [facilityId] : []));
 
 module.exports = {
   getFacilities,
@@ -355,5 +441,9 @@ module.exports = {
   releaseIsparkSpot,
   getMenu,
   createOrder,
-  getOrdersByReservation
+  getOrdersByReservation,
+  updateOrderStatus,
+  getAllReservations,
+  getAllOrders,
+  getAuditLog
 };

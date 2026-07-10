@@ -165,6 +165,21 @@ def init_db():
     if "payment_type" not in order_cols:
         cursor.execute("ALTER TABLE orders ADD COLUMN payment_type TEXT CHECK (payment_type IN ('cash', 'card', 'online'))")
 
+    # --- Migration v6 (Faz v2-07): audit_log - APPEND-ONLY olay kaydi (yalniz INSERT) --
+    # backend/database.js migration v6 ile birebir ayni. Gerekce: docs/adr/ADR-007-admin-yonetim.md
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        actor_user_id INTEGER NOT NULL REFERENCES users(id),
+        action TEXT NOT NULL,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NOT NULL,
+        detail TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id)")
+
     conn.commit()
     conn.close()
 
