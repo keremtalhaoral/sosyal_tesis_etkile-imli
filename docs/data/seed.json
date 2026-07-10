@@ -1,6 +1,6 @@
 {
   "_comment": "Kanonik veri kaynağı (single source of truth seed). Tüm servisler veritabanını bu dosyadan tohumlar. Elle düzenlenebilir; uygulama kodunun içine veri gömmeyin. | v2: menu_template eklendi (her tesise uygulanır). | v3: ham parolalar sokuldu (backend gitignored dev-credentials.json uretir); demo_users yalniz Pages icin. | v4: ispark config + ayrık zaman slotları.",
-  "version": 4,
+  "version": 5,
   "users": [
     {
       "username": "admin",

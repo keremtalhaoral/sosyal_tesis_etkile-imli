@@ -225,4 +225,8 @@ Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temi
   KNN/Haversine, kapasite, sipariş snapshot, analitik, rollup, İSPARK, güvenlik, EXPLAIN) ve çalıştırılabilir
   kök `queries.sql` (30 ifade, hepsi gerçek şemada doğrulandı) eklendi. Test verisi havuzu `scripts/generate-data.js
   --reset --scale=N` ile üretiliyor (scale=3 → ~642K rezervasyon; kapasite/benchmark için). `app.db` gitignored kalır.
+- **2026-07-10 — Giriş (login) düzeltmesi.** Pages mock login'i çevrimdışıyken çöküyordu
+  (`MOCK_USERS_KEY` boşsa `null.find`). Login/register handler artık `defaultUsers`'tan kendini
+  iyileştiriyor + başlangıçta kullanıcı listesi kuruluyor; seed `version` 4→5 (önce açan tarayıcılarda
+  admin/user re-seed); `app.js` cache-bust `?v=3.1`. Artık demo/admin/user her koşulda giriş yapar.
 - *(Sonraki fazlar buraya birer satır ekler.)*

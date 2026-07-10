@@ -157,6 +157,18 @@ try {
   localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify([]));
 }
 
+// Mock kullanıcılar: seed henüz yüklenmemiş veya çevrimdışı olsa bile giriş çalışsın diye
+// defaultUsers ile başlat (bootstrapCentralSeed sonra demo_users'tan tazeler; aynı hesaplar).
+try {
+  const rawUsers = localStorage.getItem(MOCK_USERS_KEY);
+  const parsedUsers = rawUsers ? JSON.parse(rawUsers) : null;
+  if (!Array.isArray(parsedUsers) || parsedUsers.length === 0) {
+    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(defaultUsers));
+  }
+} catch (e) {
+  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(defaultUsers));
+}
+
 const generateMockSignature = (dataStr) => {
   let hash = 0;
   for (let i = 0; i < dataStr.length; i++) {
@@ -290,7 +302,14 @@ window.fetch = async function (url, options) {
         wind: 12
       };
     } else if (cleanEndpoint === 'auth/login' || cleanEndpoint === 'auth/register') {
-      const users = JSON.parse(localStorage.getItem(MOCK_USERS_KEY));
+      // Çevrimdışıyken seed çekilememiş olabilir; kullanıcı listesi yoksa defaultUsers'tan
+      // kendini iyileştir ki giriş her koşulda çalışsın (demo/admin/user).
+      let users;
+      try { users = JSON.parse(localStorage.getItem(MOCK_USERS_KEY)); } catch { users = null; }
+      if (!Array.isArray(users) || users.length === 0) {
+        users = defaultUsers.slice();
+        localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+      }
       const { username, password } = body;
       if (cleanEndpoint === 'auth/login') {
         const found = users.find(u => u.username === username && u.password_hash === (password + '_mock'));
