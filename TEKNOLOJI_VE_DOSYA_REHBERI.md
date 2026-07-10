@@ -209,4 +209,8 @@ Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temi
   ve `advanced-gis/services/ispark.py`, okunmayan `advanced-gis/data/raw/istanbul-districts.geojson`,
   ölü `tracer.get_cost_estimate()` ve `main.py` `.padStart` dalı çıkarıldı; `config.py`'den kullanılmayan
   `DISTRICTS_GEOJSON_PATH` kaldırıldı; CLAUDE.md/README belge-kod tutarlılığı düzeltildi.
+- **2026-07-10 — Demo giriş UX + geliştirici kuralları.** Pages mock'una `admin`/`admin1234` ve
+  `user`/`user1234` demo hesapları eklendi (yalnız frontend `demo_users`; gerçek backend'i etkilemez),
+  login formuna görünür ipucu kondu. `.agents/AGENTS.md` genişletildi: DDIA + **APoSD (Ousterhout)**
+  ikincil rehber olarak tanımlandı, projeye özel 7 maddelik kural seti eklendi.
 - *(Sonraki fazlar buraya birer satır ekler.)*

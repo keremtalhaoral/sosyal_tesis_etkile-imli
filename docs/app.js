@@ -68,6 +68,8 @@ const defaultFacilities = [
 // DEMO hesaplar (yalnız GitHub Pages/çevrimdışı replika için). Gerçek backend bu parolaları
 // ASLA taşımaz; üretimde parolalar gitignored dev-credentials.json'da (ADR-002 Karar 4).
 const defaultUsers = [
+  { username: 'user', password_hash: 'user1234_mock', role: 'user' },
+  { username: 'admin', password_hash: 'admin1234_mock', role: 'admin' },
   { username: 'demo', password_hash: 'demo1234_mock', role: 'user' },
   { username: 'demo-admin', password_hash: 'demo1234_mock', role: 'admin' }
 ];
