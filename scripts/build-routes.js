@@ -170,27 +170,42 @@ function resolveGeometric(gtfs, dir, neededShorts) {
   for (const [tid, rid] of Object.entries(gtfs.routeOfTrip)) if (neededShorts.has(gtfs.shortOf[rid])) neededTrips.add(tid);
 
   // stop_times: yalnız gerekli seferler; sefer -> [[seq, stop_id],...]
+  // Not: gerçek feed 144 MB / ~6M satır → satırları indexOf ile akıtarak tara (dev array yok).
   const stFile = findFile(dir, 'stop_times');
   const tripStops = {};
   let stDataRows = 0;
   if (stFile) {
-    const lines = fs.readFileSync(stFile, 'utf8').split(/\r?\n/);
-    stDataRows = Math.max(0, lines.length - 1);
-    const delim = sniffDelim(lines[0]);
-    const head = splitCsv(lines[0], delim).map(h => h.trim().replace(/^﻿/, ''));
+    const raw = fs.readFileSync(stFile, 'utf8');
+    const nl = raw.indexOf('\n');
+    const delim = sniffDelim(raw.slice(0, nl < 0 ? raw.length : nl));
+    const head = splitCsv(raw.slice(0, nl < 0 ? raw.length : nl), delim).map(h => h.trim().replace(/^﻿/, ''));
     const iT = head.indexOf('trip_id'), iS = head.indexOf('stop_id'), iQ = head.indexOf('stop_sequence');
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i]) continue;
-      const c = splitCsv(lines[i], delim);
+    let pos = nl + 1; const len = raw.length;
+    while (pos < len && nl >= 0) {
+      let e = raw.indexOf('\n', pos); if (e < 0) e = len;
+      const line = raw.slice(pos, e).replace(/\r$/, ''); pos = e + 1;
+      if (!line) continue; stDataRows++;
+      // stop_times satırında tırnak yok (feed gerçeği) → hızlı split
+      const c = line.split(delim);
       const t = c[iT]; if (!neededTrips.has(t)) continue;
       (tripStops[t] = tripStops[t] || []).push([+c[iQ], c[iS]]);
     }
   }
 
-  // her sefer için en iyi shape; kısa-ad başına en iyi (örtüşme, sonra uzunluk) sakla
-  const shortGeom = {};
+  // Temsili sefer: her route_id için EN UZUN sefer (en dolu güzergah sinyali). Rota varyantları
+  // (farklı route_id = farklı desen/yön) farklı shape'lere düşebildiğinden route_id başına bir
+  // aday seçip kısa-ad altında en iyisini tutuyoruz (tüm seferleri taramaktan ~40× hızlı).
+  const longestPerRoute = {}; // route_id -> {trip, n}
   for (const t in tripStops) {
-    const sn = gtfs.shortOf[gtfs.routeOfTrip[t]];
+    const rid = gtfs.routeOfTrip[t]; const n = tripStops[t].length;
+    if (!longestPerRoute[rid] || n > longestPerRoute[rid].n) longestPerRoute[rid] = { trip: t, n };
+  }
+
+  // kısa-ad başına en iyi shape (kalite kapısını build() uygular; burada ham skoru saklıyoruz)
+  const shortGeom = {};
+  for (const rid in longestPerRoute) {
+    const sn = gtfs.shortOf[rid];
+    const t = longestPerRoute[rid].trip;
     const seq = tripStops[t].sort((a, b) => a[0] - b[0]).map(x => gtfs.stops[x[1]]).filter(Boolean);
     if (seq.length < 2) continue;
     const m = matchShapeToStops(seq.map(s => [s.lat, s.lng]), gtfs, idx);
@@ -200,9 +215,8 @@ function resolveGeometric(gtfs, dir, neededShorts) {
     if (better) shortGeom[sn] = { ...m, stops: seq.length };
   }
 
-  // truncation tespiti (Excel 1.048.576 satır limiti veya seferlerin çoğu stop_times'ta yok)
-  const truncated = stDataRows >= 1048575 || (gtfs.tripCount > 0 && Object.keys(gtfs.routeOfTrip).length > 0 &&
-    stDataRows > 0 && stDataRows < gtfs.tripCount); // kaba işaret; ADR-006'da açıklanır
+  // truncation tespiti: Excel 1.048.576 satır limiti (başlık dahil) = 1.048.575 veri satırı (tam eşleşme)
+  const truncated = stDataRows === 1048575;
   return { shortGeom, idx, stDataRows, truncated };
 }
 

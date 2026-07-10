@@ -79,24 +79,31 @@ düşülmez.
 çok ama yanlış hattan iyidir. Yürüme bacağı ise tüm tesislere çizilir (en yakın **gerçek** durak;
 `stops` tam) — dürüstçe "yaklaşık son-yürüyüş" olarak etiketlenir (çevrimdışı yaya ağı yok).
 
-## Karar 6 — VERİ SINIRI: `stop_times` KESİK (Excel 1.048.576 limiti)
+## Karar 6 — VERİ SINIRI: iki aşama (stop_times ÇÖZÜLDÜ → kalan sınır = shapes.csv kapsamı)
 
-**Bulgu:** Sağlanan `stop_times.csv` tam **1.048.576 satırda** kesik (Excel/CSV satır limiti);
-135.625 seferin yalnız **18.934'ü** (dar bir `trip_id` bandı) içeride. Sonuç: geometrik eşleme
-için durak dizisi olan hat sayısı çok düşük.
+**Aşama 1 — `stop_times` kesikti (ÇÖZÜLDÜ):** İlk sağlanan `stop_times.csv` tam **1.048.576
+satırda** kesikti (Excel satır limiti); 135.625 seferin yalnız 18.934'ü içerideydi → sadece 2 hat
+çözülüyordu, metrobüs hiç. Kullanıcı **EKSİKSİZ `stop_times.txt`'yi** (GTFS zip'inden,
+**6.155.693 satır**, gzip'lenip yüklendi) sağladı → truncation kalktı. `build-routes.js`
+`stop_times === 1.048.575 satır` ise `meta.warning` basar (Excel limiti tespiti).
 
-**Etki (bu commit'te):** 79 otobüs ref'inden yalnız birkaçı yüksek güvenle çözülüyor
-(`11A`, `134YK` — tesis 7 Çamlıca ve tesis 9 Dragos), **metrobüs (34\*) hiç** çözülmüyor
-(o seferler kesikte kalmış). 30 tesisin **hepsi** gerçek yürüme bacağı alır. `meta.warning`
-bu durumu çıktının içine yazar.
+**Aşama 2 — kalan sınır: `shapes.csv` yalnız bir alt kümeyi kapsıyor.** İBB feed'inde 9.000+
+rota var ama yalnız **953 shape** yayınlanmış. Yani birçok hattın gerçek geometrisi feed'de YOK.
+Sonuç (tam veriyle): 79 otobüs ref'inden **10'u** + **metrobüs (34)** yüksek güvenle çözülür
+(`cov` 0.64–0.92, sapma 35–281 m; ör. `EM2`, `15C`, `15`, `15K`, `34`, `15T`, `17`, `11A`,
+`134YK`, `EM1`), **13/30 tesis** en az bir gerçek hat alır. Eşleşmeyenlerin dağılımı dürüstçe
+`meta.unmatched`'te: `low-confidence` 53 (durak var ama shapes.csv'de o hattın geometrisi yok →
+kapıyla elendi), `no-stop-times-coverage` 17 (feed'de o hattın seferi yok), `operator-feed-missing`
+18 (ray/vapur — başka operatör). 30 tesisin **hepsi** gerçek yürüme bacağı alır.
 
-**Unblock:** EKSİKSİZ `stop_times.txt` (GTFS zip'inden, ~5M+ satır) `data/gtfs/` altına konup
-`node scripts/build-routes.js` yeniden çalıştırılınca ~62 hat + metrobüs **kalite kapısını
-geçerek** dolar. Makine hazır; tek eksik tam veri. (Ray/vapur ayrı operatör feed'leri —
-Metro İstanbul, Şehir Hatları — eklenince aynı boru hattı çizer; şimdilik `operator-feed-missing`.)
+**Kalan unblock (isteğe bağlı):** ray/vapur için Metro İstanbul + Şehir Hatları GTFS'i eklenince
+aynı boru hattı onları da çizer (şimdilik `operator-feed-missing`). Otobüs `low-confidence`
+kayıpları shapes.csv'nin kapsamıyla sınırlı — İBB o hatların shape'ini yayınlamadıkça bu bir
+veri-kaynağı sınırıdır (uydurmuyoruz).
 
-**Neden dürüstçe kaydediyoruz (DDIA ethos):** Karar-belgeleme birincil. Veri kalitesi sınırı bir
-mimari gerçektir; onu gizleyip yanlış çizgi üretmek yerine kapıyla eleyip ADR'de kayda geçiriyoruz.
+**Neden dürüstçe kaydediyoruz (DDIA ethos):** Karar-belgeleme birincil. Veri-kaynağı kapsamı bir
+mimari gerçektir; gizleyip yanlış çizgi üretmek yerine kalite kapısıyla eleyip ADR'de kayda
+geçiriyoruz — "az ama doğru, çok ama yanlıştan iyidir" (emin ol).
 
 ## Alternatifler (reddedilenler)
 
@@ -107,7 +114,8 @@ mimari gerçektir; onu gizleyip yanlış çizgi üretmek yerine kapıyla eleyip 
 
 ## Sonuç
 
-`build-routes.js` (sıfır bağımlılık, iki-mod, kalite kapılı) + fixture testi (`test-routes.js`,
-17/17) + türetilmiş `transit-routes.geojson` + frontend `TransitRoutes` (gerçek polyline + mod
-legend, düz-çizgi çizimi kaldırıldı). Tam otobüs/metrobüs kapsamı EKSİKSİZ `stop_times` gelince
-tek komutla dolar (Karar 6).
+`build-routes.js` (sıfır bağımlılık, iki-mod, kalite kapılı, ~8 sn) + fixture testi
+(`test-routes.js`, 17/17) + türetilmiş `transit-routes.geojson` (**10 gerçek hat + metrobüs +
+30 yürüme bacağı**, 13/30 tesis) + frontend `TransitRoutes` (gerçek polyline + mod legend,
+düz-çizgi çizimi kaldırıldı). Kalan kapsam İBB `shapes.csv`'nin yayınladığı hatlarla ve
+ray/vapur için ayrı operatör feed'leriyle sınırlı (Karar 6) — uydurma yok.
