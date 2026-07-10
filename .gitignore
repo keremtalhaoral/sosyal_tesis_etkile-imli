@@ -17,6 +17,9 @@ data/app.db
 *.db-wal
 *.db-shm
 advanced-gis/data/database.db
+# Tam veri dökümü (yapı + satırlar) türetilmiştir. NOT: yapı-only schema.sql
+# dokümantasyon olarak commit EDİLİR (scripts/export-schema.js üretir).
+data/full.sql
 
 # Ham GTFS feed'i (İBB/İETT - büyük, üçüncü taraf ham veri). TÜRETİLMİŞ çıktı
 # docs/data/transit-routes.geojson commit edilir (ADR-006). Ham veriyi kullanıcı

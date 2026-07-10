@@ -159,6 +159,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 |---|---|---|
 | `build-routes.js` | 358 | **GTFS → gerçek rota geometrisi** (ADR-006). İki feed formatı, delimiter/mojibake/dev `stop_times` streaming; **kalite kapısı** (düşük güven eşleşme uydurma çizgiye düşmez); per-tesis rota indeksi + en yakın durak yürüyüş bacağı. |
 | `export-analytics.js` | 44 | Pages için analitik snapshot: rollup'ı tazeler, tüm granülerlikte motoru çalıştırır → `docs/data/analytics.json`. |
+| `export-schema.js` | ~55 | `app.db` şemasını okunur **`schema.sql`** DDL dokümanına döker (sqlite_master'dan). Kanonik değil — migration'lardan türetilir; şema değişince yeniden çalıştırılır. |
 | `generate-data.js` | 133 | Ölçeklenebilir dummy veri (Faz v2-03): `--scale=N`, `--reset`; chunked batch insert, sipariş toplamı insert öncesi; sonda benchmark + `EXPLAIN QUERY PLAN`. |
 
 ### 4.5 Kök dosyalar
@@ -171,6 +172,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `VERITABANI_ANLATIM_REHBERI.md` | Veri mimarisini mentöre SQL ile anlatma rehberi (öğrenme). |
 | `staj_sunum_rehberi.md` | Staj sunum rehberi (erken sürüm mimarisi + hâlâ geçerli tasarım prensipleri; başında sürüm notu). |
 | `data/seed.json` | Kanonik başlangıç verisi (30 tesis, 39 ilçe, kullanıcılar). |
+| `schema.sql` | **Türetilmiş** okunur DDL dokümanı (migration'lardan üretilir; `scripts/export-schema.js`). Elle düzenlenmez; mentöre/DBeaver'a şemayı tek dosyada gösterir. Kanonik değil — kaynak `database.js` MIGRATIONS. |
 | `.env.example` | Ortam değişkeni şablonu (JWT_SECRET, OPENWEATHER_API_KEY, …). |
 | `.agents/AGENTS.md` | Çalışma alanı kuralları (kod okurken fark edilen risk/koku bildirilir). |
 | `.github/workflows/deploy-pages.yml` | GitHub Pages otomatik yayın. |
@@ -213,4 +215,8 @@ Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temi
   `user`/`user1234` demo hesapları eklendi (yalnız frontend `demo_users`; gerçek backend'i etkilemez),
   login formuna görünür ipucu kondu. `.agents/AGENTS.md` genişletildi: DDIA + **APoSD (Ousterhout)**
   ikincil rehber olarak tanımlandı, projeye özel 7 maddelik kural seti eklendi.
+- **2026-07-10 — `schema.sql` + üretici script.** `scripts/export-schema.js` eklendi; `app.db`'den
+  okunur DDL dokümanı `schema.sql` üretiyor (kanonik değil, migration'lardan türetilmiş; şema değişince
+  yeniden üretilir — CLAUDE.md sözleşmesi). Amaç: SQL şemasını tek dosyada gösterebilmek (DBeaver/mentör).
+  Tam veri dökümü `data/full.sql` gitignored. `schema.sql` (yalnız yapı) dokümantasyon olarak commit'lenir.
 - *(Sonraki fazlar buraya birer satır ekler.)*
