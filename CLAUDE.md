@@ -71,6 +71,7 @@ node backend/test-admin.js       # audit log, admin gözetim, requireAdmin (ADR-
 # Python
 cd advanced-gis && python3 scripts/seed.py && python3 tests/test_crypto.py
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092
+# Her özelliği SQL ile gösterme: queries.sql (DBeaver) + anlatımı docs/sorgu-defteri.md
 ```
 
 ## Sözleşmeler
