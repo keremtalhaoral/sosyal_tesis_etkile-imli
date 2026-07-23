@@ -1,10 +1,13 @@
 /**
- * database.js - Merkezi SQLite Veri Katmanı (Single Source of Truth)
+ * database.js - Merkezi SQLite DEPOLAMA katmanı (Single Source of Truth)
+ *
+ * SORUMLULUK SINIRI: Bu dosya = düşük seviye depolama (bağlantı/getDb, migration+seed,
+ * transaction(), parola hash'i). Üstündeki repository + mekansal katman ise db.js'tedir.
  *
  * TASARIM GEREKÇESİ (DDIA - Designing Data-Intensive Applications):
  * 1. Tek Gerçek Kaynak (Bölüm 11 - Derived Data): Tesis, kullanıcı ve rezervasyon verisi daha önce
- *    üç ayrı yerde yaşıyordu (backend/db.js içinde gömülü JS sabitleri, advanced-gis'in kendi SQLite'ı,
- *    docs/ localStorage mock'u). Bu modül repo kökündeki data/app.db dosyasını tek otorite yapar;
+ *    ayrı yerlerde yaşıyordu (backend/db.js içinde gömülü JS sabitleri, docs/ localStorage mock'u).
+ *    Bu modül repo kökündeki data/app.db dosyasını tek otorite yapar;
  *    diğer temsiller türetilmiş veridir. Çift-yazma (dual write) tutarsızlıkları böylece kökten kalkar.
  * 2. Güvenilirlik & Dayanıklılık (Bölüm 7 - Transactions): WAL modu + senkron commit ile süreç
  *    çökse bile onaylanmış yazmalar kaybolmaz. Çok adımlı yazmalar (rezervasyon + doluluk güncellemesi)

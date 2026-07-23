@@ -1,6 +1,10 @@
 /**
  * db.js - Veri Erişim Katmanı (Repository) + Mekansal Analiz
  *
+ * SORUMLULUK SINIRI: Bu dosya = iş odaklı repository (tesis/rezervasyon/sipariş okuma-yazma)
+ * + mekansal fonksiyonlar. Alttaki düşük seviye depolama (getDb/transaction/hashPassword)
+ * database.js'ten gelir; burada onun üstüne uygulama sorguları kurulur.
+ *
  * Bu modül artık veriyi kod içinde saklamaz: tüm okuma/yazma merkezi SQLite veritabanına
  * (data/app.db, bkz. database.js ve DATABASE.md) gider. Mekansal fonksiyonlar (ray-casting
  * point-in-polygon, Haversine mesafe, KNN) korunmuştur; PostGIS'e geçişte bunlar
