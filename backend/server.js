@@ -292,9 +292,9 @@ app.get('/api/weather', async (req, res) => {
           const weatherJson = JSON.parse(data);
           res.json({
             temp: parseFloat(weatherJson.main.temp.toFixed(1)),
-            condition: translateConditionToTurkish(weatherJson.weather[0].main),
+            desc: translateConditionToTurkish(weatherJson.weather[0].main),
             humidity: weatherJson.main.humidity,
-            wind: parseFloat((weatherJson.wind.speed * 3.6).toFixed(1)), // Convert m/s to km/h
+            wind_speed: parseFloat((weatherJson.wind.speed * 3.6).toFixed(1)), // Convert m/s to km/h
             isMock: false
           });
         } else {
@@ -357,13 +357,14 @@ const generateRealisticMockWeather = (lat, lng) => {
   const condition = conditions[index];
   
   const humidity = Math.abs(Math.floor(seed * 25)) + 55; // 55% - 80%
-  const wind = (Math.abs(seed * 12) + 6).toFixed(1); // 6 - 18 km/h
+  const wind_speed = parseFloat((Math.abs(seed * 12) + 6).toFixed(1)); // 6 - 18 km/h
   
+  // Tek sözleşme: { temp, desc, humidity, wind_speed } — frontend'in okuduğu alan isimleri.
   return {
     temp,
-    condition,
+    desc: condition,
     humidity,
-    wind,
+    wind_speed,
     isMock: true
   };
 };

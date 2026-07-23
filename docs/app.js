@@ -295,11 +295,19 @@ window.fetch = async function (url, options) {
         { name: "Türk Kahvesi", price: "15" }
       ];
     } else if (cleanEndpoint === 'weather') {
+      // Koordinata göre değişen mock (backend generateRealisticMockWeather ile aynı mantık).
+      // Tek sözleşme: { temp, desc, humidity, wind_speed }. Sabit değer DÖNMEZ; her tesis farklı.
+      const params = new URLSearchParams(endpoint.split('?')[1] || '');
+      const lat = parseFloat(params.get('lat')) || 41.0;
+      const lng = parseFloat(params.get('lng')) || 29.0;
+      const seed = Math.sin(lat) * Math.cos(lng);
+      const conditions = ["Açık / Güneşli", "Hafif Rüzgarlı / Güneşli", "Parçalı Bulutlu", "Az Bulutlu"];
       responseData = {
-        temp: 24,
-        desc: "Açık, Güneşli",
-        humidity: 45,
-        wind: 12
+        temp: 25 + Math.round(seed * 4),
+        desc: conditions[Math.abs(Math.floor(seed * 10)) % 4],
+        humidity: Math.abs(Math.floor(seed * 25)) + 55,
+        wind_speed: parseFloat((Math.abs(seed * 12) + 6).toFixed(1)),
+        isMock: true
       };
     } else if (cleanEndpoint === 'auth/login' || cleanEndpoint === 'auth/register') {
       // Çevrimdışıyken seed çekilememiş olabilir; kullanıcı listesi yoksa defaultUsers'tan
