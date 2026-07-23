@@ -15,10 +15,12 @@ const { getDb, transaction, hashPassword } = require('./database');
 // GeoJSON ilçe sınırları (statik referans verisi - salt okunur, DB'ye taşınmadı
 // çünkü 3.7MB'lık geometri blob'u SQLite'ta sorgulanamıyor; PostGIS'te geometry
 // kolonu olur. Nüfus gibi *değişebilen* demografik veri ise DB'dedir.)
+// TEK KANONİK KOPYA: docs/data/istanbul-districts.geojson — hem bu backend hem
+// GitHub Pages arayüzü aynı dosyayı kullanır (mükerrer 3.7MB kopya kaldırıldı).
 // ---------------------------------------------------------------------------
 let districtsGeoJSON = null;
 try {
-  const filePath = path.join(__dirname, 'data', 'istanbul-districts.geojson');
+  const filePath = path.join(__dirname, '..', 'docs', 'data', 'istanbul-districts.geojson');
   districtsGeoJSON = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 } catch (error) {
   console.error('Critical Error: istanbul-districts.geojson yüklenemedi. Boş koleksiyonla devam ediliyor.', error);
