@@ -16,7 +16,6 @@ build/
 data/app.db
 *.db-wal
 *.db-shm
-advanced-gis/data/database.db
 # Tam veri dökümü (yapı + satırlar) türetilmiştir. NOT: yapı-only schema.sql
 # dokümantasyon olarak commit EDİLİR (scripts/export-schema.js üretir).
 data/full.sql
