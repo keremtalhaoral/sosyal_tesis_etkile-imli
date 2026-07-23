@@ -2,8 +2,8 @@
  * export-schema.js — app.db şemasını okunur bir schema.sql dosyasına döker.
  *
  * NEDEN VAR: SQLite verisini tek binary dosyada (data/app.db) tutar; ayrı bir .sql dosyası
- * zorunlu değildir. Bu projede şemanın KANONİK kaynağı backend/database.js MIGRATIONS dizisidir
- * (advanced-gis/app/models.py ile senkron). Ancak SQL şemasını tek bakışta okumak (DBeaver'a almak,
+ * zorunlu değildir. Bu projede şemanın KANONİK kaynağı backend/database.js MIGRATIONS dizisidir.
+ * Ancak SQL şemasını tek bakışta okumak (DBeaver'a almak,
  * inceleme, mentöre gösterme) için düz metin bir DDL çıktısı pratiktir.
  *
  * schema.sql bu yüzden TÜRETİLMİŞ (derived) bir DOKÜMANDIR: elle düzenlenmez, migration'lardan
@@ -43,7 +43,7 @@ const header =
 -- schema.sql — TÜRETİLMİŞ (derived) veritabanı şeması / DERIVED database schema
 -- =============================================================================
 -- Bu dosya ELLE DÜZENLENMEZ. Kanonik kaynak:
---   * Yapı  : backend/database.js  (MIGRATIONS dizisi) + advanced-gis/app/models.py (senkron)
+--   * Yapı  : backend/database.js  (MIGRATIONS dizisi)
 --   * Veri  : data/seed.json  (kanonik başlangıç verisi)
 -- Yeniden üretmek için:  node scripts/export-schema.js
 -- Uygulanmış migration sürümleri: ${appliedVersions}
