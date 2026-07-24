@@ -204,8 +204,11 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   (şema tek yerde: `backend/database.js`). Mükerrer `istanbul-districts.geojson` **tekilleştirildi**:
   tek kanonik kopya `docs/data/istanbul-districts.geojson`, Node backend (`db.js`) ile Pages aynı
   dosyayı okur. Ayrıca bir doğruluk/bug-fix turu: menü gerçek veri, harita rezervasyonu, kayıt (mock
-  token/user), yol tarifi çizim + mesafe/süre, İSPARK gerçek uca bağlama, hava yedeği ve grafik
-  snapshot tazelik/etiket düzeltmeleri. (İSPARK: gerçek uca bağlanamadı — backend
-  `ispark_status` seed'de tohumlanmıyor — bu yüzden uydurma `Math.random()` yerine
-  konuma göre **deterministik demo** doluluğa çevrildi; sahte "İBB Feed" etiketi dürüstleştirildi.)
+  token/user), yol tarifi çizim + mesafe/süre, İSPARK doluluğu, hava yedeği ve grafik
+  snapshot tazelik/etiket düzeltmeleri. (İSPARK: haritadaki İSPARK işaretleri ayrı bir
+  **hardcoded `ISPARK_LOCATIONS`** listesidir (15 kamu otoparkı, id 1–15) — bunlar *tesis*
+  değildir, dolayısıyla tesis-anahtarlı `/api/ispark/:facilityId` ucuna eşlenmez. Uydurma
+  `Math.random()` doluluk konuma göre **deterministik demo** değere çevrildi ve sahte
+  "İBB Feed" etiketi dürüstleştirildi. Backend'de her *tesisin kendi* `ispark_status` kaydı
+  gerçek/tohumlu ve atomik take/release ile canlıdır (ADR-003) — farklı bir kavram, ayrı veri.)
 - *(Sonraki fazlar buraya birer satır ekler.)*
