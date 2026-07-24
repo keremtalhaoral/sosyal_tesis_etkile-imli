@@ -339,7 +339,13 @@ window.fetch = async function (url, options) {
         } else {
           users.push({ username, password_hash: password + '_mock', role: 'user' });
           localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
-          responseData = { message: 'Kayıt başarılı.' };
+          // Backend register ile AYNI sözleşme: { token, user }. Sadece {message} dönersek
+          // tüketici data.token/data.user'ı "undefined" saklar ve checkSession patlar.
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify({ id: 2, username, role: 'user' }));
+          const sig = btoa('mock_signature');
+          status = 201;
+          responseData = { token: `${header}.${payload}.${sig}`, user: { username, role: 'user' } };
         }
       }
     } else if (cleanEndpoint === 'reservations' && method === 'POST') {
