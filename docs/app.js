@@ -286,13 +286,14 @@ window.fetch = async function (url, options) {
         }
       }
     } else if (cleanEndpoint === 'menu') {
+      // Backend /api/menu ile AYNI sözleşme: çıplak dizi + price_minor (kuruş).
       responseData = [
-        { name: "Mercimek Çorbası", price: "25" },
-        { name: "Izgara Köfte", price: "75" },
-        { name: "Fırın Sütlaç", price: "30" },
-        { name: "Mevsim Salatası", price: "20" },
-        { name: "Çay", price: "5" },
-        { name: "Türk Kahvesi", price: "15" }
+        { id: 1, facility_id: null, name: "Mercimek Çorbası", category: "Çorba",   price_minor: 2500 },
+        { id: 2, facility_id: null, name: "Izgara Köfte",      category: "Ana Yemek", price_minor: 7500 },
+        { id: 3, facility_id: null, name: "Fırın Sütlaç",      category: "Tatlı",   price_minor: 3000 },
+        { id: 4, facility_id: null, name: "Mevsim Salatası",   category: "Salata",  price_minor: 2000 },
+        { id: 5, facility_id: null, name: "Çay",               category: "İçecek",  price_minor: 500  },
+        { id: 6, facility_id: null, name: "Türk Kahvesi",      category: "İçecek",  price_minor: 1500 }
       ];
     } else if (cleanEndpoint === 'weather') {
       // Koordinata göre değişen mock (backend generateRealisticMockWeather ile aynı mantık).
@@ -338,10 +339,18 @@ window.fetch = async function (url, options) {
         } else {
           users.push({ username, password_hash: password + '_mock', role: 'user' });
           localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
-          responseData = { message: 'Kayıt başarılı.' };
+          // Backend register ile AYNI sözleşme: { token, user }. Sadece {message} dönersek
+          // tüketici data.token/data.user'ı "undefined" saklar ve checkSession patlar.
+          const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+          const payload = btoa(JSON.stringify({ id: 2, username, role: 'user' }));
+          const sig = btoa('mock_signature');
+          status = 201;
+          responseData = { token: `${header}.${payload}.${sig}`, user: { username, role: 'user' } };
         }
       }
-    } else if (cleanEndpoint === 'reserve') {
+    } else if (cleanEndpoint === 'reservations' && method === 'POST') {
+      // Backend POST /api/reservations ile AYNI sözleşme: camelCase gövde
+      // (facilityId/reserveDate/reserveTime/guests), yanıt { id, booked, remaining, signature }.
       const user = getLoggedUser();
       if (!user) {
         status = 401;
@@ -349,7 +358,7 @@ window.fetch = async function (url, options) {
       } else {
         const reservations = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY));
         const facilities = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY));
-        const facilityIdx = facilities.findIndex(f => f.id === body.facility_id);
+        const facilityIdx = facilities.findIndex(f => f.id === body.facilityId);
         const facility = facilities[facilityIdx];
         if (!facility) {
           status = 404;
@@ -363,30 +372,30 @@ window.fetch = async function (url, options) {
             status = 400;
             responseData = { error: `Kapasite yetersiz. Kalan boş yer: ${capacityLeft}` };
           } else {
-            // Update dolulukOrani
             const newOccupied = currentOccupied + guestCount;
             facility.dolulukOrani = Math.round((newOccupied / facility.kapasite) * 100);
             facilities[facilityIdx] = facility;
             localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(facilities));
 
-            const facilityName = facility.ad;
-            const dataStr = `${user.username}-${body.facility_id}-${body.reserve_date}-${body.reserve_time}-${body.guests}`;
+            const dataStr = `${user.username}-${body.facilityId}-${body.reserveDate}-${body.reserveTime}-${body.guests}`;
             const signature = generateMockSignature(dataStr);
+            const newId = reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1;
 
-            const newRes = {
-              id: reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1,
+            // Liste dalı (GET) snake_case okuyor; kayıt içi alanları snake_case sakla.
+            reservations.push({
+              id: newId,
               user_id: user.id,
               username: user.username,
-              facility_id: body.facility_id,
-              facility_name: facilityName,
-              reserve_date: body.reserve_date,
-              reserve_time: body.reserve_time,
-              guests: body.guests,
+              facility_id: body.facilityId,
+              facility_name: facility.ad,
+              reserve_date: body.reserveDate,
+              reserve_time: body.reserveTime,
+              guests: guestCount,
               crypto_signature: signature
-            };
-            reservations.push(newRes);
+            });
             localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(reservations));
-            responseData = { message: 'Rezervasyon başarıyla oluşturuldu.', signature, crypto_signature: signature };
+            status = 201;
+            responseData = { id: newId, booked: newOccupied, remaining: capacityLeft - guestCount, signature };
           }
         }
       }
@@ -496,6 +505,28 @@ const TILE_LAYERS = {
   }
 };
 
+// Karolar CDN'den gelir (tüm İstanbul karolarını offline paketlemek pratik değil).
+// Çevrimdışı/CDN erişilemezse kırık-resim ikonu yerine sade gri karo göster ve BİR KEZ
+// kullanıcıyı bilgilendir — böylece "boş gri harita" bir hata gibi görünmez.
+const OFFLINE_TILE = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='256'%20height='256'%3E%3Crect%20width='256'%20height='256'%20fill='%23cbd5e1'/%3E%3C/svg%3E";
+let tileErrorNoted = false;
+const makeTileLayer = (config) => {
+  const layer = L.tileLayer(config.url, Object.assign({}, config.options, { errorTileUrl: OFFLINE_TILE }));
+  layer.on('tileerror', () => {
+    if (tileErrorNoted || !state.map) return;
+    tileErrorNoted = true;
+    const note = L.control({ position: 'topleft' });
+    note.onAdd = () => {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:rgba(0,0,0,0.72);color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;max-width:240px;';
+      div.textContent = '🗺️ Harita karoları çevrimiçi bağlantı gerektirir (çevrimdışı: sade arka plan).';
+      return div;
+    };
+    note.addTo(state.map);
+  });
+  return layer;
+};
+
 // Local Otopark (İSPARK) Database (Fallback model representing 15 major otoparks near social facilities)
 const ISPARK_LOCATIONS = [
   { id: 1, ad: "İSPARK Eminönü Açık Otoparkı", koordinatlar: [41.018042, 28.971556], kapasite: 250 },
@@ -592,14 +623,14 @@ const initMap = () => {
   L.control.zoom({ position: 'bottomright' }).addTo(state.map);
 
   const config = TILE_LAYERS[state.theme];
-  state.activeTileLayer = L.tileLayer(config.url, config.options).addTo(state.map);
+  state.activeTileLayer = makeTileLayer(config).addTo(state.map);
 };
 
 const switchMapTileLayer = () => {
   if (state.map && state.activeTileLayer) {
     state.map.removeLayer(state.activeTileLayer);
     const config = TILE_LAYERS[state.theme];
-    state.activeTileLayer = L.tileLayer(config.url, config.options).addTo(state.map);
+    state.activeTileLayer = makeTileLayer(config).addTo(state.map);
   }
 };
 
@@ -1085,6 +1116,16 @@ const renderFacilityMarkers = () => {
   });
 };
 
+// İSPARK doluluğu — DETERMİNİSTİK demo değeri. Gerçek canlı bir İBB İSPARK feed'i
+// yok; eski kod her render'da Math.random() ile UYDURUYORDU (tıklayınca değişiyordu).
+// Bunun yerine otoparkın konumundan türetilen, her seferinde AYNI kalan bir yüzde
+// üretiriz (35-84% arası). Dürüstçe "demo" olarak etiketlenir.
+const isparkOccupancy = (p) => {
+  const [lat, lng] = p.koordinatlar;
+  const frac = Math.abs(Math.sin(lat * 91.7 + lng * 57.3)) % 1;
+  return 35 + Math.floor(frac * 50);
+};
+
 // Render İSPARK markers
 const renderIsparkMarkers = () => {
   state.isparkMarkers.forEach(m => state.map.removeLayer(m));
@@ -1101,8 +1142,7 @@ const renderIsparkMarkers = () => {
       fillOpacity: 0.8
     }).addTo(state.map);
 
-    // Simulated available occupancy on otoparks
-    const occupiedPercent = Math.floor(Math.random() * 40) + 40; // 40-80% occupied
+    const occupiedPercent = isparkOccupancy(p);
     const emptySpots = Math.floor(p.kapasite * (1 - occupiedPercent / 100));
 
     // Custom Click popup representation
@@ -1111,7 +1151,7 @@ const renderIsparkMarkers = () => {
         <strong>${p.ad}</strong><br/>
         Kapasite: ${p.kapasite} araç<br/>
         Boş Yer: <strong style="color: #8b5cf6;">${emptySpots}</strong> araç (%${(100 - occupiedPercent).toFixed(0)} boş)<br/>
-        <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: İBB İSPARK Otopark Feed</small>
+        <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Örnek doluluk (demo verisi)</small>
       </div>
     `);
 
@@ -1198,14 +1238,20 @@ const fetchMenu = async (facilityId) => {
     const res = await fetch(`${API_BASE}/api/menu?facilityId=${facilityId}`);
     if (!res.ok) throw new Error("Backend unavailable");
     const data = await res.json();
-    
+
+    // /api/menu ÇIPLAK DİZİ döndürür: [{id, facility_id, name, category, price_minor}].
+    // (Fiyat kuruş cinsinden 'price_minor'dır; TL için 100'e böl.) order.js:127 ile aynı sözleşme.
+    if (!Array.isArray(data) || data.length === 0) throw new Error("Boş/geçersiz menü yanıtı");
+
     container.innerHTML = '';
-    data.items.forEach(item => {
+    data.forEach(item => {
+      const tl = item.price_minor / 100;
+      const priceStr = Number.isInteger(tl) ? tl : tl.toFixed(2);
       const row = document.createElement('div');
       row.className = 'menu-item-row';
       row.innerHTML = `
         <span class="menu-item-name">${item.name}</span>
-        <span class="menu-item-price">${item.price} TL</span>
+        <span class="menu-item-price">${priceStr} TL</span>
       `;
       container.appendChild(row);
     });
@@ -1237,14 +1283,20 @@ const fetchWeather = async (lat, lng, elementId) => {
       <div class="weather-detail">Rüzgar: ${data.wind_speed} km/s</div>
     `;
   } catch (e) {
-    // Fallback simulated local weather based on coordinates to avoid app crashing
-    const tempSim = Math.floor(Math.random() * 8) + 22; // 22-30C
+    // Çevrimdışı yedek: rastgele DEĞİL — backend mock'u ve override ile AYNI deterministik
+    // (koordinata dayalı) mantık. Böylece her tesis için değer sabit ve tutarlı kalır.
+    const seed = Math.sin(parseFloat(lat)) * Math.cos(parseFloat(lng));
+    const conditions = ["Açık / Güneşli", "Hafif Rüzgarlı / Güneşli", "Parçalı Bulutlu", "Az Bulutlu"];
+    const tempSim = 25 + Math.round(seed * 4);
+    const descSim = conditions[Math.abs(Math.floor(seed * 10)) % 4];
+    const humiditySim = Math.abs(Math.floor(seed * 25)) + 55;
+    const windSim = (Math.abs(seed * 12) + 6).toFixed(1);
     container.innerHTML = `
       <div class="weather-temp">${tempSim}°C</div>
-      <div class="weather-desc">Açık / Güneşli ☀️</div>
-      <div class="weather-detail">Nem: %48</div>
-      <div class="weather-detail">Rüzgar: 14 km/s</div>
-      <small style="grid-column: 1 / span 2; font-size: 8px; opacity:0.65;">* İstanbul Centroid İklim Modeli Simülasyonu</small>
+      <div class="weather-desc">${descSim}</div>
+      <div class="weather-detail">Nem: %${humiditySim}</div>
+      <div class="weather-detail">Rüzgar: ${windSim} km/s</div>
+      <small style="grid-column: 1 / span 2; font-size: 8px; opacity:0.65;">* Çevrimdışı yedek (koordinata dayalı tahmin)</small>
     `;
   }
 };
@@ -1256,8 +1308,8 @@ const calculateNearestIspark = (facility) => {
     const ispark = result[0].target;
     const distanceVal = result[0].distance;
     
-    // Simulate current empty spots dynamically
-    const percentSim = Math.floor(Math.random() * 40) + 30; // 30-70% capacity
+    // DETERMİNİSTİK doluluk (rastgele değil) — popup ile aynı demo mantığı, stabil.
+    const percentSim = isparkOccupancy(ispark);
     const spotsSim = Math.floor(ispark.kapasite * (1 - percentSim / 100));
 
     document.getElementById('detail-ispark-name').textContent = ispark.ad;
@@ -1464,32 +1516,58 @@ const Routing = (() => {
     }
   };
 
+  // İki nokta arası kuşuçuşu (Haversine) mesafe — km. Çevrimdışı yedek için.
+  const haversineKm = (a, b) => {
+    const R = 6371, toRad = d => d * Math.PI / 180;
+    const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+    const s = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+
+  // Rota çizgisine kalıcı "mesafe · süre" etiketi bağlar (tahmini ise ~ öneki).
+  const labelRoute = (line, km, min, estimated) => {
+    const pre = estimated ? '~' : '';
+    line.bindTooltip(`${pre}${km.toFixed(1)} km · ${pre}${min} dk`, {
+      permanent: true, direction: 'center', className: 'leaflet-tooltip-own'
+    });
+  };
+
   const draw = async (start, end) => {
     clear();
     activeRouteGroup = L.layerGroup().addTo(state.map);
 
-    const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
+    // NOT: doğru host 'router.project-osrm.org' (tireli); eski kod tiresiz yazıldığından
+    // istek hep başarısız olup düz çizgiye düşüyordu. geometries=geojson + gerçek yol geometrisi.
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson&overview=full`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("OSRM driving route failed");
       const data = await res.json();
-      
+
       if (data.routes && data.routes.length > 0) {
-        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        L.polyline(routeCoords, {
+        const r = data.routes[0];
+        const routeCoords = r.geometry.coordinates.map(c => [c[1], c[0]]);
+        const line = L.polyline(routeCoords, {
           color: '#3b82f6',
           weight: 5,
           opacity: 0.85
         }).addTo(activeRouteGroup);
+        // Gerçek yol mesafesi (m→km) ve sürüş süresi (s→dk).
+        labelRoute(line, r.distance / 1000, Math.round(r.duration / 60), false);
       } else {
         throw new Error("No routes");
       }
     } catch (e) {
-      L.polyline([start, end], {
+      // Çevrimdışı/erişilemez: düz-çizgi yedeği + Haversine mesafe, süre ~30 km/s şehir-içi tahmini.
+      const line = L.polyline([start, end], {
         color: '#3b82f6',
         weight: 4,
-        opacity: 0.7
+        opacity: 0.7,
+        dashArray: '6, 8'
       }).addTo(activeRouteGroup);
+      const km = haversineKm(start, end);
+      labelRoute(line, km, Math.max(1, Math.round((km / 30) * 60)), true);
     }
   };
 
@@ -1503,7 +1581,7 @@ const Routing = (() => {
       return;
     }
 
-    const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("OSRM transit route failed");
@@ -1759,7 +1837,7 @@ const submitReservation = async () => {
 
   try {
     const token = localStorage.getItem('session-token');
-    const res = await fetch(`${API_BASE}/api/reserve`, {
+    const res = await fetch(`${API_BASE}/api/reservations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1776,7 +1854,7 @@ const submitReservation = async () => {
     const data = await res.json();
     if (res.ok) {
       msg.className = 'form-status-msg success';
-      msg.textContent = `Rezervasyon başarıyla kaydedildi! Kripto İmza: ${data.crypto_signature.slice(0, 16)}...`;
+      msg.textContent = `Rezervasyon başarıyla kaydedildi! Kripto İmza: ${data.signature.slice(0, 16)}...`;
       // Clear forms
       document.getElementById('reservation-form').reset();
       // Reload profile data

@@ -2,7 +2,8 @@
 
 Bu dosya, projeyi devralan her Claude oturumunun **giriş kapısıdır**. Derin gerekçeler için
 `docs/adr/` (ADR'ler) ve `DATABASE.md`'ye bak. **Her teknoloji ve dosyanın tek tek amacı** için
-→ `TEKNOLOJI_VE_DOSYA_REHBERI.md` (yaşayan katalog).
+→ `TEKNOLOJI_VE_DOSYA_REHBERI.md` (yaşayan katalog). **Projeyi mentöre/juriye anlatmak** için
+→ `PROJE_ANLATIM_REHBERI.md` (ne gerçek/ne demo + savunma soruları).
 
 ## Proje
 İstanbul sosyal tesisleri için etkileşimli Web GIS + karar destek. Harita, rezervasyon,
@@ -11,15 +12,13 @@ sipariş, İSPARK, analitik dashboard. Rehber ilke: **Designing Data-Intensive A
 kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 
 ## Mimari
-- **Merkezi SQLite** (`data/app.db`, WAL) = tek gerçek kaynak. Node ve Python servisleri paylaşır.
+- **Merkezi SQLite** (`data/app.db`, WAL) = tek gerçek kaynak. Node backend'i kullanır.
 - **`data/seed.json`** = kanonik veri (git'te). `app.db` türetilmiş (gitignored), seed'den kurulur.
 - **`backend/`** (Node/Express, `node:sqlite`): DB için **sıfır dış bağımlılık** (SQLite yerleşik
   `node:sqlite`'tan gelir); HTTP katmanı `express` + `cors` kullanır (bkz. `backend/package.json`).
   `database.js` (migration+seed+`transaction()`), `db.js` (repository+mekansal), `analytics.js`,
-  `security.js`, `validate.js`, `server.js` (API, port 8085).
-- **`advanced-gis/`** (Python stdlib): aynı `app.db`'yi kullanır; şema `app/models.py`'de Node ile
-  **senkron** ama **API bir alt-kümedir** (orders/analytics/audit uçları yalnız Node'da). Diller-arası
-  kripto/şema parity göstergesi (portfolyo değeri). Rol detayı → `TEKNOLOJI_VE_DOSYA_REHBERI.md`.
+  `security.js`, `validate.js`, `server.js` (API, port 8085). İlçe geometrisini
+  `docs/data/istanbul-districts.geojson`'dan (tek kanonik kopya) okur.
 - **`docs/`** = GitHub Pages (sunucusuz). `dashboard.html`/`order.html`: gerçek çift mod (önce canlı
   API dener, `localStorage`+`seed.json`'a düşer). `index.html` (ana harita+admin panel): **kasıtlı
   olarak her zaman mock** — `docs/app.js`'teki `window.fetch` override'ı bilinen uçları tarayıcı-içi
@@ -68,15 +67,13 @@ node backend/test-analytics.js   # analytics (rollup==canlı)
 node backend/test-concurrency.js # write-skew / atomik (worker_threads)
 node backend/test-routes.js      # GTFS ingest (fixture; ADR-006)
 node backend/test-admin.js       # audit log, admin gözetim, requireAdmin (ADR-007)
-# Python
-cd advanced-gis && python3 scripts/seed.py && python3 tests/test_crypto.py
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092
 # Her özelliği SQL ile gösterme: queries.sql (DBeaver) + anlatımı docs/sorgu-defteri.md
 ```
 
 ## Sözleşmeler
-- Şema değişince **hem** `backend/database.js` MIGRATIONS **hem** `advanced-gis/app/models.py`
-  güncellenir (senkron); yeni faz = yeni migration versiyonu. Ardından `node scripts/export-schema.js`
+- Şema değişince `backend/database.js` MIGRATIONS güncellenir (şema tek yerde tanımlıdır);
+  yeni faz = yeni migration versiyonu. Ardından `node scripts/export-schema.js`
   ile **`schema.sql` yeniden üretilir** (türetilmiş DDL dokümanı; elle düzenlenmez).
 - **Yeni dosya/teknoloji eklenince** `TEKNOLOJI_VE_DOSYA_REHBERI.md` güncellenir (dosya-dosya
   katalog + değişiklik günlüğü güncel kalır).

@@ -1,9 +1,8 @@
 /**
  * security.js - JWT (HS256) ve rezervasyon imzası
  *
- * advanced-gis/security/crypto_signer.py ile bit-uyumludur: aynı secret, aynı algoritma,
- * aynı payload biçimi. Böylece iki servis aynı users tablosunu ve token'ları paylaşabilir
- * (merkezi veri, merkezi kimlik).
+ * Sabit secret (env'den), sabit algoritma ve sabit payload biçimi kullanır; token'lar
+ * merkezi users tablosuna ve app.db'ye bağlıdır (merkezi veri, merkezi kimlik).
  */
 
 const crypto = require('crypto');

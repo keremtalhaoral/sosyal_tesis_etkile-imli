@@ -2,11 +2,11 @@
 -- schema.sql — TÜRETİLMİŞ (derived) veritabanı şeması / DERIVED database schema
 -- =============================================================================
 -- Bu dosya ELLE DÜZENLENMEZ. Kanonik kaynak:
---   * Yapı  : backend/database.js  (MIGRATIONS dizisi) + advanced-gis/app/models.py (senkron)
+--   * Yapı  : backend/database.js  (MIGRATIONS dizisi)
 --   * Veri  : data/seed.json  (kanonik başlangıç verisi)
 -- Yeniden üretmek için:  node scripts/export-schema.js
 -- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6
--- Üretim zamanı: 2026-07-10T12:26:45.344Z
+-- Üretim zamanı: 2026-07-24T08:42:02.210Z
 -- Tam veri dökümü (yapı + satırlar) için:  sqlite3 data/app.db .dump > data/full.sql
 -- =============================================================================
 

@@ -14,7 +14,6 @@ ve her dosyanın **ne işe yaradığı** için → [`TEKNOLOJI_VE_DOSYA_REHBERI.
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+) — `docs/` altında, sunucusuz (GitHub Pages).
 - **Harita / GIS:** **Leaflet** (harita render) + **Turf.js** (mekansal analiz) + **Chart.js** (analitik grafik) — hepsi `docs/vendor/`'da vendored (CDN'siz, offline çalışır).
 - **Backend:** Node.js + Express + `cors`; veritabanı yerleşik `node:sqlite` (DB için sıfır dış bağımlılık).
-- **İkiz Servis:** `advanced-gis/` (Python stdlib) — aynı `app.db`'yi paylaşan, diller-arası kripto/şema parity göstergesi.
 - **Veritabanı:** Merkezi SQLite (WAL modu) — tüm servislerin paylaştığı tek gerçek kaynak; tasarım ve PostgreSQL + PostGIS geçiş yolu için bkz. [DATABASE.md](DATABASE.md).
 
 ## 💻 Yerel Geliştirme ve Çalıştırma

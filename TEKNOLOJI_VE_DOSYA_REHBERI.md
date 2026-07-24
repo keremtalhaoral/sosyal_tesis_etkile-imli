@@ -18,19 +18,19 @@ proje giriş kapısı `CLAUDE.md`. Bu belge onların yerine geçmez — "ne / ne
 ## 1. Büyük resim (bir paragraf)
 
 İstanbul sosyal tesisleri için **etkileşimli Web GIS + karar destek** sistemi: harita, rezervasyon,
-sipariş, İSPARK doluluk, analitik dashboard. Üç çalıştırılabilir parça aynı veriyi paylaşır:
-**Node/Express backend** (asıl API), **Python `advanced-gis` ikiz servisi** (aynı veritabanına ikinci
-bir kapı; kripto/şema parity göstergesi) ve **`docs/` statik frontend** (GitHub Pages, sunucusuz).
-Tek gerçek kaynak repo kökündeki `data/app.db` (SQLite, WAL); kanonik başlangıç verisi `data/seed.json`.
-Rehber ilke **DDIA (Kleppmann)** — her karar bir ADR'de.
+sipariş, İSPARK doluluk, analitik dashboard. İki çalıştırılabilir parça aynı veriyi paylaşır:
+**Node/Express backend** (tek backend, asıl API) ve **`docs/` statik frontend** (GitHub Pages,
+sunucusuz). Proje **tek dillidir** (Node). Tek gerçek kaynak repo kökündeki `data/app.db`
+(SQLite, WAL); kanonik başlangıç verisi `data/seed.json`. Rehber ilke **DDIA (Kleppmann)** —
+her karar bir ADR'de.
 
 ```
                     data/seed.json  (kanonik, git'te)
                             │  seed
                             ▼
-   backend/ (Node) ───┐               ┌─── advanced-gis/ (Python ikiz)
-                      ├──► data/app.db ◄──┤     (aynı şema, alt-küme API)
-   scripts/ ─────────┘  (SQLite, WAL)     
+   backend/ (Node) ───┐
+                      ├──► data/app.db
+   scripts/ ─────────┘  (SQLite, WAL)
                             │  türetilir (export-analytics.js)
                             ▼
    docs/ (GitHub Pages, statik) ──► tarayıcıda localStorage + JSON snapshot (çevrimdışı replika)
@@ -52,10 +52,6 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 - **SQLite — WAL modu** — *Ne:* gömülü ilişkisel veritabanı. *Neden:* tek düğüm, düşük yazma hacmi,
   ilişkisel veri profiline en uygun; WAL ile dayanıklılık + okur/yazar bloklamaz (DDIA Böl. 3/7).
   *Nerede:* `data/app.db`. *Alternatif:* PostgreSQL + PostGIS (geçiş yolu `DATABASE.md`'de tanımlı).
-- **Python 3 standart kütüphanesi** — *Ne:* `http.server`, `sqlite3`, `hashlib`, `hmac`,
-  `html.parser`, `urllib`. *Neden:* `advanced-gis` ikiz servisini **dış bağımlılık olmadan** çalıştırmak;
-  kripto ve şemanın diller-arası taşınabilir olduğunu kanıtlamak. *Nerede:* `advanced-gis/`.
-  *Alternatif:* Flask/FastAPI — kurulum bağımlılığı getireceği için kaçınıldı.
 
 ### Frontend & harita (hepsi `docs/vendor/`'da vendored — CDN yok, offline çalışır)
 - **Leaflet** — *Ne:* hafif harita kütüphanesi. *Neden:* katman yönetimi, marker/popup, tile tabanlı
@@ -70,8 +66,8 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 
 ### Coğrafi veri formatları
 - **GeoJSON** — *Ne:* coğrafi geometri için JSON standardı. *Neden:* ilçe poligonları ve toplu
-  taşıma rota çizgileri; Leaflet ve Turf doğrudan tüketir. *Nerede:* `*/istanbul-districts.geojson`,
-  `docs/data/transit-routes.geojson`.
+  taşıma rota çizgileri; Leaflet ve Turf doğrudan tüketir. *Nerede:* `docs/data/istanbul-districts.geojson`
+  (tek kanonik kopya), `docs/data/transit-routes.geojson`.
 - **GTFS** — *Ne:* toplu taşıma tarife/güzergah standardı (İBB/İETT). *Neden:* **gerçek** otobüs/vapur
   güzergahları; ham GTFS'ten türetilmiş slim GeoJSON üretilir (ADR-006). *Nerede:* `scripts/build-routes.js`,
   `test/fixtures/gtfs-sample/`.
@@ -80,7 +76,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 - **PBKDF2-HMAC-SHA256 (+ per-user salt, PHC formatı)** — parola saklama (tek yönlü, key-stretching).
 - **HMAC-SHA256** — rezervasyon/sipariş bütünlük imzası.
 - **JWT (HS256, `iat`/`exp`)** — oturum token'ı; sabit-zamanlı imza karşılaştırması.
-  *Nerede:* `backend/security.js` ↔ `advanced-gis/security/crypto_signer.py` (**bit-uyumlu**; ADR-002).
+  *Nerede:* `backend/security.js` (ADR-002).
 
 ### Dağıtım / altyapı
 - **GitHub Pages** — statik frontend'i sunucusuz yayınlar (`docs/`). **GitHub Actions**
@@ -93,8 +89,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 
 | Klasör | Rolü |
 |---|---|
-| `backend/` | Node/Express API (asıl backend) + veritabanı katmanı + testler. |
-| `advanced-gis/` | Python ikiz servisi — aynı `app.db`, alt-küme API; kripto/şema parity göstergesi. |
+| `backend/` | Node/Express API (tek backend) + veritabanı katmanı + testler. |
 | `docs/` | GitHub Pages statik frontend + ADR'ler + öğrenme notları + veri snapshot'ları + vendored kütüphaneler. |
 | `scripts/` | Yardımcı Node scriptleri (dummy veri, analytics snapshot, GTFS→GeoJSON). |
 | `data/` | Kanonik `seed.json` (git'te) + çalışma zamanı `app.db` (gitignored, türetilmiş). |
@@ -110,31 +105,17 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 |---|---|---|
 | `database.js` | 411 | **Merkezi veri katmanı.** `data/app.db`'yi WAL modunda açar; versiyonlu migration zinciri (v1–v6: users/facilities/reservations/districts → menu/orders → ispark_status → daily_stats → payment_type → audit_log); `seed.json`'dan idempotent tohumlama. PBKDF2 hash (PHC). Exportlar: `getDb`, `transaction` (atomik `BEGIN IMMEDIATE`), `hashPassword`, `verifyPassword`, `SLOTS`, `DB_PATH`. |
 | `db.js` | 449 | **Repository + mekansal analiz.** Tüm okuma/yazma DB'ye gider. Ray-casting nokta-poligon, Haversine, KNN (PostGIS karşılıkları kavramsal). İş operasyonları: `getFacilities`, `getProcessedDistricts` (mekansal join + alarm skoru), `getClosestFacilities`, tesis CRUD, `createReservation` (per-slot kapasite + atomik tx, write-skew'e kapalı), İSPARK atomik take/release, sipariş + fiyat snapshot, durum makinesi, admin gözetim, append-only `logAudit`. |
-| `analytics.js` | 214 | **Analitik motoru + rollup + OLTP/OLAP benchmark.** Canlı agregasyonlar (`kpiSummary`, `revenueTimeSeries`, `occupancyHeatmap`, `topFacilities`, `paymentBreakdown`, …), `dateBucket` granülerlik. `rebuildDailyStats` türetilmiş rollup'ı kurar; `benchmark` rollup==canlı ve ~178× hız kanıtı. İptaller gelirden düşülür. |
-| `security.js` | 76 | **JWT + HMAC imza.** `signJwt`/`verifyJwt` (`iat`/`exp`, `timingSafeEqual`), `signReservation`, `signOrder`. Sır env'den (üretimde yoksa hata). Python `crypto_signer.py` ile bit-uyumlu. |
+| `analytics.js` | 198 | **Analitik motoru + rollup.** Canlı agregasyonlar (`kpiSummary`, `revenueTimeSeries`, `occupancyHeatmap`, `topFacilities`, `paymentBreakdown`, …), `dateBucket` granülerlik. `rebuildDailyStats` türetilmiş rollup'ı kurar; `revenueFromRollup` ile canlı==rollup parity (test'te doğrulanır). İptaller gelirden düşülür. |
+| `security.js` | 76 | **JWT + HMAC imza.** `signJwt`/`verifyJwt` (`iat`/`exp`, `timingSafeEqual`), `signReservation`, `signOrder`. Sır env'den (üretimde yoksa hata). |
 | `validate.js` | 82 | **Uygulama seviyesi girdi doğrulama** (DB CHECK'lerinden önceki dost katman). `validateReservationInput`, `validateOrderInput` → `{ok, value}` / `{ok, error}`. |
 | `server.js` | 373 | **API router (port 8085) + hava durumu servisi.** CORS/JSON/log, `requireAuth`/`requireAdmin`. Uçlar: auth, facilities (admin CRUD), reservations, menu, orders + durum geçişleri, admin gözetim (`/api/admin/*`), İSPARK, analytics, districts, proximity. Hava durumu: anahtar yok/hata → deterministik gerçekçi mock (Ousterhout "hataları tasarımla yok et"). |
 | `test-db.js` | 237 | En geniş smoke-test (geçici DB): seed, PHC parola, KNN, atomik rezervasyon + kapasite, UNIQUE/CHECK/FK-cascade, İSPARK, validate, migration v2 şeması, kripto. |
 | `test-concurrency.js` | 120 | **Eşzamanlılık kanıtı** (`worker_threads`, ayrı bağlantılar, WAL). İSPARK compare-and-set, atomik rezervasyon (overbook yok), ve kasıtlı naif read-then-write yolu **write-skew'i gösterir** — fark tek `BEGIN IMMEDIATE`. |
 | `test-orders.js` | 86 | Sipariş akışı: snapshot toplam, fiyat değişince snapshot değişmez, sahiplik (403), yanlış tesis kalemi (409), durum makinesi (`submitted→served→paid`, sıçrama 409), audit yazımı, FK cascade. |
-| `test-analytics.js` | 73 | Analitik: KPI (iptaller hariç), aylık/yıllık bucket, ödeme kırılımı, **ROLLUP == LIVE** invaryantı, ısı haritası, benchmark tutarlılığı. |
+| `test-analytics.js` | 69 | Analitik: KPI (iptaller hariç), aylık/yıllık bucket, ödeme kırılımı, **ROLLUP == LIVE** invaryantı, ısı haritası. |
 | `test-admin.js` | 75 | Admin (Faz v2-07): CRUD audit satırları, admin gözetim (sahiplik filtresiz), durum whitelist, audit sorgu (yeni→eski, limit, actor join), `requireAdmin`. |
 | `test-routes.js` | 62 | GTFS ingest (Faz v2-06): `build-routes.js`'i fixture'a karşı çalıştırır; slim GeoJSON yapısı, gerçek geometri, mod sınıflama, palet renkleri, yürüyüş bacağı, `[lng,lat]` sırası. |
 | `package.json` | 13 | `mufettis-backend`; `start: node server.js`; bağımlılıklar `express`, `cors` (SQLite yerleşik). |
-
-### 4.2 `advanced-gis/` (Python ikiz servis)
-| Dosya | ~satır | Amaç |
-|---|---|---|
-| `app/config.py` | 21 | Merkezi config: `PORT=8085`, `JWT_SECRET` (env; üretimde zorunlu, dev'de DEV-ONLY sabit), paylaşılan `DB_PATH`/`SEED_PATH` (repo kökü). |
-| `app/main.py` | 373 | **Sunucu.** `ThreadingHTTPServer` + `BaseHTTPRequestHandler`, CORS. Uçlar: GET facilities/menu/weather/reservations; POST register/login/reserve/facilities(admin); DELETE facilities(admin). Node'un **alt-kümesi** (orders/analytics/audit yok). |
-| `app/models.py` | 284 | **SQLite veri katmanı.** `init_db()` Node migration v1–v6 şemasını `CREATE TABLE IF NOT EXISTS` ile birebir kurar (WAL, FK). CRUD + `create_reservation` sunucu-taraflı kapasite. |
-| `security/crypto_signer.py` | 85 | **Diller-arası kripto.** PBKDF2 PHC (`pbkdf2_sha256$…`) `security.js` ile bit-uyumlu; HS256 JWT (iat/exp); HMAC rezervasyon imzası; `hmac.compare_digest`. |
-| `scripts/seed.py` | 119 | Idempotent tohumlayıcı: `seed.json`'dan users/districts/facilities/menu/ispark → `app.db` (`INSERT OR IGNORE`); dev parolaları gitignored `dev-credentials.json`'a. |
-| `services/weather.py` | 71 | Hava durumu sağlayıcı: `OPENWEATHER_API_KEY` varsa OpenWeather (TR çeviri), yoksa lat/lng-seed'li deterministik mock. |
-| `services/scraper.py` | 74 | Menü scraper: İBB menü sayfasını `HTMLParser` ile ayrıştırır; hata → `facility_id % 2` anahtarlı çevrimdışı fallback menü. |
-| `observability/tracer.py` | 28 | `log_request()`: erişim logu + bellek-içi API sayaçları (`main.py` kullanır). |
-| `tests/test_crypto.py` | 56 | `unittest`: per-user salt farklı hash, verify round-trip, JWT tamper, rezervasyon imza kararlılığı/tamper. |
-| `tests/test_math.py` | 40 | `unittest`: deterministik mock hava durumu + Haversine (İstanbul→Ankara) sağlaması. |
 
 ### 4.3 `docs/` (GitHub Pages statik frontend)
 | Dosya | ~satır | Amaç |
@@ -151,7 +132,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |
 | `data/analytics.json` | 7872 | Analitik fallback snapshot (`dashboard.js`). |
 | `data/seed.json` | 692 | Kanonik seed'in frontend mock kopyası. |
-| `data/istanbul-districts.geojson` | ~132k | İlçe poligonları (Pages statik okur). |
+| `data/istanbul-districts.geojson` | ~132k | İlçe poligonları — **tek kanonik kopya** (hem Node backend `db.js` hem Pages statik olarak okur). |
 | `data/transit-routes.geojson` | 1 | Türetilmiş toplu taşıma çizgileri (minified). |
 | `vendor/{leaflet,turf,chartjs}/` | — | Vendored kütüphaneler (CDN'siz, offline). |
 
@@ -182,31 +163,19 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 
 ---
 
-## 5. `advanced-gis`'in rolü (Soru #3)
-
-**Fonksiyonel olarak silinirse hiçbir uç kaybolmaz** — Node backend onun **süper kümesidir**
-(Python yalnızca facilities/register/login/reserve/menu/weather sunar; Node bunlara ek olarak orders,
-analytics, İSPARK canlı, districts, proximity, admin gözetim, audit sunar). İkisi de aynı `app.db` +
-`seed.json` kullanır. Kaybedilecek tek şey **gösteri/anlatı değeridir**: kripto ve şemanın diller-arası
-**bit-uyumlu** olduğunun bağımsız ikinci kanıtı, Python `unittest` takımı ve stdlib-only scraper/weather.
-Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temizlendi (bkz. Bölüm 7).
-
----
-
-## 6. Bilinen tekrarlar & tutarsızlıklar (durum)
+## 5. Bilinen tekrarlar & tutarsızlıklar (durum)
 
 | Konu | Durum |
 |---|---|
-| `istanbul-districts.geojson` — `backend/data/` ve `docs/data/` **iki kopya** | **Bilinçli.** İkisi ayrı runtime bağlamı: Node sunucu tarafı okur, Pages statik olarak servis eder. Teke indirmek Pages'i riske atar. Okunmayan üçüncü kopya (`advanced-gis/data/raw/`) **silindi.** |
+| `istanbul-districts.geojson` kopyaları | **Tekilleştirildi.** Artık **tek kanonik kopya** `docs/data/istanbul-districts.geojson`'da; Node backend (`db.js`, `../docs/data/istanbul-districts.geojson`) ve Pages statik aynı dosyayı okur. Eski `backend/data/` kopyası kaldırıldı. |
 | `data/seed.json` ↔ `docs/data/seed.json` ikizi | Frontend mock için gerekli; elle senkron riski var. İleride bir kopya script'i düşünülebilir (şimdilik not). |
 | CLAUDE.md "sıfır dış bağımlılık" | **Düzeltildi:** DB için sıfır (`node:sqlite`), HTTP için express+cors. |
-| "Python şeması senkron" | **Netleştirildi:** şema senkron, **API alt-küme**. |
 | `staj_sunum_rehberi.md` eski mimari | **Sürüm notu bandı** eklendi (yeniden yazılmadı). |
 | `README.md` kesik + OpenLayers placeholder | **Tamamlandı + Leaflet gerçeğiyle güncellendi.** |
 
 ---
 
-## 7. Değişiklik günlüğü
+## 6. Değişiklik günlüğü
 
 - **2026-07-10 — İlk sürüm.** Belge oluşturuldu (teknoloji + dosya kataloğu). Yanında hedefli
   sadeleştirme: ham parolalı `advanced-gis/evaluation/golden_dataset.json`, yetim `advanced-gis/server.py`
@@ -229,4 +198,17 @@ Bu yüzden **tutuluyor** (portfolyo/DDIA anlatısı), ama ölü parçaları temi
   (`MOCK_USERS_KEY` boşsa `null.find`). Login/register handler artık `defaultUsers`'tan kendini
   iyileştiriyor + başlangıçta kullanıcı listesi kuruluyor; seed `version` 4→5 (önce açan tarayıcılarda
   admin/user re-seed); `app.js` cache-bust `?v=3.1`. Artık demo/admin/user her koşulda giriş yapar.
+- **2026-07-24 — Tek dilli mimariye geçiş + belge senkronu.** Python `advanced-gis/` ikiz servisi
+  **tamamen kaldırıldı**; proje artık tek dilli (Node/Express backend + statik `docs/` frontend).
+  Diller-arası kripto/şema parity anlatısı ve tüm `advanced-gis` referansları belgelerden temizlendi
+  (şema tek yerde: `backend/database.js`). Mükerrer `istanbul-districts.geojson` **tekilleştirildi**:
+  tek kanonik kopya `docs/data/istanbul-districts.geojson`, Node backend (`db.js`) ile Pages aynı
+  dosyayı okur. Ayrıca bir doğruluk/bug-fix turu: menü gerçek veri, harita rezervasyonu, kayıt (mock
+  token/user), yol tarifi çizim + mesafe/süre, İSPARK doluluğu, hava yedeği ve grafik
+  snapshot tazelik/etiket düzeltmeleri. (İSPARK: haritadaki İSPARK işaretleri ayrı bir
+  **hardcoded `ISPARK_LOCATIONS`** listesidir (15 kamu otoparkı, id 1–15) — bunlar *tesis*
+  değildir, dolayısıyla tesis-anahtarlı `/api/ispark/:facilityId` ucuna eşlenmez. Uydurma
+  `Math.random()` doluluk konuma göre **deterministik demo** değere çevrildi ve sahte
+  "İBB Feed" etiketi dürüstleştirildi. Backend'de her *tesisin kendi* `ispark_status` kaydı
+  gerçek/tohumlu ve atomik take/release ile canlıdır (ADR-003) — farklı bir kavram, ayrı veri.)
 - *(Sonraki fazlar buraya birer satır ekler.)*

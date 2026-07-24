@@ -32,6 +32,9 @@
     }
     // snapshot modu (Pages): byGranularity'den ilgili aralığı seç
     const s = state.snapshot;
+    // Canlı mod sonradan koparsa (backend restart / timeout) snapshot hiç yüklenmemiş
+    // olabilir; null ise çökmek yerine null dön → refresh() "Veri yüklenemedi" gösterir.
+    if (!s) return null;
     const g = s.byGranularity[granularity] || s.byGranularity.month;
     return { kpi: s.kpi, occupancy_heatmap: s.occupancy_heatmap, top_facilities: s.top_facilities,
              payments: s.payments, category_sales: s.category_sales,
@@ -161,7 +164,15 @@
     await detectMode();
     const banner = document.getElementById('mode-banner');
     if (state.mode === 'live') banner.textContent = '🟢 Canlı backend verisi (gerçek zamanlı sorgu)';
-    else if (state.snapshot) banner.textContent = '📦 Anlık görüntü (data/analytics.json) — çevrimdışı/Pages modu';
+    else if (state.snapshot) {
+      // Grafikler GERÇEK ama Pages'te backend yok → sabit bir anlık görüntü (snapshot)
+      // okunur. Kullanıcıya "neden hep aynı?" sorusunu yanıtlamak için tarih + adet göster.
+      const gen = state.snapshot.generated_at
+        ? new Date(state.snapshot.generated_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })
+        : '?';
+      const n = state.snapshot.kpi ? num(state.snapshot.kpi.reservations) : '?';
+      banner.textContent = `📦 Veri anlık görüntüsü: ${gen} · ${n} rezervasyon (sabit demo verisi — Pages modu, canlı backend'de değişir)`;
+    }
     else { banner.textContent = '⚠️ Veri kaynağı yok'; document.querySelector('main').innerHTML = '<div class="err">Ne backend ne de snapshot bulunabildi.</div>'; return; }
     refresh();
   })();

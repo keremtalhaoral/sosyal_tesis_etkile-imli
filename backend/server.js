@@ -239,17 +239,25 @@ app.get('/api/analytics/dashboard', (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
   res.json(analytics.dashboard(g));
 });
+// NOT (ölü sözleşme, kasıtlı): Frontend tüm ciro serisini /api/analytics/dashboard
+// içinde alıyor; bu tekil uç API bütünlüğü için var (canlı-sorgu örneği) ama şu an
+// hiçbir istemci çağırmıyor.
 app.get('/api/analytics/revenue', (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
   res.json(analytics.revenueTimeSeries(g));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms
+// NOT (ölü sözleşme, kasıtlı): Sunucu tarafı zengin alarm/100k-başına hesaplaması
+// burada yaşıyor; ancak Pages sunucusuz çalışabilsin diye frontend aynı hesabı statik
+// geojson'dan client-side yapıyor (app.js). Bu uç canlı/backend senaryosu içindir.
 app.get('/api/districts', (req, res) => {
   res.json(db.getDistricts());
 });
 
 // Endpoint: K-Nearest Neighbor (KNN) Proximity Analysis (Closest 3 facilities)
+// NOT (ölü sözleşme, kasıtlı): Frontend yakınlık analizini MatrixEngine.findNearestKNN
+// ile client-side yapıyor (offline çalışsın diye); bu uç aynı KNN'in backend karşılığı.
 app.get('/api/proximity', (req, res) => {
   const { lat, lng } = req.query;
   
@@ -279,18 +287,22 @@ app.get('/api/weather', async (req, res) => {
   // If API key is present, attempt real OpenWeatherMap request
   const url = `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&appid=${apiKey}`;
   
+  // Tek-yanıt guard'ı: timeout + error + end yarışabilir; yalnız ilki yanıtı gönderir.
+  let settled = false;
+  const reply = (payload) => { if (settled) return; settled = true; res.json(payload); };
+
   const request = http.get(url, (apiRes) => {
     let data = '';
-    
+
     apiRes.on('data', (chunk) => {
       data += chunk;
     });
-    
+
     apiRes.on('end', () => {
       try {
         if (apiRes.statusCode === 200) {
           const weatherJson = JSON.parse(data);
-          res.json({
+          reply({
             temp: parseFloat(weatherJson.main.temp.toFixed(1)),
             desc: translateConditionToTurkish(weatherJson.weather[0].main),
             humidity: weatherJson.main.humidity,
@@ -300,18 +312,26 @@ app.get('/api/weather', async (req, res) => {
         } else {
           // If OpenWeather returns error (e.g. invalid key), serve mock weather instead of failing
           console.warn(`OpenWeather API returned status code ${apiRes.statusCode}. Falling back to mock.`);
-          res.json(generateRealisticMockWeather(lat, lng));
+          reply(generateRealisticMockWeather(lat, lng));
         }
       } catch (err) {
-        res.json(generateRealisticMockWeather(lat, lng));
+        reply(generateRealisticMockWeather(lat, lng));
       }
     });
+  });
+
+  // Askıda kalan soket koruması: 3 sn içinde yanıt gelmezse mock'a düş (aksi halde
+  // ne 'end' ne 'error' tetiklenmeyip istek sonsuza dek asılı kalabilir).
+  request.setTimeout(3000, () => {
+    console.warn("OpenWeather isteği zaman aşımına uğradı; mock'a düşülüyor.");
+    request.destroy();
+    reply(generateRealisticMockWeather(lat, lng));
   });
 
   request.on('error', (err) => {
     console.warn("OpenWeather connection failed (e.g. offline sandbox). Falling back to mock.");
     // Mask exception: serve mock weather so frontend functions uninterrupted
-    res.json(generateRealisticMockWeather(lat, lng));
+    reply(generateRealisticMockWeather(lat, lng));
   });
 });
 
