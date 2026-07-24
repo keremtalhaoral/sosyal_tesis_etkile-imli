@@ -1479,32 +1479,58 @@ const Routing = (() => {
     }
   };
 
+  // İki nokta arası kuşuçuşu (Haversine) mesafe — km. Çevrimdışı yedek için.
+  const haversineKm = (a, b) => {
+    const R = 6371, toRad = d => d * Math.PI / 180;
+    const dLat = toRad(b[0] - a[0]), dLng = toRad(b[1] - a[1]);
+    const s = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(a[0])) * Math.cos(toRad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+
+  // Rota çizgisine kalıcı "mesafe · süre" etiketi bağlar (tahmini ise ~ öneki).
+  const labelRoute = (line, km, min, estimated) => {
+    const pre = estimated ? '~' : '';
+    line.bindTooltip(`${pre}${km.toFixed(1)} km · ${pre}${min} dk`, {
+      permanent: true, direction: 'center', className: 'leaflet-tooltip-own'
+    });
+  };
+
   const draw = async (start, end) => {
     clear();
     activeRouteGroup = L.layerGroup().addTo(state.map);
 
-    const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
+    // NOT: doğru host 'router.project-osrm.org' (tireli); eski kod tiresiz yazıldığından
+    // istek hep başarısız olup düz çizgiye düşüyordu. geometries=geojson + gerçek yol geometrisi.
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson&overview=full`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("OSRM driving route failed");
       const data = await res.json();
-      
+
       if (data.routes && data.routes.length > 0) {
-        const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-        L.polyline(routeCoords, {
+        const r = data.routes[0];
+        const routeCoords = r.geometry.coordinates.map(c => [c[1], c[0]]);
+        const line = L.polyline(routeCoords, {
           color: '#3b82f6',
           weight: 5,
           opacity: 0.85
         }).addTo(activeRouteGroup);
+        // Gerçek yol mesafesi (m→km) ve sürüş süresi (s→dk).
+        labelRoute(line, r.distance / 1000, Math.round(r.duration / 60), false);
       } else {
         throw new Error("No routes");
       }
     } catch (e) {
-      L.polyline([start, end], {
+      // Çevrimdışı/erişilemez: düz-çizgi yedeği + Haversine mesafe, süre ~30 km/s şehir-içi tahmini.
+      const line = L.polyline([start, end], {
         color: '#3b82f6',
         weight: 4,
-        opacity: 0.7
+        opacity: 0.7,
+        dashArray: '6, 8'
       }).addTo(activeRouteGroup);
+      const km = haversineKm(start, end);
+      labelRoute(line, km, Math.max(1, Math.round((km / 30) * 60)), true);
     }
   };
 
@@ -1518,7 +1544,7 @@ const Routing = (() => {
       return;
     }
 
-    const url = `https://router.projectosrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
+    const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?geometries=geojson`;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error("OSRM transit route failed");
