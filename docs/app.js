@@ -1261,14 +1261,20 @@ const fetchWeather = async (lat, lng, elementId) => {
       <div class="weather-detail">Rüzgar: ${data.wind_speed} km/s</div>
     `;
   } catch (e) {
-    // Fallback simulated local weather based on coordinates to avoid app crashing
-    const tempSim = Math.floor(Math.random() * 8) + 22; // 22-30C
+    // Çevrimdışı yedek: rastgele DEĞİL — backend mock'u ve override ile AYNI deterministik
+    // (koordinata dayalı) mantık. Böylece her tesis için değer sabit ve tutarlı kalır.
+    const seed = Math.sin(parseFloat(lat)) * Math.cos(parseFloat(lng));
+    const conditions = ["Açık / Güneşli", "Hafif Rüzgarlı / Güneşli", "Parçalı Bulutlu", "Az Bulutlu"];
+    const tempSim = 25 + Math.round(seed * 4);
+    const descSim = conditions[Math.abs(Math.floor(seed * 10)) % 4];
+    const humiditySim = Math.abs(Math.floor(seed * 25)) + 55;
+    const windSim = (Math.abs(seed * 12) + 6).toFixed(1);
     container.innerHTML = `
       <div class="weather-temp">${tempSim}°C</div>
-      <div class="weather-desc">Açık / Güneşli ☀️</div>
-      <div class="weather-detail">Nem: %48</div>
-      <div class="weather-detail">Rüzgar: 14 km/s</div>
-      <small style="grid-column: 1 / span 2; font-size: 8px; opacity:0.65;">* İstanbul Centroid İklim Modeli Simülasyonu</small>
+      <div class="weather-desc">${descSim}</div>
+      <div class="weather-detail">Nem: %${humiditySim}</div>
+      <div class="weather-detail">Rüzgar: ${windSim} km/s</div>
+      <small style="grid-column: 1 / span 2; font-size: 8px; opacity:0.65;">* Çevrimdışı yedek (koordinata dayalı tahmin)</small>
     `;
   }
 };
