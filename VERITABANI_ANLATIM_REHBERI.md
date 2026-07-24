@@ -71,8 +71,10 @@ Anlatacağın kavramlar:
   uygulama kodu unutsa bile.
 - **CHECK**: role kolonuna 'user' ve 'admin' dışında değer yazılamaz. *"Geçersiz durumu
   uygulamada kontrol etmek yerine veritabanında imkânsız kılıyorum."*
-- **Parola güvenliği**: parolalar PBKDF2-HMAC-SHA256 ile 100.000 iterasyon hash'lenir.
-  *"Veritabanı sızsa bile parolalar okunamaz."*
+- **Parola güvenliği**: parolalar PBKDF2-HMAC-SHA256 ile **600.000 iterasyon** ve
+  **kullanıcı başına rastgele salt** ile hash'lenir (PHC formatı: `pbkdf2_sha256$…`).
+  *"Veritabanı sızsa bile parolalar okunamaz; her kullanıcının salt'ı farklı olduğu için
+  rainbow-table ve toplu kırma işe yaramaz."*
 
 ### 3.2 `facilities` — sosyal tesisler
 
@@ -304,9 +306,11 @@ indeks anlatımının kanıtıdır.
 > ölçeklendirme sinyallerini bilmek demek."
 
 **"Parolaları nasıl saklıyorsun?"**
-> "Asla düz metin değil. PBKDF2-HMAC-SHA256, 100.000 iterasyon, sabit uygulama salt'ı.
-> Hash tek yönlü: veritabanı sızsa bile parola geri çıkarılamaz. İyileştirme alanı olarak
-> kullanıcı başına rastgele salt'a geçilebileceğini de biliyorum."
+> "Asla düz metin değil. PBKDF2-HMAC-SHA256, **600.000 iterasyon** (OWASP 2023 önerisi) ve
+> **kullanıcı başına rastgele salt** (her hash'te `crypto.randomBytes(16)`), PHC formatında
+> saklanır (`pbkdf2_sha256$iterasyon$salt$hash`). Hash tek yönlü: veritabanı sızsa bile parola
+> geri çıkarılamaz; salt kullanıcı başına farklı olduğu için iki aynı parola bile farklı hash
+> üretir, rainbow-table'lar işe yaramaz."
 
 **"Sunucu çökerse veri gider mi?"**
 > "Commit edilmiş hiçbir şey gitmez — WAL bunu garanti eder. Test de ettim: sunucuyu

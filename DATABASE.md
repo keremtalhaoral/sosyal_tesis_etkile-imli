@@ -30,7 +30,8 @@ docs/  (GitHub Pages)     ──> statik/serverless olduğu için localStorage'd
 
 - **Yeni veriler** (rezervasyonlar, yeni tesisler, kullanıcılar) artık tek yere yazılır: `data/app.db`.
 - Node backend bu dosyayı tek gerçek kaynak olarak kullanır (tek dilli mimari).
-- Parola hash'i (PBKDF2-HMAC-SHA256, 100k iterasyon) ve JWT (HS256) `backend/security.js` +
+- Parola hash'i (PBKDF2-HMAC-SHA256, **600.000 iterasyon**, kullanıcı başına rastgele salt,
+  PHC formatı) ve JWT (HS256) `backend/security.js` +
   `backend/database.js` içinde tanımlıdır.
 
 ## Kararlar ve DDIA Gerekçeleri
