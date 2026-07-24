@@ -342,7 +342,9 @@ window.fetch = async function (url, options) {
           responseData = { message: 'Kayıt başarılı.' };
         }
       }
-    } else if (cleanEndpoint === 'reserve') {
+    } else if (cleanEndpoint === 'reservations' && method === 'POST') {
+      // Backend POST /api/reservations ile AYNI sözleşme: camelCase gövde
+      // (facilityId/reserveDate/reserveTime/guests), yanıt { id, booked, remaining, signature }.
       const user = getLoggedUser();
       if (!user) {
         status = 401;
@@ -350,7 +352,7 @@ window.fetch = async function (url, options) {
       } else {
         const reservations = JSON.parse(localStorage.getItem(MOCK_RESERVATIONS_KEY));
         const facilities = JSON.parse(localStorage.getItem(MOCK_FACILITIES_KEY));
-        const facilityIdx = facilities.findIndex(f => f.id === body.facility_id);
+        const facilityIdx = facilities.findIndex(f => f.id === body.facilityId);
         const facility = facilities[facilityIdx];
         if (!facility) {
           status = 404;
@@ -364,30 +366,30 @@ window.fetch = async function (url, options) {
             status = 400;
             responseData = { error: `Kapasite yetersiz. Kalan boş yer: ${capacityLeft}` };
           } else {
-            // Update dolulukOrani
             const newOccupied = currentOccupied + guestCount;
             facility.dolulukOrani = Math.round((newOccupied / facility.kapasite) * 100);
             facilities[facilityIdx] = facility;
             localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(facilities));
 
-            const facilityName = facility.ad;
-            const dataStr = `${user.username}-${body.facility_id}-${body.reserve_date}-${body.reserve_time}-${body.guests}`;
+            const dataStr = `${user.username}-${body.facilityId}-${body.reserveDate}-${body.reserveTime}-${body.guests}`;
             const signature = generateMockSignature(dataStr);
+            const newId = reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1;
 
-            const newRes = {
-              id: reservations.length ? Math.max(...reservations.map(r => r.id)) + 1 : 1,
+            // Liste dalı (GET) snake_case okuyor; kayıt içi alanları snake_case sakla.
+            reservations.push({
+              id: newId,
               user_id: user.id,
               username: user.username,
-              facility_id: body.facility_id,
-              facility_name: facilityName,
-              reserve_date: body.reserve_date,
-              reserve_time: body.reserve_time,
-              guests: body.guests,
+              facility_id: body.facilityId,
+              facility_name: facility.ad,
+              reserve_date: body.reserveDate,
+              reserve_time: body.reserveTime,
+              guests: guestCount,
               crypto_signature: signature
-            };
-            reservations.push(newRes);
+            });
             localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(reservations));
-            responseData = { message: 'Rezervasyon başarıyla oluşturuldu.', signature, crypto_signature: signature };
+            status = 201;
+            responseData = { id: newId, booked: newOccupied, remaining: capacityLeft - guestCount, signature };
           }
         }
       }
@@ -1766,7 +1768,7 @@ const submitReservation = async () => {
 
   try {
     const token = localStorage.getItem('session-token');
-    const res = await fetch(`${API_BASE}/api/reserve`, {
+    const res = await fetch(`${API_BASE}/api/reservations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1783,7 +1785,7 @@ const submitReservation = async () => {
     const data = await res.json();
     if (res.ok) {
       msg.className = 'form-status-msg success';
-      msg.textContent = `Rezervasyon başarıyla kaydedildi! Kripto İmza: ${data.crypto_signature.slice(0, 16)}...`;
+      msg.textContent = `Rezervasyon başarıyla kaydedildi! Kripto İmza: ${data.signature.slice(0, 16)}...`;
       // Clear forms
       document.getElementById('reservation-form').reset();
       // Reload profile data
