@@ -2,7 +2,8 @@
 
 Bu dosya, projeyi devralan her Claude oturumunun **giriş kapısıdır**. Derin gerekçeler için
 `docs/adr/` (ADR'ler) ve `DATABASE.md`'ye bak. **Her teknoloji ve dosyanın tek tek amacı** için
-→ `TEKNOLOJI_VE_DOSYA_REHBERI.md` (yaşayan katalog).
+→ `TEKNOLOJI_VE_DOSYA_REHBERI.md` (yaşayan katalog). **Projeyi mentöre/juriye anlatmak** için
+→ `PROJE_ANLATIM_REHBERI.md` (ne gerçek/ne demo + savunma soruları).
 
 ## Proje
 İstanbul sosyal tesisleri için etkileşimli Web GIS + karar destek. Harita, rezervasyon,
