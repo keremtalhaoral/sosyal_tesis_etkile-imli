@@ -28,6 +28,10 @@ erken optimizasyondan kaçınır; rollup "ne zaman gerekir"i **ölçülen sayıy
 Ders net: aynı cevap, iki büyüklük mertebesi fark. Rollup, tüm ham satırları taramak yerine
 gün×tesis özetini tarar.
 
+> **Güncelleme (2026-07):** Yukarıdaki karar ve ölçüm geçerli kalır (rollup korunur).
+> Sadece iki yolu ölçen **gösteri amaçlı `benchmark()` yardımcısı üretimden kaldırıldı**
+> (sadeleştirme); canlı==rollup **parity** artık `test-analytics.js`'te doğrulanır.
+
 ## Karar 2 — daily_stats türetilmiş veri: rebuild, artımlı değil
 
 **Karar:** `rebuildDailyStats()` daily_stats'ı kaynaktan (reservations/orders) **yeniden inşa

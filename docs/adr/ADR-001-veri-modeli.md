@@ -133,6 +133,8 @@ derived-data ilkesi): siparişlerden yeniden üretilebilir.
   `advanced-gis/app/models.py` (`init_db`) şemayı elle senkron tutar. Bir tarafı değiştirip
   diğerini unutmak sinsi hata kaynağıdır. Şimdilik kabul edildi (iki farklı dil, tek DB);
   ileride tek bir `schema.sql` dosyasından iki tarafın da okuması düşünülebilir.
+
+  > **Güncelleme (2026-07):** advanced-gis kaldırıldı; şema artık tek yerde tanımlıdır (backend/database.js). Bu ADR'deki iki-dil senkron kaygısı tarihsel bağlam olarak korunmuştur.
 - **`total_minor` denormalize:** Kalemlerden hesaplanır ama saklanır; tutarlılık sipariş
   transaction'ına bağımlı (Faz v2-05'te garanti edilecek).
 
