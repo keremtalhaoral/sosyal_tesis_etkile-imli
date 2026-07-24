@@ -286,13 +286,14 @@ window.fetch = async function (url, options) {
         }
       }
     } else if (cleanEndpoint === 'menu') {
+      // Backend /api/menu ile AYNI sözleşme: çıplak dizi + price_minor (kuruş).
       responseData = [
-        { name: "Mercimek Çorbası", price: "25" },
-        { name: "Izgara Köfte", price: "75" },
-        { name: "Fırın Sütlaç", price: "30" },
-        { name: "Mevsim Salatası", price: "20" },
-        { name: "Çay", price: "5" },
-        { name: "Türk Kahvesi", price: "15" }
+        { id: 1, facility_id: null, name: "Mercimek Çorbası", category: "Çorba",   price_minor: 2500 },
+        { id: 2, facility_id: null, name: "Izgara Köfte",      category: "Ana Yemek", price_minor: 7500 },
+        { id: 3, facility_id: null, name: "Fırın Sütlaç",      category: "Tatlı",   price_minor: 3000 },
+        { id: 4, facility_id: null, name: "Mevsim Salatası",   category: "Salata",  price_minor: 2000 },
+        { id: 5, facility_id: null, name: "Çay",               category: "İçecek",  price_minor: 500  },
+        { id: 6, facility_id: null, name: "Türk Kahvesi",      category: "İçecek",  price_minor: 1500 }
       ];
     } else if (cleanEndpoint === 'weather') {
       // Koordinata göre değişen mock (backend generateRealisticMockWeather ile aynı mantık).
@@ -1198,14 +1199,20 @@ const fetchMenu = async (facilityId) => {
     const res = await fetch(`${API_BASE}/api/menu?facilityId=${facilityId}`);
     if (!res.ok) throw new Error("Backend unavailable");
     const data = await res.json();
-    
+
+    // /api/menu ÇIPLAK DİZİ döndürür: [{id, facility_id, name, category, price_minor}].
+    // (Fiyat kuruş cinsinden 'price_minor'dır; TL için 100'e böl.) order.js:127 ile aynı sözleşme.
+    if (!Array.isArray(data) || data.length === 0) throw new Error("Boş/geçersiz menü yanıtı");
+
     container.innerHTML = '';
-    data.items.forEach(item => {
+    data.forEach(item => {
+      const tl = item.price_minor / 100;
+      const priceStr = Number.isInteger(tl) ? tl : tl.toFixed(2);
       const row = document.createElement('div');
       row.className = 'menu-item-row';
       row.innerHTML = `
         <span class="menu-item-name">${item.name}</span>
-        <span class="menu-item-price">${item.price} TL</span>
+        <span class="menu-item-price">${priceStr} TL</span>
       `;
       container.appendChild(row);
     });
