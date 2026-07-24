@@ -1094,6 +1094,16 @@ const renderFacilityMarkers = () => {
   });
 };
 
+// İSPARK doluluğu — DETERMİNİSTİK demo değeri. Gerçek canlı bir İBB İSPARK feed'i
+// yok; eski kod her render'da Math.random() ile UYDURUYORDU (tıklayınca değişiyordu).
+// Bunun yerine otoparkın konumundan türetilen, her seferinde AYNI kalan bir yüzde
+// üretiriz (35-84% arası). Dürüstçe "demo" olarak etiketlenir.
+const isparkOccupancy = (p) => {
+  const [lat, lng] = p.koordinatlar;
+  const frac = Math.abs(Math.sin(lat * 91.7 + lng * 57.3)) % 1;
+  return 35 + Math.floor(frac * 50);
+};
+
 // Render İSPARK markers
 const renderIsparkMarkers = () => {
   state.isparkMarkers.forEach(m => state.map.removeLayer(m));
@@ -1110,8 +1120,7 @@ const renderIsparkMarkers = () => {
       fillOpacity: 0.8
     }).addTo(state.map);
 
-    // Simulated available occupancy on otoparks
-    const occupiedPercent = Math.floor(Math.random() * 40) + 40; // 40-80% occupied
+    const occupiedPercent = isparkOccupancy(p);
     const emptySpots = Math.floor(p.kapasite * (1 - occupiedPercent / 100));
 
     // Custom Click popup representation
@@ -1120,7 +1129,7 @@ const renderIsparkMarkers = () => {
         <strong>${p.ad}</strong><br/>
         Kapasite: ${p.kapasite} araç<br/>
         Boş Yer: <strong style="color: #8b5cf6;">${emptySpots}</strong> araç (%${(100 - occupiedPercent).toFixed(0)} boş)<br/>
-        <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Kaynak: İBB İSPARK Otopark Feed</small>
+        <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Örnek doluluk (demo verisi)</small>
       </div>
     `);
 
@@ -1271,8 +1280,8 @@ const calculateNearestIspark = (facility) => {
     const ispark = result[0].target;
     const distanceVal = result[0].distance;
     
-    // Simulate current empty spots dynamically
-    const percentSim = Math.floor(Math.random() * 40) + 30; // 30-70% capacity
+    // DETERMİNİSTİK doluluk (rastgele değil) — popup ile aynı demo mantığı, stabil.
+    const percentSim = isparkOccupancy(ispark);
     const spotsSim = Math.floor(ispark.kapasite * (1 - percentSim / 100));
 
     document.getElementById('detail-ispark-name').textContent = ispark.ad;
