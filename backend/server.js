@@ -239,17 +239,25 @@ app.get('/api/analytics/dashboard', (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
   res.json(analytics.dashboard(g));
 });
+// NOT (ölü sözleşme, kasıtlı): Frontend tüm ciro serisini /api/analytics/dashboard
+// içinde alıyor; bu tekil uç API bütünlüğü için var (canlı-sorgu örneği) ama şu an
+// hiçbir istemci çağırmıyor.
 app.get('/api/analytics/revenue', (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
   res.json(analytics.revenueTimeSeries(g));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms
+// NOT (ölü sözleşme, kasıtlı): Sunucu tarafı zengin alarm/100k-başına hesaplaması
+// burada yaşıyor; ancak Pages sunucusuz çalışabilsin diye frontend aynı hesabı statik
+// geojson'dan client-side yapıyor (app.js). Bu uç canlı/backend senaryosu içindir.
 app.get('/api/districts', (req, res) => {
   res.json(db.getDistricts());
 });
 
 // Endpoint: K-Nearest Neighbor (KNN) Proximity Analysis (Closest 3 facilities)
+// NOT (ölü sözleşme, kasıtlı): Frontend yakınlık analizini MatrixEngine.findNearestKNN
+// ile client-side yapıyor (offline çalışsın diye); bu uç aynı KNN'in backend karşılığı.
 app.get('/api/proximity', (req, res) => {
   const { lat, lng } = req.query;
   
