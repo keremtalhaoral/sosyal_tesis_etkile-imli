@@ -32,6 +32,9 @@
     }
     // snapshot modu (Pages): byGranularity'den ilgili aralığı seç
     const s = state.snapshot;
+    // Canlı mod sonradan koparsa (backend restart / timeout) snapshot hiç yüklenmemiş
+    // olabilir; null ise çökmek yerine null dön → refresh() "Veri yüklenemedi" gösterir.
+    if (!s) return null;
     const g = s.byGranularity[granularity] || s.byGranularity.month;
     return { kpi: s.kpi, occupancy_heatmap: s.occupancy_heatmap, top_facilities: s.top_facilities,
              payments: s.payments, category_sales: s.category_sales,
