@@ -505,6 +505,28 @@ const TILE_LAYERS = {
   }
 };
 
+// Karolar CDN'den gelir (tüm İstanbul karolarını offline paketlemek pratik değil).
+// Çevrimdışı/CDN erişilemezse kırık-resim ikonu yerine sade gri karo göster ve BİR KEZ
+// kullanıcıyı bilgilendir — böylece "boş gri harita" bir hata gibi görünmez.
+const OFFLINE_TILE = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='256'%20height='256'%3E%3Crect%20width='256'%20height='256'%20fill='%23cbd5e1'/%3E%3C/svg%3E";
+let tileErrorNoted = false;
+const makeTileLayer = (config) => {
+  const layer = L.tileLayer(config.url, Object.assign({}, config.options, { errorTileUrl: OFFLINE_TILE }));
+  layer.on('tileerror', () => {
+    if (tileErrorNoted || !state.map) return;
+    tileErrorNoted = true;
+    const note = L.control({ position: 'topleft' });
+    note.onAdd = () => {
+      const div = L.DomUtil.create('div');
+      div.style.cssText = 'background:rgba(0,0,0,0.72);color:#fff;padding:6px 10px;border-radius:8px;font-size:11px;max-width:240px;';
+      div.textContent = '🗺️ Harita karoları çevrimiçi bağlantı gerektirir (çevrimdışı: sade arka plan).';
+      return div;
+    };
+    note.addTo(state.map);
+  });
+  return layer;
+};
+
 // Local Otopark (İSPARK) Database (Fallback model representing 15 major otoparks near social facilities)
 const ISPARK_LOCATIONS = [
   { id: 1, ad: "İSPARK Eminönü Açık Otoparkı", koordinatlar: [41.018042, 28.971556], kapasite: 250 },
@@ -601,14 +623,14 @@ const initMap = () => {
   L.control.zoom({ position: 'bottomright' }).addTo(state.map);
 
   const config = TILE_LAYERS[state.theme];
-  state.activeTileLayer = L.tileLayer(config.url, config.options).addTo(state.map);
+  state.activeTileLayer = makeTileLayer(config).addTo(state.map);
 };
 
 const switchMapTileLayer = () => {
   if (state.map && state.activeTileLayer) {
     state.map.removeLayer(state.activeTileLayer);
     const config = TILE_LAYERS[state.theme];
-    state.activeTileLayer = L.tileLayer(config.url, config.options).addTo(state.map);
+    state.activeTileLayer = makeTileLayer(config).addTo(state.map);
   }
 };
 
