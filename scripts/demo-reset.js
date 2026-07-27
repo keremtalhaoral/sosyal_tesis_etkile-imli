@@ -19,6 +19,10 @@
  * ETKİLENMEZ - iki dünya birbirinden tamamen ayrı.
  */
 process.env.PG_SCHEMA = process.env.PG_SCHEMA || 'demo';
+// Demo şeması KENDİ seed dosyasını kullanır (5 tesis). Bu şart: seed her sunucu açılışında
+// çalışıyor, dolayısıyla "kur sonra sil" yaklaşımı işe yaramaz - silinen tesisler
+// `npm run demo:start` ile geri gelirdi. Küçük veri kümesi kaynağın kendisinde olmalı.
+process.env.SEED_FILE = process.env.SEED_FILE || 'data/seed-demo.json';
 
 const { loadEnv } = require('../backend/env');
 loadEnv();
@@ -34,9 +38,6 @@ const DEMO_USERS = [
   { username: 'ayse',         password: 'AyseParola26',  role: 'user'  },
   { username: 'mehmet',       password: 'MehmetParola26', role: 'user' },
 ];
-
-// Haritada dağınık dursunlar diye iki yakadan seçilmiş 5 tesis.
-const KEEP_FACILITY_IDS = [1, 2, 5, 10, 22];
 
 (async () => {
   const schema = process.env.PG_SCHEMA;
@@ -55,13 +56,9 @@ const KEEP_FACILITY_IDS = [1, 2, 5, 10, 22];
   const geo = await loadDistrictGeometry(db());
   console.log(`[demo] ${geo.features} ilçe geometrisi yüklendi.`);
 
-  // 4) KÜÇÜLT: 5 tesis kalsın. FK cascade menüleri/İSPARK'ı da temizler.
-  const removed = await db().run(
-    `DELETE FROM facilities WHERE id <> ALL($1::int[])`, [KEEP_FACILITY_IDS]
-  );
-  console.log(`[demo] ${removed} tesis kaldırıldı, ${KEEP_FACILITY_IDS.length} tanesi bırakıldı.`);
-
-  // 5) Tohumlanan rastgele parolalı kullanıcıları at, SABİT parolalı demo kullanıcıları koy.
+  // 4) Demo kullanıcıları: SABİT ve bilinir parolalarla (sunumda giriş yapabilmek için).
+  // seed-demo.json'daki `users` listesi BOŞ, o yüzden burada temizlenecek bir şey yok;
+  // yine de açık olalım.
   await db().run('DELETE FROM users');
   for (const u of DEMO_USERS) {
     await db().run('INSERT INTO users (username, password, role) VALUES ($1,$2,$3)',
@@ -69,7 +66,7 @@ const KEEP_FACILITY_IDS = [1, 2, 5, 10, 22];
   }
   console.log(`[demo] ${DEMO_USERS.length} demo kullanıcısı oluşturuldu.`);
 
-  // 6) Rezervasyon/sipariş/audit SIFIR olmalı - demonun tüm amacı bu.
+  // 5) Rezervasyon/sipariş/audit SIFIR olmalı - demonun tüm amacı bu.
   //    (users silinince cascade ile zaten gittiler; yine de doğrulayalım.)
   const counts = await db().one(`
     SELECT (SELECT COUNT(*)::int FROM facilities)   AS tesis,

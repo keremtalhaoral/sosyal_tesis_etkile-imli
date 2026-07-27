@@ -47,7 +47,12 @@ types.setTypeParser(types.builtins.TIME, (v) => (v ? String(v).slice(0, 5) : v))
 // Bağlantı yapılandırması
 // ---------------------------------------------------------------------------
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const SEED_PATH = path.join(DATA_DIR, 'seed.json');
+// SEED_FILE ile başka bir seed dosyası seçilebilir (sunum için data/seed-demo.json).
+// Seed her açılışta çalıştığı için bu ŞART: aksi halde demo şemasından silinen tesisler
+// sunucu her yeniden başladığında geri gelirdi (yaşandı).
+const SEED_PATH = process.env.SEED_FILE
+  ? path.resolve(process.cwd(), process.env.SEED_FILE)
+  : path.join(DATA_DIR, 'seed.json');
 // Yerel dev parolaları (gitignored). Testte DEV_CREDENTIALS_PATH ile geçici dizine yönlenir.
 const CREDENTIALS_PATH = process.env.DEV_CREDENTIALS_PATH || path.join(DATA_DIR, 'dev-credentials.json');
 

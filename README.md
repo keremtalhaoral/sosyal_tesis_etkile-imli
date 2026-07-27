@@ -55,6 +55,7 @@ Projenin yerel bilgisayarınızda çalıştırılması için aşağıdaki adıml
 ## 📚 Belgeler
 - [`CLAUDE.md`](CLAUDE.md) — proje rehberi / giriş kapısı, mimari ve gömülü kararlar.
 - [`docs/anlatim-rehberi.md`](docs/anlatim-rehberi.md) — projeyi anlatma rehberi: ne gerçek / ne demo, savunma soruları.
+- [`docs/dbeaver-rehberi.md`](docs/dbeaver-rehberi.md) — **DBeaver sıfırdan + 9 adımlık sunum senaryosu** (ne diyeceğiniz dahil).
 - [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
 - [`docs/sorgu-defteri.md`](docs/sorgu-defteri.md) + [`queries.sql`](queries.sql) — her özelliği SQL ile gösterme.
 - [`DATABASE.md`](DATABASE.md) — merkezi veri mimarisi (DDIA tabanlı) ve API tablosu.

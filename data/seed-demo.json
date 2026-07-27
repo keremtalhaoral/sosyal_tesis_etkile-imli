@@ -1,0 +1,343 @@
+{
+  "_comment": "DEMO seed - sunum icin kucuk veri kumesi. Kanonik kaynak data/seed.json; bu dosya ondan turetilmistir (5 tesis secilmis). users BOS: demo kullanicilari sabit parolalarla scripts/demo-reset.js tarafindan olusturulur.",
+  "version": 5,
+  "slots": [
+    "10:00",
+    "11:30",
+    "13:00",
+    "14:30",
+    "16:00",
+    "17:30",
+    "19:00",
+    "20:30"
+  ],
+  "users": [],
+  "demo_users": [
+    {
+      "username": "user",
+      "password": "user1234",
+      "role": "user"
+    },
+    {
+      "username": "admin",
+      "password": "admin1234",
+      "role": "admin"
+    },
+    {
+      "username": "demo",
+      "password": "demo1234",
+      "role": "user"
+    },
+    {
+      "username": "demo-admin",
+      "password": "demo1234",
+      "role": "admin"
+    }
+  ],
+  "districts": [
+    {
+      "name": "Adalar",
+      "population": 16372
+    },
+    {
+      "name": "Arnavutköy",
+      "population": 336062
+    },
+    {
+      "name": "Ataşehir",
+      "population": 416529
+    },
+    {
+      "name": "Avcılar",
+      "population": 462372
+    },
+    {
+      "name": "Bağcılar",
+      "population": 719264
+    },
+    {
+      "name": "Bahçelievler",
+      "population": 575225
+    },
+    {
+      "name": "Bakırköy",
+      "population": 220974
+    },
+    {
+      "name": "Başakşehir",
+      "population": 514900
+    },
+    {
+      "name": "Bayrampaşa",
+      "population": 268600
+    },
+    {
+      "name": "Beşiktaş",
+      "population": 169022
+    },
+    {
+      "name": "Beykoz",
+      "population": 245902
+    },
+    {
+      "name": "Beylikdüzü",
+      "population": 417287
+    },
+    {
+      "name": "Beyoğlu",
+      "population": 218789
+    },
+    {
+      "name": "Büyükçekmece",
+      "population": 272449
+    },
+    {
+      "name": "Çatalca",
+      "population": 78931
+    },
+    {
+      "name": "Çekmeköy",
+      "population": 298466
+    },
+    {
+      "name": "Esenler",
+      "population": 443058
+    },
+    {
+      "name": "Esenyurt",
+      "population": 978923
+    },
+    {
+      "name": "Eyüpsultan",
+      "population": 439737
+    },
+    {
+      "name": "Fatih",
+      "population": 356220
+    },
+    {
+      "name": "Gaziosmanpaşa",
+      "population": 483025
+    },
+    {
+      "name": "Güngören",
+      "population": 280256
+    },
+    {
+      "name": "Kadıköy",
+      "population": 467919
+    },
+    {
+      "name": "Kağıthane",
+      "population": 454530
+    },
+    {
+      "name": "Kartal",
+      "population": 485847
+    },
+    {
+      "name": "Küçükçekmece",
+      "population": 792030
+    },
+    {
+      "name": "Maltepe",
+      "population": 528544
+    },
+    {
+      "name": "Pendik",
+      "population": 741895
+    },
+    {
+      "name": "Sancaktepe",
+      "population": 490189
+    },
+    {
+      "name": "Sarıyer",
+      "population": 344250
+    },
+    {
+      "name": "Silivri",
+      "population": 221733
+    },
+    {
+      "name": "Şişli",
+      "population": 264516
+    },
+    {
+      "name": "Sultanbeyli",
+      "population": 360879
+    },
+    {
+      "name": "Sultangazi",
+      "population": 532846
+    },
+    {
+      "name": "Şile",
+      "population": 48826
+    },
+    {
+      "name": "Tuzla",
+      "population": 293645
+    },
+    {
+      "name": "Ümraniye",
+      "population": 723436
+    },
+    {
+      "name": "Üsküdar",
+      "population": 527325
+    },
+    {
+      "name": "Zeytinburnu",
+      "population": 280252
+    }
+  ],
+  "ispark": {
+    "capacity_divisor": 5,
+    "min_capacity": 10
+  },
+  "menu_template": [
+    {
+      "name": "Serpme Kahvaltı",
+      "category": "Kahvaltı",
+      "price_minor": 25000
+    },
+    {
+      "name": "Menemen",
+      "category": "Kahvaltı",
+      "price_minor": 12000
+    },
+    {
+      "name": "Çay",
+      "category": "Sıcak İçecek",
+      "price_minor": 1500
+    },
+    {
+      "name": "Türk Kahvesi",
+      "category": "Sıcak İçecek",
+      "price_minor": 4000
+    },
+    {
+      "name": "Filtre Kahve",
+      "category": "Sıcak İçecek",
+      "price_minor": 5500
+    },
+    {
+      "name": "Limonata",
+      "category": "Soğuk İçecek",
+      "price_minor": 6000
+    },
+    {
+      "name": "Ayran",
+      "category": "Soğuk İçecek",
+      "price_minor": 2500
+    },
+    {
+      "name": "Mercimek Çorbası",
+      "category": "Ana Yemek",
+      "price_minor": 8000
+    },
+    {
+      "name": "Köfte Ekmek",
+      "category": "Ana Yemek",
+      "price_minor": 15000
+    },
+    {
+      "name": "Izgara Tavuk",
+      "category": "Ana Yemek",
+      "price_minor": 18000
+    },
+    {
+      "name": "Sütlaç",
+      "category": "Tatlı",
+      "price_minor": 9000
+    },
+    {
+      "name": "Baklava",
+      "category": "Tatlı",
+      "price_minor": 12000
+    },
+    {
+      "name": "Tost",
+      "category": "Atıştırmalık",
+      "price_minor": 7000
+    },
+    {
+      "name": "Simit",
+      "category": "Atıştırmalık",
+      "price_minor": 1500
+    }
+  ],
+  "facilities": [
+    {
+      "id": 1,
+      "kod": "ALTY-01",
+      "ad": "Altınboynuz Sosyal Tesisi",
+      "adres": "Tekke Parkı Merkez Bahariye Cd. No: 16 Eyüpsultan",
+      "lat": 41.0578458,
+      "lng": 28.9456101,
+      "capacity": 120,
+      "occupancy": 75,
+      "iett_info": "39D, 55, 99A, 37M, 86V (Eyüpsultan Teleferik)",
+      "vapur_info": "Haliç Hattı (Eyüpsultan İskelesi)",
+      "transit_transfer": "M7 Metro (Alibeyköy) -> T5 Tramvayı (Feshane)",
+      "route_description": "Silahtarağa Cd. ve Bahariye Cd. üzerinden"
+    },
+    {
+      "id": 2,
+      "kod": "ALTY-02",
+      "ad": "Arnavutköy Sosyal Tesisi",
+      "adres": "Arnavutköy, Bebek Arnavutköy Cd No:72, Beşiktaş",
+      "lat": 41.067491,
+      "lng": 29.0448903,
+      "capacity": 150,
+      "occupancy": 85,
+      "iett_info": "22, 22RE, 25E, 40T, 42T (Arnavutköy Durağı)",
+      "vapur_info": "Boğaz Hattı (Arnavutköy İskelesi)",
+      "transit_transfer": "M2 Metro (Taksim) -> 40T Otobüsü",
+      "route_description": "Bebek Arnavutköy Cd. üzerinden"
+    },
+    {
+      "id": 5,
+      "kod": "ALTY-05",
+      "ad": "Beykoz Sahil Sosyal Tesisi",
+      "adres": "Paşabahçe Mahallesi Burunbahçe Mevkii, Beykoz",
+      "lat": 41.1134095,
+      "lng": 29.0864284,
+      "capacity": 180,
+      "occupancy": 65,
+      "iett_info": "15, 15F, 15T, 15BK, 121A (Burunbahçe Durağı)",
+      "vapur_info": "İstinye - Çubuklu Vapuru veya Üsküdar - Beykoz Motoru",
+      "transit_transfer": "M2 Metro (Hacıosman) -> Otobüs / Vapur",
+      "route_description": "Beykoz Sahil Yolu ve Burunbahçe Sk. üzerinden"
+    },
+    {
+      "id": 10,
+      "kod": "ALTY-10",
+      "ad": "Fethipaşa Sosyal Tesisi",
+      "adres": "Kuzguncuk Mahallesi Nacak Sokak No:6, Üsküdar",
+      "lat": 41.0333739,
+      "lng": 29.0259101,
+      "capacity": 280,
+      "occupancy": 89,
+      "iett_info": "15, 15B, 15C, 15H, 15K, 15M (Paşalimanı Durağı)",
+      "vapur_info": "Üsküdar İskelesi (1.2 km yürüyüş)",
+      "transit_transfer": "Marmaray (Üsküdar) -> 15 no'lu Otobüs hattı",
+      "route_description": "Paşalimanı Cd. ve Nacak Sk. üzerinden"
+    },
+    {
+      "id": 22,
+      "kod": "ALTY-22",
+      "ad": "Beykoz Kır Bahçesi Sosyal Tesisi",
+      "adres": "Merkez Mahallesi, Kelle İbrahim Cd., Beykoz",
+      "lat": 41.134419,
+      "lng": 29.1006,
+      "capacity": 280,
+      "occupancy": 82,
+      "iett_info": "15, 15F, 15T, 15BK, 121A (Beykoz Belediyesi Durağı)",
+      "vapur_info": "İstinye - Çubuklu Vapuru veya Şehir Hatları",
+      "transit_transfer": "M2 Metro (Hacıosman) -> Otobüs",
+      "route_description": "Beykoz Sahil Yolu ve Kelle İbrahim Cd. üzerinden"
+    }
+  ]
+}
