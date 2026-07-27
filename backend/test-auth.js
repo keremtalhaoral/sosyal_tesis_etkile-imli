@@ -12,18 +12,13 @@
  *
  * Çalıştırma: node backend/test-auth.js
  */
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-process.env.DB_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'auth-')), 'test.db');
+const t = require('./test-helper').setup('auth');
+const { assert } = t;
 
 const {
   hashPassword, verifyPassword, hashPasswordAsync, verifyPasswordAsync,
   DUMMY_PHC, PBKDF2_ITERATIONS
 } = require('./database');
-
-let passed = 0, failed = 0;
-const assert = (name, cond) => { if (cond) { passed++; console.log(`  PASS  ${name}`); } else { failed++; console.error(`  FAIL  ${name}`); } };
 
 const iterationsOf = (phc) => parseInt(String(phc).split('$')[1], 10);
 
@@ -73,17 +68,19 @@ const iterationsOf = (phc) => parseInt(String(phc).split('$')[1], 10);
     && (await verifyPasswordAsync('yanlis', syncHash)) === false);
 
   // --- 4. Bozuk/kötü niyetli PHC girdileri çökmeden false dönmeli -------------
-  for (const bad of ['', 'x', 'pbkdf2_sha256$abc$AA==$AA==', 'pbkdf2_sha256$0$AA==$AA==',
-                     'bcrypt$10$AA==$AA==', null, undefined, '$$$']) {
-    if (verifyPassword('p', bad) !== false) { failed++; console.error(`  FAIL  bozuk PHC reddedilmedi: ${JSON.stringify(bad)}`); }
-  }
-  assert('bozuk PHC girdileri çökmeden reddedildi', true);
+  const badInputs = ['', 'x', 'pbkdf2_sha256$abc$AA==$AA==', 'pbkdf2_sha256$0$AA==$AA==',
+                     'bcrypt$10$AA==$AA==', null, undefined, '$$$'];
+  assert('bozuk PHC girdileri çökmeden reddedildi',
+    badInputs.every((bad) => verifyPassword('p', bad) === false));
 
   // --- 5. Salt gerçekten kullanıcı başına rastgele olmalı ---------------------
   const h1 = await hashPasswordAsync('ayni');
   const h2 = await hashPasswordAsync('ayni');
   assert('salt: aynı parola farklı hash üretiyor (rainbow table saldırısına kapalı)', h1 !== h2);
 
-  console.log(`\n${passed} başarılı, ${failed} başarısız`);
-  process.exit(failed === 0 ? 0 : 1);
-})();
+  await t.finish();
+})().catch(async (err) => {
+  console.error('\nTEST ÇÖKTÜ:', err);
+  await require('./database').dropSchema().catch(() => {});
+  process.exit(1);
+});

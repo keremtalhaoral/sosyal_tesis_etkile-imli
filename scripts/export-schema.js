@@ -1,64 +1,113 @@
+#!/usr/bin/env node
 /**
- * export-schema.js — app.db şemasını okunur bir schema.sql dosyasına döker.
+ * export-schema.js — canlı PostgreSQL şemasını okunur bir schema.sql dosyasına döker.
  *
- * NEDEN VAR: SQLite verisini tek binary dosyada (data/app.db) tutar; ayrı bir .sql dosyası
- * zorunlu değildir. Bu projede şemanın KANONİK kaynağı backend/database.js MIGRATIONS dizisidir.
- * Ancak SQL şemasını tek bakışta okumak (DBeaver'a almak,
- * inceleme, mentöre gösterme) için düz metin bir DDL çıktısı pratiktir.
+ * NEDEN VAR: şemanın KANONİK kaynağı backend/database.js MIGRATIONS dizisidir. Ancak SQL
+ * şemasını tek bakışta okumak (DBeaver'a almak, inceleme, mentöre gösterme) için düz metin
+ * bir DDL çıktısı pratiktir.
  *
- * schema.sql bu yüzden TÜRETİLMİŞ (derived) bir DOKÜMANDIR: elle düzenlenmez, migration'lardan
- * üretilir. Şema değişince bu script yeniden çalıştırılır (bkz. CLAUDE.md > Sözleşmeler).
- * Veri değil yalnız YAPI döker; runtime verisi için: sqlite3 data/app.db .dump > data/full.sql
+ * schema.sql bu yüzden TÜRETİLMİŞ (derived) bir DOKÜMANDIR: elle düzenlenmez, veritabanının
+ * KENDİSİNDEN üretilir. Şema değişince bu script yeniden çalıştırılır (bkz. CLAUDE.md).
+ * Veri değil yalnız YAPI döker; tam döküm için: pg_dump.
  *
- * Kullanım:  node scripts/export-schema.js   (app.db önce tohumlanmış olmalı)
+ * pg_dump'a değil information_schema/pg_catalog'a dayanır: pg_dump her ortamda kurulu
+ * olmayabilir, ayrıca çıktısı gürültülü (SET komutları, OWNER, ACL). Burada yalnız
+ * anlatmak istediğimiz şeyi üretiyoruz: tablolar, kolonlar, kısıtlar, indeksler.
+ *
+ * Kullanım:  node scripts/export-schema.js
  */
-const { DatabaseSync } = require('node:sqlite');
 const fs = require('fs');
 const path = require('path');
+const { db, init, close } = require('../backend/database');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'app.db');
 const OUT_PATH = path.join(__dirname, '..', 'schema.sql');
+const SCHEMA = process.env.PG_SCHEMA || 'public';
 
-if (!fs.existsSync(DB_PATH)) {
-  console.error(`HATA: app.db bulunamadı → ${DB_PATH}`);
-  console.error('Önce veritabanını tohumla:  cd backend && npm install && npm start  (Ctrl+C ile durdur)');
-  process.exit(1);
-}
+(async () => {
+  await init();
+  const conn = db();
 
-const db = new DatabaseSync(DB_PATH);
+  const versions = (await conn.all('SELECT version FROM schema_migrations ORDER BY version')).map(r => r.version);
 
-// sqlite_master: tablo/index/view/trigger DDL'lerini SQLite'ın sakladığı normalize biçimde verir.
-const objects = db.prepare(`
-  SELECT type, name, sql FROM sqlite_master
-  WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%'
-  ORDER BY CASE type WHEN 'table' THEN 0 WHEN 'index' THEN 1 WHEN 'view' THEN 2 ELSE 3 END, name
-`).all();
+  const tables = (await conn.all(`
+    SELECT table_name FROM information_schema.tables
+    WHERE table_schema = $1 AND table_type = 'BASE TABLE'
+      AND table_name NOT IN ('spatial_ref_sys')
+    ORDER BY table_name
+  `, [SCHEMA])).map(r => r.table_name);
 
-const appliedVersions = db.prepare('SELECT version FROM schema_migrations ORDER BY version').all()
-  .map(r => r.version).join(', ');
+  const parts = [];
 
-const header =
-`-- =============================================================================
+  for (const table of tables) {
+    const cols = await conn.all(`
+      SELECT column_name, data_type, udt_name, character_maximum_length, numeric_precision,
+             is_nullable, column_default, is_identity, identity_generation, is_generated, generation_expression
+      FROM information_schema.columns
+      WHERE table_schema = $1 AND table_name = $2
+      ORDER BY ordinal_position
+    `, [SCHEMA, table]);
+
+    const lines = cols.map((c) => {
+      // PostGIS geometry kolonları information_schema'da 'USER-DEFINED' görünür; gerçek
+      // tipi (geometry(Point,4326)) format_type ile ayrıca çekiliyor (aşağıda).
+      let type = c.data_type === 'USER-DEFINED' ? c.udt_name : c.data_type;
+      if (c.character_maximum_length) type += `(${c.character_maximum_length})`;
+
+      let line = `  ${c.column_name} ${type}`;
+      if (c.is_identity === 'YES') line += ` GENERATED ${c.identity_generation} AS IDENTITY`;
+      else if (c.is_generated === 'ALWAYS') line += ` GENERATED ALWAYS AS (${c.generation_expression}) STORED`;
+      else if (c.column_default) line += ` DEFAULT ${c.column_default}`;
+      if (c.is_nullable === 'NO') line += ' NOT NULL';
+      return line;
+    });
+
+    // Kısıtlar (PK / UNIQUE / FK / CHECK) - pg_get_constraintdef okunur DDL verir.
+    const constraints = await conn.all(`
+      SELECT conname, pg_get_constraintdef(oid) AS def
+      FROM pg_constraint
+      WHERE conrelid = format('%I.%I', $1::text, $2::text)::regclass
+      ORDER BY CASE contype WHEN 'p' THEN 0 WHEN 'u' THEN 1 WHEN 'f' THEN 2 ELSE 3 END, conname
+    `, [SCHEMA, table]);
+    for (const c of constraints) lines.push(`  CONSTRAINT ${c.conname} ${c.def}`);
+
+    parts.push(`CREATE TABLE ${table} (\n${lines.join(',\n')}\n);`);
+
+    const indexes = await conn.all(`
+      SELECT indexdef FROM pg_indexes
+      WHERE schemaname = $1 AND tablename = $2
+        AND indexname NOT IN (SELECT conname FROM pg_constraint WHERE conrelid = format('%I.%I', $1::text, $2::text)::regclass)
+      ORDER BY indexname
+    `, [SCHEMA, table]);
+    for (const i of indexes) parts.push(`${i.indexdef};`);
+  }
+
+  const postgis = await conn.one("SELECT extversion FROM pg_extension WHERE extname = 'postgis'");
+  const pgver = (await conn.one('SELECT version() AS v')).v.split(' ').slice(0, 2).join(' ');
+
+  const header = `-- =============================================================================
 -- schema.sql — TÜRETİLMİŞ (derived) veritabanı şeması / DERIVED database schema
 -- =============================================================================
 -- Bu dosya ELLE DÜZENLENMEZ. Kanonik kaynak:
 --   * Yapı  : backend/database.js  (MIGRATIONS dizisi)
 --   * Veri  : data/seed.json  (kanonik başlangıç verisi)
 -- Yeniden üretmek için:  node scripts/export-schema.js
--- Uygulanmış migration sürümleri: ${appliedVersions}
+--
+-- Veritabanı: ${pgver}${postgis ? ` + PostGIS ${postgis.extversion}` : ''}
+-- Uygulanmış migration sürümleri: ${versions.join(', ')}
 -- Üretim zamanı: ${new Date().toISOString()}
--- Tam veri dökümü (yapı + satırlar) için:  sqlite3 data/app.db .dump > data/full.sql
 -- =============================================================================
 
-PRAGMA foreign_keys = ON;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 `;
 
-const body = objects.map(o => `${o.sql.trim()};`).join('\n\n') + '\n';
-fs.writeFileSync(OUT_PATH, header + body, 'utf8');
-db.close();
+  fs.writeFileSync(OUT_PATH, header + parts.join('\n\n') + '\n', 'utf8');
+  console.log(`Yazıldı: ${OUT_PATH}`);
+  console.log(`  ${tables.length} tablo, ${parts.length - tables.length} indeks (migration v${versions[versions.length - 1]})`);
 
-const counts = objects.reduce((m, o) => (m[o.type] = (m[o.type] || 0) + 1, m), {});
-console.log(`Yazıldı: ${OUT_PATH}`);
-console.log(`  ${objects.length} nesne (` + Object.entries(counts).map(([k, v]) => `${v} ${k}`).join(', ') + ')');
+  await close();
+})().catch(async (err) => {
+  console.error('HATA:', err.message);
+  await close().catch(() => {});
+  process.exit(1);
+});

@@ -12,13 +12,17 @@ sipariş, İSPARK, analitik dashboard. Rehber ilke: **Designing Data-Intensive A
 kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 
 ## Mimari
-- **Merkezi SQLite** (`data/app.db`, WAL) = tek gerçek kaynak. Node backend'i kullanır.
-- **`data/seed.json`** = kanonik veri (git'te). `app.db` türetilmiş (gitignored), seed'den kurulur.
-- **`backend/`** (Node/Express, `node:sqlite`): DB için **sıfır dış bağımlılık** (SQLite yerleşik
-  `node:sqlite`'tan gelir); HTTP katmanı `express` + `cors` kullanır (bkz. `backend/package.json`).
-  `database.js` (migration+seed+`transaction()`), `db.js` (repository+mekansal), `analytics.js`,
-  `security.js`, `validate.js`, `server.js` (API, port 8085). İlçe geometrisini
-  `docs/data/istanbul-districts.geojson`'dan (tek kanonik kopya) okur.
+- **PostgreSQL 16 + PostGIS 3.4** = tek gerçek kaynak (ADR-009; SQLite kaldırıldı).
+  `docker-compose.yml` ile ayağa kalkar; bağlantı `DATABASE_URL` ya da `PG*` env'lerinden.
+- **`data/seed.json`** = kanonik veri (git'te). Veritabanı türetilmiştir, seed'den kurulur.
+- **`backend/`** (Node/Express + `pg`): `database.js` (havuz + migration + seed +
+  `transaction()`), `db.js` (repository + PostGIS sorguları), `analytics.js`, `geo.js`
+  (ilçe geometrisi yükleyici), `security.js`, `validate.js`, `server.js` (API, port 8085),
+  `test-helper.js` (şema-başına test izolasyonu). Tüm veri erişimi **async**.
+- **Mekansal katman veritabanında**: `ST_Contains` (ilçe×tesis), `ST_Distance(geography)`
+  (metre), KNN `<->` (GiST indeksli). `facilities.geom` lat/lng'den **generated** kolondur.
+  İlçe geometrisi `docs/data/istanbul-districts.geojson`'dan `npm run db:load-geo` ile yüklenir
+  (tek kanonik kopya; Pages de aynı dosyayı okur).
 - **`docs/`** = GitHub Pages (sunucusuz). `dashboard.html`/`order.html`: gerçek çift mod (önce canlı
   API dener, `localStorage`+`seed.json`'a düşer). `index.html` (ana harita+admin panel): **kasıtlı
   olarak her zaman mock** — `docs/app.js`'teki `window.fetch` override'ı bilinen uçları tarayıcı-içi
@@ -42,9 +46,12 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 - Sipariş **rezervasyona bağlı**; sipariş kalemi fiyatı **snapshot** (captured vs derived). (ADR-001/005)
 - Parola **PBKDF2 + per-user salt**, PHC formatı; JWT HS256 + `exp`; sırlar env'de; ham parola
   git'te YOK (`data/dev-credentials.json`, gitignored). (ADR-002)
-- Kapasite **per-slot** `SUM(guests)` + atomik transaction (write-skew'e kapalı); İSPARK atomik
-  compare-and-set. (ADR-003)
-- Analitik: canlı sorgu + `daily_stats` rollup (türetilmiş); ~178× hızlanma. (ADR-004)
+- Kapasite **per-slot** `SUM(guests)`; koruma **SERIALIZABLE + 40001 retry** ile sağlanır.
+  PostgreSQL'de READ COMMITTED bunu KORUMAZ (ölçüldü: 40 worker/kapasite 10 → 18-22 rezervasyon
+  geçiyor; SERIALIZABLE tam 10'da tutuyor). İSPARK atomik compare-and-set — tek satır çakışması
+  olduğu için satır kilidi yeterli. (ADR-003, ADR-009)
+- Analitik: canlı sorgu + `daily_stats` rollup (türetilmiş). Para toplamları **`::bigint`**
+  olmak ZORUNDA: kuruş cinsinden int4 sınırı ~21,5M TL, bir yıllık veri bile aşıyor. (ADR-004)
 - Tutarlar **sunucuda** hesaplanır (istemciye güvenilmez); sahiplik zorlanır (403). (ADR-005)
 - Gerçek toplu taşıma güzergahları: GTFS `shapes` → türetilmiş slim GeoJSON (ham veri gitignored,
   kalite kapılı — düşük güven eşleşme uydurma çizgiye düşmez). (ADR-006)
@@ -54,26 +61,25 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 
 ## Çalıştırma & test
 ```bash
-# Backend (ilk açılışta migration+seed otomatik)
-cd backend && npm install && npm start        # http://localhost:8085
-# Dummy veri / analitik snapshot
-node scripts/generate-data.js [--scale=N] [--reset]
-node scripts/export-analytics.js              # -> docs/data/analytics.json
-node scripts/export-schema.js                 # -> schema.sql (türetilmiş DDL; migration'lardan)
-# Testler (geçici DB, gerçek veriye dokunmaz)
-node backend/test-db.js          # şema, kısıt, tx
-node backend/test-orders.js      # sipariş + durum makinesi (submitted→served→paid)
-node backend/test-analytics.js   # analytics (rollup==canlı)
-node backend/test-concurrency.js # write-skew / atomik (worker_threads)
-node backend/test-routes.js      # GTFS ingest (fixture; ADR-006)
-node backend/test-admin.js       # audit log, admin gözetim, requireAdmin (ADR-007)
+npm install
+npm run db:up            # PostgreSQL + PostGIS (docker compose)
+npm start                # migration+seed otomatik -> http://localhost:8085
+npm run db:load-geo      # ilçe sınırlarını PostGIS'e yükle (bir kez)
+# Dummy veri / türetilmiş çıktılar
+npm run db:generate      # -- --scale=N --reset   (per-slot kapasite invariant'ını doğrular)
+npm run export:analytics # -> docs/data/analytics.json (Pages snapshot)
+npm run export:schema    # -> schema.sql (türetilmiş DDL; elle düzenlenmez)
+npm run build:routes     # GTFS -> docs/data/transit-routes.geojson (ADR-006)
+# Testler (her test kendi izole PostgreSQL şemasında; gerçek veriye dokunmaz)
+npm test                 # 168 test: şema/kısıt/PostGIS, sipariş, analytics,
+                         # eşzamanlılık (write-skew), GTFS, audit log, parola/zamanlama
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092
-# Her özelliği SQL ile gösterme: queries.sql (DBeaver) + anlatımı docs/sorgu-defteri.md
+# Her özelliği SQL ile gösterme: queries.sql (psql/DBeaver) + anlatımı docs/sorgu-defteri.md
 ```
 
 ## Sözleşmeler
 - Şema değişince `backend/database.js` MIGRATIONS güncellenir (şema tek yerde tanımlıdır);
-  yeni faz = yeni migration versiyonu. Ardından `node scripts/export-schema.js`
+  yeni faz = yeni migration versiyonu. Ardından `npm run export:schema`
   ile **`schema.sql` yeniden üretilir** (türetilmiş DDL dokümanı; elle düzenlenmez).
 - **Yeni dosya/teknoloji eklenince** `TEKNOLOJI_VE_DOSYA_REHBERI.md` güncellenir (dosya-dosya
   katalog + değişiklik günlüğü güncel kalır).
