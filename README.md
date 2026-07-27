@@ -74,6 +74,31 @@ en hızlı yol.
    (GTFS ingest), `test-admin.js` (audit log), `test-auth.js` (parola/zamanlama).
 
 ## 📚 Belgeler
+
+### 🎓 "Hiçbir şey bilmiyorum, nereden başlamalıyım?"
+
+→ **[`docs/ogrenme/`](docs/ogrenme/)** — projeyi sıfırdan anlatan öğrenme kitabı.
+Feynman tekniğiyle yazıldı: her konu tek cümleyle başlar, benzetmeyle devam eder,
+**benzetmenin nerede bozulduğunu** söyler, sonra derinleşir. Her bölümde çalıştırılabilir
+komutlar ve "mentör sorarsa" cevapları var.
+
+- **Katmanlı kitap (00→11):** [proje ne yapıyor](docs/ogrenme/00-bu-proje-ne-yapiyor.md) →
+  [web](docs/ogrenme/01-web-nasil-calisir.md) →
+  [veritabanı](docs/ogrenme/02-veritabani-nedir.md) →
+  [SQL](docs/ogrenme/03-sql-ile-konusmak.md) →
+  [neden PostgreSQL](docs/ogrenme/04-neden-postgresql.md) →
+  [PostGIS](docs/ogrenme/05-harita-verisi-postgis.md) →
+  [eşzamanlılık](docs/ogrenme/06-ayni-anda-iki-kisi.md) →
+  [kimlik/kripto](docs/ogrenme/07-kimlik-ve-sifreleme.md) →
+  [backend](docs/ogrenme/08-backend-node-express.md) →
+  [frontend](docs/ogrenme/09-frontend-harita.md) →
+  [veri kaynakları](docs/ogrenme/10-veri-nereden-geliyor.md) →
+  [sözlük](docs/ogrenme/11-sozluk.md)
+- **Teknoloji başına derin dosyalar:** [`docs/ogrenme/teknoloji/`](docs/ogrenme/teknoloji/)
+  — 16 dosya. Her biri: *ne olduğu, hangi problemi çözmek için doğduğu, alternatifleri ve
+  neden seçilmedikleri, bu projede tam olarak nerede, bilinmesi gereken tuzaklar.*
+
+### Diğer belgeler
 - [`CLAUDE.md`](CLAUDE.md) — proje rehberi / giriş kapısı, mimari ve gömülü kararlar.
 - [`docs/anlatim-rehberi.md`](docs/anlatim-rehberi.md) — projeyi anlatma rehberi: ne gerçek / ne demo, savunma soruları.
 - [`docs/dbeaver-rehberi.md`](docs/dbeaver-rehberi.md) — **DBeaver sıfırdan + 9 adımlık sunum senaryosu** (ne diyeceğiniz dahil).

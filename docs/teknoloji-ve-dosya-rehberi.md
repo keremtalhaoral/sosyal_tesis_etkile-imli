@@ -121,6 +121,15 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `test-analytics.js` | 69 | Analitik: KPI (iptaller hariç), aylık/yıllık bucket, ödeme kırılımı, **ROLLUP == LIVE** invaryantı, ısı haritası. |
 | `test-admin.js` | 75 | Admin (Faz v2-07): CRUD audit satırları, admin gözetim (sahiplik filtresiz), durum whitelist, audit sorgu (yeni→eski, limit, actor join), `requireAdmin`. |
 | `test-routes.js` | 62 | GTFS ingest (Faz v2-06): `build-routes.js`'i fixture'a karşı çalıştırır; slim GeoJSON yapısı, gerçek geometri, mod sınıflama, palet renkleri, yürüyüş bacağı, `[lng,lat]` sırası. |
+| `env.js` | 59 | **Bağımlılıksız `.env` okuyucu.** Satır satır `KEY=VALUE`; `process.env`'de zaten tanımlı olanı **ezmez** (gerçek ortam değişkeni her zaman kazanır). `server.js`'in EN BAŞINDA yüklenir — `security.js`/`database.js` sırları modül yüklenme anında okuduğu için sıra bozulursa `.env` hiç görülmez. `dotenv` paketi yerine yazıldı. |
+| `weather.js` | 177 | **OpenWeather entegrasyonu + önbellek.** `https` (şifresiz `http` değil — anahtar sorgu dizesinde gidiyor). Koordinat ~1 km'lik tam sayı hücre indeksine yuvarlanır (`toFixed(2)` kayan nokta sınırında tutarsız). TTL `WEATHER_CACHE_TTL_MS` (varsayılan 10 dk, `0` = kapalı). Yanıtta `observed_at` + `cached` → tazelik kanıtı. **Asla fırlatmaz**: ağ engeli / `401` / `429` / timeout / anahtarsız → `isMock: true` + `reason`. Ağ engelini anahtar hatasından **ayırt eder**. |
+| `ratelimit.js` | 74 | **Kayan pencere hız sınırlayıcı** (bağımlılıksız, `express-rate-limit` yerine). Login: 15 dk'da 5, anahtar `${req.ip}\|${username}` — tek IP arkasındaki kurumsal ağın tamamı bir kişi yüzünden kilitlenmesin. Register: saatte 10. Aşılınca `429` + `Retry-After`. Zincirin başında olduğu için PBKDF2 **hiç çalışmıyor** → CPU tüketme vektörü kapalı. |
+| `demo-users.js` | 27 | **`demo` şemasının sunum hesapları — tek kaynak.** Veri `data/demo-users.json`'da (git'te; sunumda giriş yapılabilmesi için BİLİNİR olmak zorunda). İki yer okuyor: `scripts/demo-reset.js` hesapları kurar, `database.js` `describeDevLogins()` açılışta hatırlatır. Önce `demo-reset.js` içinde inline'dı; iki kopya olsaydı biri güncellenmeden kalır ve sunum ortasında "parola yanlış" denirdi. |
+| `test-auth.js` | 86 | Parola/JWT: PHC ayrıştırma, salt benzersizliği, `timingSafeEqual`, `DUMMY_PHC` ile zamanlama eşitliği, `exp` süre dolumu, kurcalanmış imza reddi. |
+| `test-weather.js` | 160 | **Yerel sahte OpenWeather sunucusuna** karşı (`WEATHER_API_BASE`): yanıt ayrıştırma, önbellek isabeti (ikinci çağrı upstream'e gitmiyor), TTL dolunca yeniden çağırma, `401`/`429`/timeout/bağlantı reddi/bozuk JSON → mock'a düşme, anahtarsız → mock. Gerçek ağ gerektirmez. |
+| `test-api-hardening.js` | 173 | Denetim bulgularının regresyon testleri: D3 (sayfalama), D5 (hız sınırı `429` + `Retry-After`), D6 (parola ≥ 8), D7 (İSPARK sahipliği), D9 (rezervasyon iptali + para geri alma), D10 (kısmi UNIQUE), D14 (`audit_log` indeksi — planda `Sort` yok). |
+| `test-ibb-parse.js` | 166 | İBB ayrıştırıcıları **gerçek bayt dizileriyle**: mojibake onarımı, koordinat sırası/virgüllü ondalık düzeltme, alan adı esnekliği, İstanbul dışı koordinat reddi. Ağ gerektirmez. |
+| `test-helper.js` | 71 | **Şema-başına test izolasyonu.** `PG_SCHEMA` → `search_path`; her test kendi şemasında koşar, gerçek veriye dokunmaz, paralel koşabilir. |
 | *(kaldırıldı)* | — | `backend/package.json` kaldırıldı; npm projesi kökte tekilleşti (`backend/` ve `scripts/` aynı bağımlılıkları paylaşıyor). |
 
 ### 4.3 `docs/` (GitHub Pages statik frontend)
@@ -140,7 +149,10 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `data/seed.json` | 692 | Kanonik seed'in frontend mock kopyası. |
 | `data/istanbul-districts.geojson` | ~132k | İlçe poligonları — **tek kanonik kopya** (hem Node backend `db.js` hem Pages statik olarak okur). |
 | `data/transit-routes.geojson` | 1 | Türetilmiş toplu taşıma çizgileri (minified). |
-| `vendor/{leaflet,turf,chartjs}/` | — | Vendored kütüphaneler (CDN'siz, offline). |
+| `vendor/{leaflet,turf,chartjs}/` | ~1 MB | Vendored kütüphaneler (CDN'siz, offline). Leaflet 1.9.4 (148 KB + 15 KB CSS + ikonlar), Turf (590 KB), Chart.js 4.5.1 (209 KB). |
+| `dbeaver-rehberi.md` | ~500 | **DBeaver sıfırdan + 9 adımlık sunum senaryosu.** Kurulum/bağlantı, arayüz turu, ER diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, prova edilmiş senaryo (ne diyeceğiniz dahil), sorun giderme tablosu, sunum öncesi kontrol listesi. |
+| `ogrenme/00…11-*.md` | 12 dosya | **Katmanlı öğrenme kitabı** (Feynman disiplini). Her bölüm sabit 7 adım: bir cümlede → benzetme **ve nerede bozulduğu** → daha derin → projede tam olarak nerede → kendin dene (çalıştırılabilir komut + beklenen çıktı) → mentör sorarsa → sırada ne var. Sıfır ön bilgiyle başlar. |
+| `ogrenme/teknoloji/*.md` | 16 + README | **Teknoloji başına derin dosyalar.** Her biri: ne olduğu → hangi problemi çözmek için doğdu → alternatifleri ve neden seçilmedikleri → bu projede tam olarak nerede → bilinmesi gereken 3 tuzak (mümkünse projede fiilen yaşanmış) → daha fazlası için. `nodejs`, `express`, `postgresql`, `postgis`, `pg-driver`, `docker`, `dbeaver`, `jwt`, `pbkdf2`, `leaflet`, `turf`, `chartjs`, `geojson`, `gtfs`, `soap-vs-rest`, `git-github-pages`. |
 
 ### 4.4 `scripts/` (Node yardımcıları)
 | Dosya | ~satır | Amaç |
@@ -259,3 +271,48 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   `scripts/check-consistency.js` eklendi: API tablosu ↔ rotalar, migration ↔ schema.sql, seed replikası,
   ADR numaralandırması, test kapsamı ve platform kalıntıları **makineyle** doğrulanıyor (`npm run check`)
   — belge kayması artık yorumla değil testle korunuyor.
+
+- **2026-07-27 — Denetim bulguları + gerçek hava durumu.** (Faz 5) 18 bulgulu acımasız denetimin
+  düzeltmeleri. En önemlisi **D1**: `index.html` veritabanına hiçbir şey yazmıyordu (`app.js`'teki
+  `fetch` override'ı bilinen uçları tarayıcı içinde simüle ediyordu), yani "uygulamada işlem yap,
+  DBeaver'da gör" demosu **imkânsızdı**. Artık çift mod: açılışta backend yoklanır, erişilebiliyorsa
+  override tamamen atlanır. **D2**: override'ın belgelerdeki güvenlik gerekçesi olgusal olarak
+  yanlıştı (`/api/auth/login` zaten hash döndürmüyor) — gerçek sebep Pages'in kod çalıştıramaması;
+  düzeltildi. **D3**: `/api/admin/*` sayfalamasız 425.139 satır / 142 MB / 8,7 sn döndürüyordu →
+  `LIMIT`/`OFFSET` + `X-Total-Count`. **D4**: kalıcı XSS (`escapeHtml`, gerçek Chromium'la doğrulandı).
+  **D5/D6**: hız sınırı + parola ≥ 8. **D7**: `ispark_holds` ile bırakma sahipliği. **D8/D11/D12**:
+  `backend/env.js` (`.env` hiç okunmuyordu — 7. madde bunsuz çalışmazdı), `http`→`https`,
+  koordinat hücreli önbellek. **D9/D10**: `DELETE /api/reservations/:id` + kısmi UNIQUE indeks
+  (iptal edilen rezervasyon slotu artık bloke etmiyor). **D14**: `idx_audit_log_created`.
+  Yeni: `weather.js`, `ratelimit.js`, `test-weather.js`, `test-api-hardening.js`. Migration v9.
+
+- **2026-07-27 — Demo şeması + sorgu defteri genişletmesi.** (Faz 7) `npm run demo:reset` /
+  `demo:start`: `demo` şemasında 5 tesis, 3 kullanıcı, **0 rezervasyon** — sunumda her işlem gözle
+  görünür. `SEED_FILE` env desteği eklendi; onsuz seed her açılışta silinen tesisleri geri
+  yazıyordu (sunum ortasında yeniden başlatma 5 yerine 30 tesis gösterirdi). `queries.sql` 10 → 16
+  bölüm (586 satır): yazma işlemleri, canlı izleme (önce/sonra sorgu çiftleri), **kısıtları kırmaya
+  çalışma** (hata kodunu görmek kısıtın gerçek olduğunun kanıtı), transaction'ı elle görme
+  (`pg_locks`), türetilmiş veri, şema keşfi. `docs/sorgu-defteri.md` 633 satıra genişledi.
+
+- **2026-07-27 — DBeaver rehberi.** (Faz 8) `docs/dbeaver-rehberi.md`: kurulum, arayüz turu, ER
+  diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, **9 adımlık sunum senaryosu** ve
+  sorun giderme. Senaryonun tamamı canlı veritabanına karşı **prova edildi**; belgedeki her çıktı
+  gerçek çıktı.
+
+- **2026-07-27 — Öğrenme kitabı (Feynman).** (Faz 6) `docs/ogrenme/`: 12 bölümlük katmanlı kitap +
+  `teknoloji/` altında 16 derin dosya. Yöntem: her bölüm tek cümleyle başlar, benzetme kurar ve
+  **benzetmenin nerede bozulduğunu** söyler (atlanırsa yanlış zihinsel model kalıcı olur), sonra
+  derinleşir; her bölümde çalıştırılabilir komut + beklenen çıktı ve "mentör sorarsa" cevapları var.
+  Kitaptaki **her olgusal iddia canlı sisteme karşı doğrulandı** — bu sırada iki gerçek düzeltme
+  çıktı: (a) `geometry` vs `geography` sıralama hatası ilk yazılan koordinatta (Taksim) tekrar
+  etmiyordu, gerçek bir çakışma noktası bulunup (41.01, 28.97) belgelendi — hatanın **çoğu zaman
+  doğru cevap vermesi** asıl tehlike; (b) `public` şemasındaki 200 sentetik kullanıcı hâlâ tek bir
+  hash paylaşıyordu (veri, `generate-data.js` düzeltmesinden önce üretilmişti) → 20 farklı hash'e
+  yeniden atandı, böylece DBeaver'da "her kullanıcıya ayrı salt" anlatısı veriyle çelişmiyor.
+
+- **2026-07-27 — Giriş bilgilerini görünür yapma.** Parolalar çalışılan moda göre değişiyordu ve
+  hiçbir yer bunu söylemiyordu: `public` şemasında rastgele üretilip gitignored dosyaya yazılıyor,
+  `demo` şemasında sabit, çevrimdışı replikada tarayıcı-içi taklit hesaplar. Deneme yanılmaya düşen
+  kullanıcı 5 denemede `429`'a takılıp bunu "parola yanlış" sanıyordu. `describeDevLogins()` açılışta
+  geçerli hesapları yazıyor (üretimde susar); demo hesapları `backend/demo-users.js` +
+  `data/demo-users.json` ile tek kaynağa taşındı; README'ye mod × hesap tablosu eklendi.
