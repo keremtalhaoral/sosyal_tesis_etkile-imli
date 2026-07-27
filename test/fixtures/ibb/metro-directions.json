@@ -1,0 +1,9 @@
+{
+  "Data": [
+    { "Id": 20, "LineId": 2,  "Name": "Hacıosman Yönü" },
+    { "Id": 21, "LineId": 2,  "Name": "Yenikapı Yönü" },
+    { "Id": 40, "LineId": 4,  "Name": "Sabiha Gökçen Yönü" },
+    { "Id": 91, "LineId": 90, "Name": "Gebze Yönü" },
+    { "Id": 98, "Name": "LineId eksik - atlanmalı" }
+  ]
+}

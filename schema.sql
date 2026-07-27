@@ -5,137 +5,185 @@
 --   * Yapı  : backend/database.js  (MIGRATIONS dizisi)
 --   * Veri  : data/seed.json  (kanonik başlangıç verisi)
 -- Yeniden üretmek için:  node scripts/export-schema.js
--- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6
--- Üretim zamanı: 2026-07-24T08:42:02.210Z
--- Tam veri dökümü (yapı + satırlar) için:  sqlite3 data/app.db .dump > data/full.sql
+--
+-- Veritabanı: PostgreSQL 16.13 + PostGIS 3.4.2
+-- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6, 7, 8
+-- Üretim zamanı: 2026-07-27T07:02:44.629Z
 -- =============================================================================
 
-PRAGMA foreign_keys = ON;
+CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE audit_log (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          actor_user_id INTEGER NOT NULL REFERENCES users(id),
-          action TEXT NOT NULL,
-          entity_type TEXT NOT NULL,
-          entity_id INTEGER NOT NULL,
-          detail TEXT,
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  actor_user_id integer NOT NULL,
+  action text NOT NULL,
+  entity_type text NOT NULL,
+  entity_id integer NOT NULL,
+  detail jsonb,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT audit_log_pkey PRIMARY KEY (id),
+  CONSTRAINT audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(id)
+);
+
+CREATE INDEX idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id);
 
 CREATE TABLE daily_stats (
-          stat_date TEXT NOT NULL,
-          facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
-          revenue_minor INTEGER NOT NULL DEFAULT 0,
-          reservation_count INTEGER NOT NULL DEFAULT 0,
-          guest_count INTEGER NOT NULL DEFAULT 0,
-          highchair_count INTEGER NOT NULL DEFAULT 0,
-          cancelled_count INTEGER NOT NULL DEFAULT 0,
-          order_count INTEGER NOT NULL DEFAULT 0,
-          PRIMARY KEY (stat_date, facility_id)
-        );
+  stat_date date NOT NULL,
+  facility_id integer NOT NULL,
+  revenue_minor integer DEFAULT 0 NOT NULL,
+  reservation_count integer DEFAULT 0 NOT NULL,
+  guest_count integer DEFAULT 0 NOT NULL,
+  highchair_count integer DEFAULT 0 NOT NULL,
+  cancelled_count integer DEFAULT 0 NOT NULL,
+  order_count integer DEFAULT 0 NOT NULL,
+  CONSTRAINT daily_stats_pkey PRIMARY KEY (stat_date, facility_id),
+  CONSTRAINT daily_stats_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE
+);
 
 CREATE TABLE districts (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE NOT NULL,
-          population INTEGER NOT NULL CHECK (population >= 0)
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  name text NOT NULL,
+  population integer NOT NULL,
+  geom geometry,
+  CONSTRAINT districts_pkey PRIMARY KEY (id),
+  CONSTRAINT districts_name_key UNIQUE (name),
+  CONSTRAINT districts_population_check CHECK ((population >= 0))
+);
+
+CREATE INDEX idx_districts_geom ON public.districts USING gist (geom);
 
 CREATE TABLE facilities (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          kod TEXT UNIQUE NOT NULL,
-          ad TEXT NOT NULL,
-          adres TEXT,
-          lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
-          lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
-          capacity INTEGER NOT NULL CHECK (capacity > 0),
-          occupancy INTEGER NOT NULL DEFAULT 0 CHECK (occupancy BETWEEN 0 AND 100),
-          iett_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
-          vapur_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
-          transit_transfer TEXT NOT NULL DEFAULT 'Mevcut Değil',
-          route_description TEXT NOT NULL DEFAULT 'Mevcut Değil',
-          created_at TEXT NOT NULL DEFAULT (datetime('now')),
-          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  kod text NOT NULL,
+  ad text NOT NULL,
+  adres text,
+  lat double precision NOT NULL,
+  lng double precision NOT NULL,
+  capacity integer NOT NULL,
+  manual_occupancy integer DEFAULT 0 NOT NULL,
+  iett_info text DEFAULT 'Mevcut Değil'::text NOT NULL,
+  vapur_info text DEFAULT 'Mevcut Değil'::text NOT NULL,
+  transit_transfer text DEFAULT 'Mevcut Değil'::text NOT NULL,
+  route_description text DEFAULT 'Mevcut Değil'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  geom geometry GENERATED ALWAYS AS (st_setsrid(st_makepoint(lng, lat), 4326)) STORED,
+  CONSTRAINT facilities_pkey PRIMARY KEY (id),
+  CONSTRAINT facilities_kod_key UNIQUE (kod),
+  CONSTRAINT facilities_capacity_check CHECK ((capacity > 0)),
+  CONSTRAINT facilities_lat_check CHECK (((lat >= ('-90'::integer)::double precision) AND (lat <= (90)::double precision))),
+  CONSTRAINT facilities_lng_check CHECK (((lng >= ('-180'::integer)::double precision) AND (lng <= (180)::double precision))),
+  CONSTRAINT facilities_occupancy_check CHECK (((manual_occupancy >= 0) AND (manual_occupancy <= 100)))
+);
+
+CREATE INDEX idx_facilities_geog ON public.facilities USING gist (((geom)::geography));
+
+CREATE INDEX idx_facilities_geom ON public.facilities USING gist (geom);
 
 CREATE TABLE ispark_status (
-          facility_id INTEGER PRIMARY KEY REFERENCES facilities(id) ON DELETE CASCADE,
-          capacity INTEGER NOT NULL CHECK (capacity > 0),
-          occupied INTEGER NOT NULL DEFAULT 0 CHECK (occupied >= 0 AND occupied <= capacity),
-          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
+  facility_id integer NOT NULL,
+  capacity integer NOT NULL,
+  occupied integer DEFAULT 0 NOT NULL,
+  updated_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT ispark_status_pkey PRIMARY KEY (facility_id),
+  CONSTRAINT ispark_status_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
+  CONSTRAINT ispark_status_capacity_check CHECK ((capacity > 0)),
+  CONSTRAINT ispark_status_check CHECK (((occupied >= 0) AND (occupied <= capacity)))
+);
 
 CREATE TABLE menu_items (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
-          name TEXT NOT NULL,
-          category TEXT NOT NULL DEFAULT 'Genel',
-          price_minor INTEGER NOT NULL CHECK (price_minor >= 0),
-          is_available INTEGER NOT NULL DEFAULT 1 CHECK (is_available IN (0, 1)),
-          created_at TEXT NOT NULL DEFAULT (datetime('now')),
-          UNIQUE (facility_id, name)
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  facility_id integer NOT NULL,
+  name text NOT NULL,
+  category text DEFAULT 'Genel'::text NOT NULL,
+  price_minor integer NOT NULL,
+  is_available boolean DEFAULT true NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT menu_items_pkey PRIMARY KEY (id),
+  CONSTRAINT menu_items_facility_id_name_key UNIQUE (facility_id, name),
+  CONSTRAINT menu_items_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
+  CONSTRAINT menu_items_price_minor_check CHECK ((price_minor >= 0))
+);
+
+CREATE INDEX idx_menu_items_facility ON public.menu_items USING btree (facility_id);
 
 CREATE TABLE order_items (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-          menu_item_id INTEGER NOT NULL REFERENCES menu_items(id),
-          quantity INTEGER NOT NULL CHECK (quantity > 0),
-          unit_price_minor INTEGER NOT NULL CHECK (unit_price_minor >= 0)
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  order_id integer NOT NULL,
+  menu_item_id integer NOT NULL,
+  quantity integer NOT NULL,
+  unit_price_minor integer NOT NULL,
+  CONSTRAINT order_items_pkey PRIMARY KEY (id),
+  CONSTRAINT order_items_menu_item_id_fkey FOREIGN KEY (menu_item_id) REFERENCES menu_items(id),
+  CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT order_items_quantity_check CHECK ((quantity > 0)),
+  CONSTRAINT order_items_unit_price_minor_check CHECK ((unit_price_minor >= 0))
+);
+
+CREATE INDEX idx_order_items_order ON public.order_items USING btree (order_id);
 
 CREATE TABLE orders (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          reservation_id INTEGER NOT NULL REFERENCES reservations(id) ON DELETE CASCADE,
-          status TEXT NOT NULL DEFAULT 'open'
-            CHECK (status IN ('open', 'submitted', 'served', 'paid', 'cancelled')),
-          total_minor INTEGER NOT NULL DEFAULT 0 CHECK (total_minor >= 0),
-          crypto_signature TEXT NOT NULL DEFAULT '',
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        , payment_type TEXT
-          CHECK (payment_type IN ('cash', 'card', 'online')));
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  reservation_id integer NOT NULL,
+  status text DEFAULT 'open'::text NOT NULL,
+  total_minor integer DEFAULT 0 NOT NULL,
+  crypto_signature text DEFAULT ''::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  payment_type text,
+  CONSTRAINT orders_pkey PRIMARY KEY (id),
+  CONSTRAINT orders_reservation_id_fkey FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE,
+  CONSTRAINT orders_payment_type_check CHECK ((payment_type = ANY (ARRAY['cash'::text, 'card'::text, 'online'::text]))),
+  CONSTRAINT orders_status_check CHECK ((status = ANY (ARRAY['open'::text, 'submitted'::text, 'served'::text, 'paid'::text, 'cancelled'::text]))),
+  CONSTRAINT orders_total_minor_check CHECK ((total_minor >= 0))
+);
+
+CREATE INDEX idx_orders_reservation ON public.orders USING btree (reservation_id);
 
 CREATE TABLE reservations (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
-          reserve_date TEXT NOT NULL,
-          reserve_time TEXT NOT NULL,
-          guests INTEGER NOT NULL CHECK (guests > 0),
-          crypto_signature TEXT NOT NULL,
-          created_at TEXT NOT NULL DEFAULT (datetime('now')), status TEXT NOT NULL DEFAULT 'confirmed'
-          CHECK (status IN ('pending', 'confirmed', 'cancelled')), amount_minor INTEGER NOT NULL DEFAULT 0
-          CHECK (amount_minor >= 0), payment_type TEXT
-          CHECK (payment_type IN ('cash', 'card', 'online')), highchair_count INTEGER NOT NULL DEFAULT 0
-          CHECK (highchair_count >= 0),
-          UNIQUE (user_id, facility_id, reserve_date, reserve_time)
-        );
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  user_id integer NOT NULL,
+  facility_id integer NOT NULL,
+  reserve_date date NOT NULL,
+  reserve_time time without time zone NOT NULL,
+  guests integer NOT NULL,
+  crypto_signature text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  status text DEFAULT 'confirmed'::text NOT NULL,
+  amount_minor integer DEFAULT 0 NOT NULL,
+  payment_type text,
+  highchair_count integer DEFAULT 0 NOT NULL,
+  CONSTRAINT reservations_pkey PRIMARY KEY (id),
+  CONSTRAINT reservations_user_id_facility_id_reserve_date_reserve_time_key UNIQUE (user_id, facility_id, reserve_date, reserve_time),
+  CONSTRAINT reservations_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
+  CONSTRAINT reservations_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT reservations_amount_minor_check CHECK ((amount_minor >= 0)),
+  CONSTRAINT reservations_guests_check CHECK ((guests > 0)),
+  CONSTRAINT reservations_highchair_count_check CHECK ((highchair_count >= 0)),
+  CONSTRAINT reservations_payment_type_check CHECK ((payment_type = ANY (ARRAY['cash'::text, 'card'::text, 'online'::text]))),
+  CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['pending'::text, 'confirmed'::text, 'cancelled'::text])))
+);
+
+CREATE INDEX idx_reservations_date ON public.reservations USING btree (reserve_date);
+
+CREATE INDEX idx_reservations_facility_date ON public.reservations USING btree (facility_id, reserve_date);
+
+CREATE INDEX idx_reservations_slot ON public.reservations USING btree (facility_id, reserve_date, reserve_time);
+
+CREATE INDEX idx_reservations_user ON public.reservations USING btree (user_id);
 
 CREATE TABLE schema_migrations (
-      version INTEGER PRIMARY KEY,
-      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
+  version integer NOT NULL,
+  applied_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT schema_migrations_pkey PRIMARY KEY (version)
+);
 
 CREATE TABLE users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT UNIQUE NOT NULL,
-          password TEXT NOT NULL,
-          role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-
-CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
-
-CREATE INDEX idx_menu_items_facility ON menu_items(facility_id);
-
-CREATE INDEX idx_order_items_order ON order_items(order_id);
-
-CREATE INDEX idx_orders_reservation ON orders(reservation_id);
-
-CREATE INDEX idx_reservations_date ON reservations(reserve_date);
-
-CREATE INDEX idx_reservations_facility_date ON reservations(facility_id, reserve_date);
-
-CREATE INDEX idx_reservations_slot
-          ON reservations(facility_id, reserve_date, reserve_time);
-
-CREATE INDEX idx_reservations_user ON reservations(user_id);
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  username text NOT NULL,
+  password text NOT NULL,
+  role text DEFAULT 'user'::text NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_username_key UNIQUE (username),
+  CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['user'::text, 'admin'::text])))
+);

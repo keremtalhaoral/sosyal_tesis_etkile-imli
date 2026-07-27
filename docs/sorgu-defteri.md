@@ -1,7 +1,7 @@
 # Sorgu Defteri — Projenin Her Özelliğini SQL ile Gösterme Rehberi
 
 Bu defter, projenin **her özelliğini** çalıştırılabilir SQL sorgularıyla gösterir. Amaç: DBeaver'da
-(veya `sqlite3 data/app.db` ile) tek tek çalıştırıp mentöre "şu özellik şu sorguyla şunu yapıyor"
+(veya `psql -d mufettis` ile) tek tek çalıştırıp mentöre "şu özellik şu sorguyla şunu yapıyor"
 diyebilmen. Her başlıkta **Amaç → SQL → Ne gösterir** (gerekirse **Örnek çıktı** ve **PostGIS karşılığı**).
 
 - Aynı sorguların **çıplak/çalıştırılabilir** hâli → repo kökündeki [`queries.sql`](../queries.sql)
@@ -153,7 +153,7 @@ GROUP BY reserve_time ORDER BY slot;
 
 **4.3 — Doluluk ısı haritası (haftanın günü × slot):**
 ```sql
-SELECT CAST(strftime('%w', reserve_date) AS INTEGER) AS gun_0paz,
+SELECT EXTRACT(DOW FROM reserve_date)::int AS gun_0paz,
        reserve_time AS slot, SUM(guests) AS misafir
 FROM reservations WHERE status != 'cancelled'
 GROUP BY gun_0paz, slot ORDER BY misafir DESC;
@@ -234,13 +234,13 @@ FROM reservations WHERE status != 'cancelled';
 
 **6.2 — Aylık ciro zaman serisi:**
 ```sql
-SELECT substr(reserve_date, 1, 7) AS ay,
+SELECT to_char(reserve_date, 'YYYY-MM') AS ay,
        ROUND(SUM(amount_minor)/100.0, 2) AS ciro_TL, COUNT(*) AS rez
 FROM reservations WHERE status != 'cancelled'
 GROUP BY ay ORDER BY ay DESC;
 ```
-*(Granülerlik: gün = `reserve_date`, hafta = `strftime('%Y-W%W', reserve_date)`, yıl =
-`substr(reserve_date,1,4)`.)*
+*(Granülerlik: gün = `reserve_date`, hafta = `to_char(reserve_date, 'IYYY-"W"IW')`, yıl =
+`to_char(reserve_date, 'YYYY')`.)*
 
 **6.3 — Ödeme tipi kırılımı:**
 ```sql
@@ -261,7 +261,7 @@ FROM reservations;
 
 **6.5 — Bebe (mama) sandalyesi trendi:**
 ```sql
-SELECT substr(reserve_date,1,7) AS ay, SUM(highchair_count) AS mama,
+SELECT to_char(reserve_date, 'YYYY-MM') AS ay, SUM(highchair_count) AS mama,
        COUNT(CASE WHEN highchair_count > 0 THEN 1 END) AS mama_isteyen_rez
 FROM reservations WHERE status != 'cancelled'
 GROUP BY ay ORDER BY ay DESC;
@@ -286,11 +286,11 @@ GROUP BY f.id ORDER BY ciro_TL DESC LIMIT 10;
 **7.1 — Aynı ciro, iki kaynaktan (eşit olmalı):**
 ```sql
 -- CANLI (kaynak tablo, ağır):
-SELECT substr(reserve_date,1,7) AS ay, SUM(amount_minor) AS ciro
+SELECT to_char(reserve_date, 'YYYY-MM') AS ay, SUM(amount_minor) AS ciro
 FROM reservations WHERE status != 'cancelled' GROUP BY ay ORDER BY ay DESC LIMIT 3;
 
 -- ROLLUP (türetilmiş, hafif):
-SELECT substr(stat_date,1,7) AS ay, SUM(revenue_minor) AS ciro
+SELECT to_char(stat_date, 'YYYY-MM') AS ay, SUM(revenue_minor) AS ciro
 FROM daily_stats GROUP BY ay ORDER BY ay DESC LIMIT 3;
 ```
 *Ne gösterir:* İki sonuç **birebir aynı** → türetilmiş veri kaynakla tutarlı. Fark yalnız hız
@@ -324,7 +324,7 @@ ROLLBACK;
 
 **9.1 — Parolalar PHC formatında hash'li (düz metin YOK):**
 ```sql
-SELECT username, substr(password, 1, 28) AS hash_onek FROM users LIMIT 5;
+SELECT username, left(password, 28) AS hash_onek FROM users LIMIT 5;
 ```
 *Örnek çıktı:* `pbkdf2_sha256$600000$W1eDSS...` → algoritma$iterasyon$salt$hash. Parolanın kendisi
 hiçbir yerde saklanmaz; her kullanıcıya ayrı salt.
@@ -365,9 +365,9 @@ SELECT COUNT(*) FROM reservations WHERE crypto_signature = 'generated';
 kanıtı (sorgu desenine göre indeks seçilir — ADR-003).
 
 **10.3 — Aylık ciro (ağır agregasyon) + süre:**
-DBeaver sorguyu çalıştırınca alt barda süreyi gösterir; `sqlite3`'te `.timer on`.
+DBeaver sorguyu çalıştırınca alt barda süreyi gösterir; `psql`'de `\timing on`.
 ```sql
-SELECT substr(reserve_date,1,7) AS ay, SUM(amount_minor) AS ciro, COUNT(*) AS rez
+SELECT to_char(reserve_date, 'YYYY-MM') AS ay, SUM(amount_minor) AS ciro, COUNT(*) AS rez
 FROM reservations WHERE status != 'cancelled' GROUP BY ay ORDER BY ay DESC;
 ```
 *Ölçüm:* ~642K satırda ~300 ms (canlı). Aynısı `daily_stats` rollup'ından çok daha hızlı (§7).

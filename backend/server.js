@@ -14,10 +14,15 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const analytics = require('./analytics');
-const { signJwt, verifyJwt, signReservation, signOrder } = require('./security');
+const { signJwt, verifyJwt, signReservation } = require('./security');
+const { verifyPasswordAsync, DUMMY_PHC, init, DATABASE_URL } = require('./database');
 const { validateReservationInput, validateOrderInput } = require('./validate');
 const http = require('http');
-const crypto = require('crypto');
+
+// Async handler'da fırlatılan hata Express 4'e KENDİLİĞİNDEN ulaşmaz (reddedilen Promise
+// yakalanmaz, istek asılı kalır). Bu sarmalayıcı reddi next()'e bağlar → alttaki hata
+// middleware'i devreye girer.
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 const app = express();
 const PORT = process.env.PORT || 8085;
@@ -55,219 +60,224 @@ const requireAdmin = (req, res, next) => {
 };
 
 // --- Auth API ---------------------------------------------------------------
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password || String(password).length < 4) {
     return res.status(400).json({ error: 'Geçerli bir kullanıcı adı ve en az 4 karakterlik parola gerekli.' });
   }
   try {
-    const user = db.createUser(String(username).trim(), password);
+    const user = await db.createUserAsync(String(username).trim(), password);
     res.status(201).json({ token: signJwt(user), user });
   } catch (err) {
-    if (String(err.message).includes('UNIQUE')) {
+    if (err.code === '23505') {  // unique_violation
       return res.status(409).json({ error: 'Bu kullanıcı adı zaten alınmış.' });
     }
     throw err;
   }
-});
+}));
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
-  const { verifyPassword } = require('./database');
-  const record = username ? db.getUserByUsername(String(username).trim()) : null;
-  // verifyPassword sabit-zamanlıdır; kullanıcı yoksa da sahte doğrulama ile timing sızıntısını azaltırız.
-  const valid = verifyPassword(password || '', record ? record.password : 'pbkdf2_sha256$1$AA==$AA==');
+  const record = username ? await db.getUserByUsername(String(username).trim()) : null;
+  // Kullanıcı yoksa da GERÇEK parametrelerle (600k iterasyon) sahte bir doğrulama koştururuz:
+  // "kullanıcı yok" ile "parola yanlış" aynı süreyi harcar, yani yanıt süresi kullanıcı adının
+  // var olup olmadığını SIZDIRMAZ. DUMMY_PHC iterasyon sayısını PBKDF2_ITERATIONS'tan alır.
+  const valid = await verifyPasswordAsync(password || '', record ? record.password : DUMMY_PHC);
   if (!record || !valid) {
     return res.status(401).json({ error: 'Kullanıcı adı veya parola hatalı.' });
   }
   const user = { id: record.id, username: record.username, role: record.role };
   res.json({ token: signJwt(user), user });
-});
+}));
 
 // --- Facilities API ----------------------------------------------------------
-// Endpoint: Retrieve Social Facilities (from central SQLite database)
-app.get('/api/facilities', (req, res) => {
-  res.json(db.getFacilities());
-});
+// Endpoint: Retrieve Social Facilities (merkezi PostgreSQL veritabanından)
+app.get('/api/facilities', asyncHandler(async (req, res) => {
+  res.json(await db.getFacilities());
+}));
 
 // Endpoint: Add a new facility (admin) - yeni veri merkezi veritabanına kalıcı yazılır
-app.post('/api/facilities', requireAdmin, (req, res) => {
+app.post('/api/facilities', requireAdmin, asyncHandler(async (req, res) => {
   const { kod, ad, lat, lng, capacity } = req.body || {};
   if (!kod || !ad || typeof lat !== 'number' || typeof lng !== 'number' || !Number.isInteger(capacity)) {
     return res.status(400).json({ error: 'kod, ad, lat, lng (sayı) ve capacity (tamsayı) alanları zorunludur.' });
   }
   try {
-    res.status(201).json(db.createFacility(req.body, req.user.id));
+    res.status(201).json(await db.createFacility(req.body, req.user.id));
   } catch (err) {
-    if (String(err.message).includes('UNIQUE')) {
+    if (err.code === '23505') {
       return res.status(409).json({ error: `'${kod}' kodlu tesis zaten mevcut.` });
     }
-    if (String(err.message).includes('CHECK')) {
+    if (err.code === '23514') {
       return res.status(400).json({ error: 'Geçersiz değer: kapasite > 0, doluluk 0-100, koordinatlar geçerli aralıkta olmalı.' });
     }
     throw err;
   }
-});
+}));
 
 // Endpoint: Update facility occupancy (admin)
-app.patch('/api/facilities/:id', requireAdmin, (req, res) => {
+// NOT: bu uç adminin ELLE girdiği göstergeyi (manual_occupancy) günceller. Gerçek doluluk
+// rezervasyonlardan türetilir ve YAZILAMAZ (migration v7 / ADR-009).
+app.patch('/api/facilities/:id', requireAdmin, asyncHandler(async (req, res) => {
   const { occupancy } = req.body || {};
   if (!Number.isInteger(occupancy) || occupancy < 0 || occupancy > 100) {
     return res.status(400).json({ error: 'occupancy 0-100 arası tamsayı olmalıdır.' });
   }
-  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy, req.user.id);
+  const updated = await db.updateFacilityOccupancy(Number(req.params.id), occupancy, req.user.id);
   if (!updated) return res.status(404).json({ error: 'Tesis bulunamadı.' });
   res.json(updated);
-});
+}));
 
 // Endpoint: Delete facility (admin) - rezervasyonları FK cascade ile temizlenir
-app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
-  if (!db.deleteFacility(Number(req.params.id), req.user.id)) {
+app.delete('/api/facilities/:id', requireAdmin, asyncHandler(async (req, res) => {
+  if (!await db.deleteFacility(Number(req.params.id), req.user.id)) {
     return res.status(404).json({ error: 'Tesis bulunamadı.' });
   }
   res.status(204).end();
-});
+}));
 
 // --- Reservations API ---------------------------------------------------------
-app.post('/api/reservations', requireAuth, (req, res) => {
+app.post('/api/reservations', requireAuth, asyncHandler(async (req, res) => {
   // Merkezi doğrulama (slot, tarih, guests, highchair...) - DB CHECK'lerinden ÖNCE dostça hata.
   const v = validateReservationInput(req.body);
   if (!v.ok) return res.status(400).json({ error: v.error });
   const { facilityId, reserveDate, reserveTime, guests, highchairCount } = v.value;
   try {
     const signature = signReservation(req.user.id, facilityId, reserveDate, reserveTime, guests);
-    const result = db.createReservation({
+    const result = await db.createReservation({
       userId: req.user.id,
       facilityId, reserveDate, reserveTime, guests, highchairCount,
       cryptoSignature: signature
     });
     res.status(201).json({ id: result.id, booked: result.booked, remaining: result.remaining, signature });
   } catch (err) {
-    if (String(err.message).includes('UNIQUE')) {
+    if (err.code === '23505') {  // unique_violation
       return res.status(409).json({ error: 'Aynı tesis, tarih ve saat için zaten rezervasyonunuz var.' });
     }
-    res.status(err.statusCode || 500).json({ error: err.message });
+    if (!err.statusCode) throw err;   // beklenmedik hata -> global middleware
+    res.status(err.statusCode).json({ error: err.message });
   }
-});
+}));
 
-app.get('/api/reservations', requireAuth, (req, res) => {
-  res.json(db.getReservationsByUserId(req.user.id));
-});
+app.get('/api/reservations', requireAuth, asyncHandler(async (req, res) => {
+  res.json(await db.getReservationsByUserId(req.user.id));
+}));
 
 // --- Menü + Sipariş API (Faz v2-05) ------------------------------------------
-app.get('/api/menu', (req, res) => {
+app.get('/api/menu', asyncHandler(async (req, res) => {
   const facilityId = Number(req.query.facilityId);
   if (!Number.isInteger(facilityId) || facilityId <= 0) {
     return res.status(400).json({ error: 'facilityId gereklidir.' });
   }
-  res.json(db.getMenu(facilityId));
-});
+  res.json(await db.getMenu(facilityId));
+}));
 
-app.post('/api/orders', requireAuth, (req, res) => {
+app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
   const v = validateOrderInput(req.body);
   if (!v.ok) return res.status(400).json({ error: v.error });
   const { reservationId, items, paymentType } = v.value;
   try {
-    const signature = signOrder(req.user.id, reservationId, 0, items); // ön-imza (istemci bütünlüğü)
-    const result = db.createOrder({ userId: req.user.id, reservationId, items, paymentType, cryptoSignature: signature });
-    res.status(201).json({ id: result.id, total_minor: result.total_minor, status: result.status, item_count: result.item_count, signature });
+    // İmza createOrder içinde, GERÇEK toplam hesaplandıktan sonra üretilir (bkz. db.js).
+    const result = await db.createOrder({ userId: req.user.id, reservationId, items, paymentType });
+    res.status(201).json(result);
   } catch (err) {
-    res.status(err.statusCode || 500).json({ error: err.message });
+    if (!err.statusCode) throw err;
+    res.status(err.statusCode).json({ error: err.message });
   }
-});
+}));
 
-app.get('/api/reservations/:id/orders', requireAuth, (req, res) => {
-  const orders = db.getOrdersByReservation(Number(req.params.id), req.user.id);
+app.get('/api/reservations/:id/orders', requireAuth, asyncHandler(async (req, res) => {
+  const orders = await db.getOrdersByReservation(Number(req.params.id), req.user.id);
   if (orders === null) return res.status(403).json({ error: 'Bu rezervasyon size ait değil.' });
   res.json(orders);
-});
+}));
 
 // Endpoint: Sipariş durum geçişi - personel/admin akışı (Faz v2-07, ADR-007).
 // İzinli geçişler yalnız submitted→served, served→paid, (submitted|served)→cancelled.
-app.patch('/api/orders/:id/status', requireAdmin, (req, res) => {
+app.patch('/api/orders/:id/status', requireAdmin, asyncHandler(async (req, res) => {
   const { status } = req.body || {};
   if (!status) return res.status(400).json({ error: 'status alanı zorunludur.' });
   try {
-    res.json(db.updateOrderStatus(Number(req.params.id), status, req.user.id));
+    res.json(await db.updateOrderStatus(Number(req.params.id), status, req.user.id));
   } catch (err) {
-    res.status(err.statusCode || 500).json({ error: err.message });
+    if (!err.statusCode) throw err;
+    res.status(err.statusCode).json({ error: err.message });
   }
-});
+}));
 
 // --- Admin gözetim API (Faz v2-07) - sahiplik filtresi YOK, requireAdmin ile korunur ---
-app.get('/api/admin/reservations', requireAdmin, (req, res) => {
+app.get('/api/admin/reservations', requireAdmin, asyncHandler(async (req, res) => {
   const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
-  res.json(db.getAllReservations(facilityId));
-});
+  res.json(await db.getAllReservations(facilityId));
+}));
 
-app.get('/api/admin/orders', requireAdmin, (req, res) => {
+app.get('/api/admin/orders', requireAdmin, asyncHandler(async (req, res) => {
   const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
-  res.json(db.getAllOrders(facilityId));
-});
+  res.json(await db.getAllOrders(facilityId));
+}));
 
-app.get('/api/admin/audit-log', requireAdmin, (req, res) => {
+app.get('/api/admin/audit-log', requireAdmin, asyncHandler(async (req, res) => {
   const limit = req.query.limit ? Number(req.query.limit) : 50;
-  res.json(db.getAuditLog(limit));
-});
+  res.json(await db.getAuditLog(limit));
+}));
 
 // --- İSPARK API (bağımsız otopark kaynağı, atomik yer kapma) -------------------
-app.get('/api/ispark/:facilityId', (req, res) => {
-  const status = db.getIsparkStatus(Number(req.params.facilityId));
+app.get('/api/ispark/:facilityId', asyncHandler(async (req, res) => {
+  const status = await db.getIsparkStatus(Number(req.params.facilityId));
   if (!status) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
   res.json(status);
-});
+}));
 
-app.post('/api/ispark/:facilityId/take', requireAuth, (req, res) => {
+app.post('/api/ispark/:facilityId/take', requireAuth, asyncHandler(async (req, res) => {
   const facilityId = Number(req.params.facilityId);
-  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
-  if (!db.takeIsparkSpot(facilityId)) {
+  if (!await db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  if (!await db.takeIsparkSpot(facilityId)) {
     return res.status(409).json({ error: 'Otopark dolu, boş yer yok.' });
   }
-  res.status(201).json(db.getIsparkStatus(facilityId));
-});
+  res.status(201).json(await db.getIsparkStatus(facilityId));
+}));
 
-app.post('/api/ispark/:facilityId/release', requireAuth, (req, res) => {
+app.post('/api/ispark/:facilityId/release', requireAuth, asyncHandler(async (req, res) => {
   const facilityId = Number(req.params.facilityId);
-  if (!db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
-  db.releaseIsparkSpot(facilityId);
-  res.json(db.getIsparkStatus(facilityId));
-});
+  if (!await db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
+  await db.releaseIsparkSpot(facilityId);
+  res.json(await db.getIsparkStatus(facilityId));
+}));
 
 // --- Analytics API (canlı; Pages snapshot ile aynı şekil) ---------------------
 const VALID_GRANULARITY = ['day', 'week', 'month', 'year'];
-app.get('/api/analytics/dashboard', (req, res) => {
+app.get('/api/analytics/dashboard', asyncHandler(async (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
-  res.json(analytics.dashboard(g));
-});
+  res.json(await analytics.dashboard(g));
+}));
 // NOT (ölü sözleşme, kasıtlı): Frontend tüm ciro serisini /api/analytics/dashboard
 // içinde alıyor; bu tekil uç API bütünlüğü için var (canlı-sorgu örneği) ama şu an
 // hiçbir istemci çağırmıyor.
-app.get('/api/analytics/revenue', (req, res) => {
+app.get('/api/analytics/revenue', asyncHandler(async (req, res) => {
   const g = VALID_GRANULARITY.includes(req.query.granularity) ? req.query.granularity : 'month';
-  res.json(analytics.revenueTimeSeries(g));
-});
+  res.json(await analytics.revenueTimeSeries(g));
+}));
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms
 // NOT (ölü sözleşme, kasıtlı): Sunucu tarafı zengin alarm/100k-başına hesaplaması
 // burada yaşıyor; ancak Pages sunucusuz çalışabilsin diye frontend aynı hesabı statik
 // geojson'dan client-side yapıyor (app.js). Bu uç canlı/backend senaryosu içindir.
-app.get('/api/districts', (req, res) => {
-  res.json(db.getDistricts());
-});
+app.get('/api/districts', asyncHandler(async (req, res) => {
+  res.json(await db.getDistricts());
+}));
 
 // Endpoint: K-Nearest Neighbor (KNN) Proximity Analysis (Closest 3 facilities)
 // NOT (ölü sözleşme, kasıtlı): Frontend yakınlık analizini MatrixEngine.findNearestKNN
 // ile client-side yapıyor (offline çalışsın diye); bu uç aynı KNN'in backend karşılığı.
-app.get('/api/proximity', (req, res) => {
+app.get('/api/proximity', asyncHandler(async (req, res) => {
   const { lat, lng } = req.query;
-  
+
   if (!lat || !lng) {
     return res.status(400).json({ error: "Missing coordinates: lat and lng query params are required." });
   }
-  
-  const closest = db.getClosestFacilities(lat, lng, 3);
-  res.json(closest);
-});
+
+  res.json(await db.getClosestFacilities(lat, lng, 3));
+}));
 
 // Endpoint: Weather API with automatic fail-safe fallback
 app.get('/api/weather', async (req, res) => {
@@ -389,6 +399,29 @@ const generateRealisticMockWeather = (lat, lng) => {
   };
 };
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Müfettiş GIS Backend Server listening at http://localhost:${PORT}`);
+// --- Global hata middleware'i (4 argüman = Express bunu hata işleyici sayar) --------
+// Önceden hiç yoktu: bir handler beklenmedik şekilde fırlattığında Express'in varsayılan
+// işleyicisi devreye girip yığın izini (stack trace) istemciye basıyordu. Artık iç detay
+// sunucu log'unda kalır, istemci sade bir mesaj alır.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(`[error] ${req.method} ${req.url}:`, err);
+  if (res.headersSent) return;
+  const status = err.statusCode || 500;
+  res.status(status).json({ error: status === 500 ? 'Sunucu hatası.' : err.message });
 });
+
+// Migration + seed BİTMEDEN port dinlenmez: aksi halde ilk istekler yarı kurulmuş bir şemaya
+// çarpar (SQLite döneminde bağlantı senkron açıldığı için bu sorun yoktu; pg async).
+init()
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Müfettiş GIS Backend Server listening at http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('[server] Veritabanı hazırlanamadı, servis başlatılmıyor:', err.message);
+    console.error(`[server] Bağlantı: ${DATABASE_URL.replace(/:[^:@]*@/, ':***@')}`);
+    console.error('[server] PostgreSQL çalışıyor mu?  npm run db:up   (docker compose)');
+    process.exit(1);
+  });

@@ -336,9 +336,28 @@ function build() {
   }
 
   const features = [...Object.values(lineFeatures), ...walkFeatures];
+
+  // KAPSAM ÖLÇÜSÜ: "kaç hat çizdik" yanıltıcıdır - asıl soru KAÇ TESİSİN hattı var.
+  // Eşleşmeyenler zaten unmatched'e yazılıyordu ama hiçbir yerde toplanmıyordu, bu yüzden
+  // tesislerin yarısından fazlasının hatsız kaldığı çıktıdan görünmüyordu.
+  const uncovered = Object.entries(facilityIndex).filter(([, keys]) => keys.length === 0).map(([id]) => Number(id));
+  const unmatchedReasons = {};
+  for (const reason of Object.values(unmatched)) {
+    const kind = reason.split('(')[0];
+    unmatchedReasons[kind] = (unmatchedReasons[kind] || 0) + 1;
+  }
+
   const meta = {
     source: SOURCE, mode: gtfs.mode,
     line_count: Object.keys(lineFeatures).length, walk_count: walkFeatures.length, facility_count: facilities.length,
+    coverage: {
+      facilities_with_lines: facilities.length - uncovered.length,
+      facilities_without_lines: uncovered.length,
+      pct: facilities.length ? Math.round((facilities.length - uncovered.length) * 100 / facilities.length) : 0,
+      uncovered_facility_ids: uncovered
+    },
+    unmatched_count: Object.keys(unmatched).length,
+    unmatched_reasons: unmatchedReasons,
     quality_gate: gtfs.mode === 'geometric' ? { cov_min: COV_MIN, dist_max_m: DIST_MAX } : undefined,
     unmatched: unmatched
   };
@@ -348,6 +367,11 @@ function build() {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(out) + '\n');
   console.log(`[routes] mod=${gtfs.mode}  ${meta.line_count} hat + ${meta.walk_count} yürüme bacağı -> ${path.relative(REPO, OUT)}`);
+  console.log(`[routes] KAPSAM: ${meta.coverage.facilities_with_lines}/${facilities.length} tesisin hattı var (%${meta.coverage.pct}).`);
+  if (uncovered.length) {
+    console.warn(`[routes] ${uncovered.length} tesiste HİÇ hat yok (id: ${uncovered.join(', ')}).`);
+    console.warn(`[routes] Eşleşmeme sebepleri: ${Object.entries(unmatchedReasons).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+  }
   if (meta.warning) console.warn(`[routes] UYARI: ${meta.warning}`);
   const um = Object.entries(unmatched);
   if (um.length) console.log(`[routes] Eşleşmeyen ${um.length} ref: ${um.slice(0, 10).map(([k, v]) => `${k}→${v}`).join(', ')}${um.length > 10 ? ' …' : ''}`);

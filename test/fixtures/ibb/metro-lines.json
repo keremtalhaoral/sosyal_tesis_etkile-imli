@@ -1,0 +1,11 @@
+{
+  "Success": true,
+  "Message": null,
+  "Data": [
+    { "Id": 2,  "Name": "M2 Yenikapı - Hacıosman", "Color": "#00A94F" },
+    { "Id": 4,  "Name": "M4 Kadıköy - Sabiha Gökçen Havalimanı", "Color": "#E44C9A" },
+    { "Id": 11, "Name": "T1 Kabataş - Bağcılar", "Color": "#0067A6" },
+    { "Id": 90, "Name": "Marmaray Halkalı - Gebze", "Color": "#A6093D" },
+    { "Id": 99, "Name": "", "Color": null }
+  ]
+}
