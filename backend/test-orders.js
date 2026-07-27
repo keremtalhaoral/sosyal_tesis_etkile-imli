@@ -10,6 +10,7 @@ process.env.DB_PATH = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'orders-')
 const db = require('./db');
 const { getDb } = require('./database');
 const { validateOrderInput } = require('./validate');
+const { signOrder } = require('./security');
 
 let passed = 0, failed = 0;
 const assert = (name, cond) => { if (cond) { passed++; console.log(`  PASS  ${name}`); } else { failed++; console.error(`  FAIL  ${name}`); } };
@@ -25,9 +26,19 @@ const [m1, m2] = menu;
 
 // 1. Sipariş oluştur: 2 kalem, snapshot fiyatlardan doğru toplam
 const expectTotal = m1.price_minor * 2 + m2.price_minor * 1;
-const order = db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'card',
-  items: [{ menuItemId: m1.id, quantity: 2 }, { menuItemId: m2.id, quantity: 1 }], cryptoSignature: 's' });
+const orderItems = [{ menuItemId: m1.id, quantity: 2 }, { menuItemId: m2.id, quantity: 1 }];
+const order = db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'card', items: orderItems });
 assert('sipariş: toplam snapshot fiyatlardan doğru', order.total_minor === expectTotal);
+
+// 1b. İMZA GERÇEK TUTARI KAPSIYOR (eskiden server.js imzayı tutar=0 ile önceden üretiyordu,
+// bu yüzden imza tutar değişse bile aynı kalıyordu - bütünlük kontrolü işlevsizdi).
+const storedSig = conn.prepare('SELECT crypto_signature FROM orders WHERE id = ?').get(order.id).crypto_signature;
+assert('imza: kaydedilen imza gerçek toplamı kapsıyor',
+  storedSig === signOrder(user.id, resv.id, expectTotal, orderItems));
+assert('imza: tutar kurcalanırsa imza tutmuyor',
+  storedSig !== signOrder(user.id, resv.id, expectTotal + 1, orderItems));
+assert('imza: tutar=0 ile üretilen eski imza artık eşleşmiyor',
+  storedSig !== signOrder(user.id, resv.id, 0, orderItems));
 assert('sipariş: durum submitted (personel akışı bekler), 2 kalem', order.status === 'submitted' && order.item_count === 2);
 assert('sipariş: rezervasyon tutarına eklendi', db.getFacilityById(1) && conn.prepare('SELECT amount_minor FROM reservations WHERE id=?').get(resv.id).amount_minor === expectTotal);
 
@@ -40,14 +51,14 @@ assert('snapshot: sipariş toplamı değişmedi', orderRow.total_minor === expec
 
 // 3. Sahiplik: başka kullanıcı bu rezervasyona sipariş veremez (403)
 let ownBlocked = false;
-try { db.createOrder({ userId: other.id, reservationId: resv.id, paymentType: 'cash', items: [{ menuItemId: m1.id, quantity: 1 }], cryptoSignature: 's' }); }
+try { db.createOrder({ userId: other.id, reservationId: resv.id, paymentType: 'cash', items: [{ menuItemId: m1.id, quantity: 1 }] }); }
 catch (e) { ownBlocked = e.statusCode === 403; }
 assert('sahiplik: başkasının rezervasyonuna sipariş reddedildi (403)', ownBlocked);
 
 // 4. Başka tesisin menü kalemi reddedilir (409)
 const otherFacMenu = db.getMenu(2);
 let wrongFacBlocked = false;
-try { db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'cash', items: [{ menuItemId: otherFacMenu[0].id, quantity: 1 }], cryptoSignature: 's' }); }
+try { db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'cash', items: [{ menuItemId: otherFacMenu[0].id, quantity: 1 }] }); }
 catch (e) { wrongFacBlocked = e.statusCode === 409; }
 assert('kısıt: başka tesisin menü kalemi reddedildi (409)', wrongFacBlocked);
 
@@ -76,6 +87,29 @@ assert('durum makinesi: served→paid kabul edildi', paid.status === 'paid');
 const auditRows = conn.prepare("SELECT action, detail FROM audit_log WHERE entity_type='order' AND entity_id=? ORDER BY id").all(order.id);
 assert('audit log: iki geçiş de kaydedildi', auditRows.length === 2);
 assert('audit log: action=order.status_change', auditRows.every(r => r.action === 'order.status_change'));
+
+// 6c. İPTAL PARAYI GERİ ALIR (H1). createOrder tutarı reservations.amount_minor'a EKLİYOR;
+// iptal bunu geri almazsa iptal edilmiş sipariş sonsuza dek ciro sayılır (tüm raporlama
+// amount_minor okur). Regresyon koruması: bu test eskiden YOKTU.
+const amountOf = () => conn.prepare('SELECT amount_minor FROM reservations WHERE id = ?').get(resv.id).amount_minor;
+const amountBeforeCancel = amountOf();
+const order2 = db.createOrder({ userId: user.id, reservationId: resv.id, paymentType: 'cash',
+  items: [{ menuItemId: m2.id, quantity: 3 }] });
+assert('iptal öncesi: yeni siparişin tutarı rezervasyona eklendi',
+  amountOf() === amountBeforeCancel + order2.total_minor);
+
+db.updateOrderStatus(order2.id, 'cancelled', staff.id);
+assert('İPTAL: rezervasyon tutarı geri alındı (ciro şişmiyor)', amountOf() === amountBeforeCancel);
+assert('iptal: sipariş durumu cancelled', conn.prepare('SELECT status FROM orders WHERE id=?').get(order2.id).status === 'cancelled');
+const cancelAudit = conn.prepare("SELECT detail FROM audit_log WHERE entity_type='order' AND entity_id=? ORDER BY id DESC").get(order2.id);
+assert('iptal: audit kaydı geri alınan tutarı içeriyor',
+  JSON.parse(cancelAudit.detail).reverted_minor === order2.total_minor);
+
+// İptal edilen siparişin kalemleri kategori cirosuna girmemeli (aynı hata ailesi).
+const analytics = require('./analytics');
+const catRevenue = analytics.categorySales().reduce((s, c) => s + (c.revenue_minor || 0), 0);
+const liveRevenue = analytics.kpiSummary().revenue_minor;
+assert('analytics: kategori cirosu iptal edilen siparişi saymıyor', catRevenue === liveRevenue);
 
 // 7. Cascade: rezervasyon silinince sipariş + kalemler gider
 conn.prepare('DELETE FROM reservations WHERE id = ?').run(resv.id);

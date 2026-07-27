@@ -59,6 +59,14 @@ const insReservation = db.prepare(`
   INSERT OR IGNORE INTO reservations
     (user_id, facility_id, reserve_date, reserve_time, guests, highchair_count, status, amount_minor, payment_type, crypto_signature)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'generated')`);
+
+// Bu script createReservation()'ı BYPASS edip ham INSERT kullanıyor (batch hız için).
+// Dolayısıyla per-slot kapasite invariant'ını KENDİSİ korumak zorunda: DB'de o slotta zaten
+// duran koltukları okumadan yazarsa, --reset olmadan ikinci koşuda kapasite aşılır ve
+// dosyanın başındaki "kapasite ASLA aşılmaz" iddiası bozulurdu.
+const existingSeats = db.prepare(`
+  SELECT COALESCE(SUM(guests), 0) AS n FROM reservations
+  WHERE facility_id = ? AND reserve_date = ? AND reserve_time = ? AND status != 'cancelled'`);
 const insOrder = db.prepare("INSERT INTO orders (reservation_id, status, total_minor) VALUES (?, 'paid', ?)");
 const insOrderItem = db.prepare('INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price_minor) VALUES (?, ?, ?, ?)');
 
@@ -75,10 +83,13 @@ for (let d = 0; d < DAYS; d++) {
   for (const f of facilities) {
     const menu = menuByFacility[f.id];
     for (const slot of SLOTS) {
-      // Makul MUTLAK doluluk hedefi (kapasiteyi aşmaz) - gerçekçi: bir slotta birkaç grup.
-      const targetSeats = Math.min(f.capacity, Math.round(slotPopularity(slot) * weekend * randInt(0, 16)));
-      if (targetSeats === 0) continue;
-      let seats = 0;
+      // Makul MUTLAK doluluk hedefi - o slotta ZATEN duran koltuklar düşülür, böylece
+      // script tekrar tekrar çalıştırılsa da SUM(guests) kapasiteyi aşamaz.
+      let seats = existingSeats.get(f.id, iso, slot).n;
+      const room = f.capacity - seats;
+      if (room <= 0) continue;
+      const targetSeats = Math.min(f.capacity, seats + Math.round(slotPopularity(slot) * weekend * randInt(0, 16)));
+      if (targetSeats <= seats) continue;
       let k = randInt(0, USER_POOL - 1); // farklı kullanıcılar için rastgele başlangıç, adım adım
       let used = 0;
       while (seats < targetSeats && used < USER_POOL) {
@@ -131,3 +142,23 @@ rows.forEach(r => console.log(`   ${r.ay}: ${(r.ciro / 100).toLocaleString('tr-T
 console.log('\n[gen] Slot doluluk sorgusu EXPLAIN QUERY PLAN:');
 db.prepare("EXPLAIN QUERY PLAN SELECT SUM(guests) FROM reservations WHERE facility_id=1 AND reserve_date='2026-06-01' AND reserve_time='19:00'")
   .all().forEach(p => console.log('  ', p.detail));
+
+// 4) INVARIANT DOĞRULAMASI: dosyanın başındaki "per-slot kapasite ASLA aşılmaz" iddiası
+// bir yorum değil, ölçülen bir gerçek olmalı. Aşan slot varsa gürültülü hata ver.
+const overbooked = db.prepare(`
+  SELECT r.facility_id, r.reserve_date, r.reserve_time, SUM(r.guests) AS seats, f.capacity
+  FROM reservations r JOIN facilities f ON f.id = r.facility_id
+  WHERE r.status != 'cancelled'
+  GROUP BY r.facility_id, r.reserve_date, r.reserve_time
+  HAVING seats > f.capacity`).all();
+if (overbooked.length) {
+  console.error(`\n[gen] HATA: ${overbooked.length} slot kapasiteyi aşıyor! İlk örnek:`, overbooked[0]);
+  process.exitCode = 1;
+} else {
+  console.log('\n[gen] Invariant OK: hiçbir (tesis, tarih, slot) kapasiteyi aşmıyor.');
+}
+
+// 5) Rollup'ı tazele: daily_stats türetilmiş veridir, kaynak değişince yeniden kurulmalı.
+// Eskiden bu çağrı yoktu; üretimden sonra rollup bayat kalıyor, dashboard eski sayıyı gösteriyordu.
+const rollupRows = require('../backend/analytics').rebuildDailyStats();
+console.log(`[gen] daily_stats rollup yeniden kuruldu: ${rollupRows} satır.`);

@@ -13,7 +13,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { getDb, transaction, hashPassword } = require('./database');
+const { getDb, transaction, hashPassword, hashPasswordAsync } = require('./database');
+const { signOrder } = require('./security');
 
 // ---------------------------------------------------------------------------
 // GeoJSON ilçe sınırları (statik referans verisi - salt okunur, DB'ye taşınmadı
@@ -75,7 +76,16 @@ const rowToFacility = (row) => ({
   adres: row.adres,
   koordinatlar: [row.lat, row.lng],
   kapasite: row.capacity,
-  dolulukOrani: row.occupancy,
+  // dolulukOrani artık TÜRETİLMİŞ: bugünün onaylı rezervasyonlarının koltuk toplamı /
+  // kapasite. Kaynak = reservations tablosu, elle girilmiş bir alan değil.
+  dolulukOrani: row.live_occupancy,
+  dolulukKaynagi: {
+    tarih: row.occupancy_date,
+    rezerveKoltuk: row.booked_seats,
+    // Adminin elle girdiği gösterge. Artık "doluluk" diye sunulmuyor; ayrı alan olarak durur
+    // ki panelde "elle işaretlenen" ile "gerçekte olan" karşılaştırılabilsin.
+    manuelIsaret: row.manual_occupancy
+  },
   transit: {
     otobus: row.iett_info,
     vapur: row.vapur_info,
@@ -87,11 +97,33 @@ const rowToFacility = (row) => ({
 // ---------------------------------------------------------------------------
 // Okuma operasyonları
 // ---------------------------------------------------------------------------
-const getFacilities = () =>
-  getDb().prepare('SELECT * FROM facilities ORDER BY id').all().map(rowToFacility);
+/**
+ * Gerçek doluluk = o günün İPTAL EDİLMEMİŞ rezervasyonlarının misafir toplamı / kapasite.
+ * Korelasyonlu alt sorgu idx_reservations_slot / idx_reservations_facility_date indeksini
+ * kullanır. 100'e sıkıştırılır (kapasite üstü tarihsel veri grafiği patlatmasın).
+ * PostGIS fazında bu LEFT JOIN LATERAL'a dönüşecek.
+ */
+const FACILITY_SELECT = `
+  SELECT f.*,
+         :onDate AS occupancy_date,
+         COALESCE((
+           SELECT SUM(r.guests) FROM reservations r
+           WHERE r.facility_id = f.id AND r.reserve_date = :onDate AND r.status != 'cancelled'
+         ), 0) AS booked_seats,
+         MIN(100, CAST(ROUND(COALESCE((
+           SELECT SUM(r.guests) FROM reservations r
+           WHERE r.facility_id = f.id AND r.reserve_date = :onDate AND r.status != 'cancelled'
+         ), 0) * 100.0 / f.capacity) AS INTEGER)) AS live_occupancy
+  FROM facilities f
+`;
 
-const getFacilityById = (id) => {
-  const row = getDb().prepare('SELECT * FROM facilities WHERE id = ?').get(id);
+const today = () => new Date().toISOString().slice(0, 10);
+
+const getFacilities = (onDate = today()) =>
+  getDb().prepare(`${FACILITY_SELECT} ORDER BY f.id`).all({ onDate }).map(rowToFacility);
+
+const getFacilityById = (id, onDate = today()) => {
+  const row = getDb().prepare(`${FACILITY_SELECT} WHERE f.id = :id`).get({ onDate, id });
   return row ? rowToFacility(row) : null;
 };
 
@@ -188,13 +220,18 @@ const logAudit = (conn, actorUserId, action, entityType, entityId, detail) => {
   ).run(actorUserId, action, entityType, entityId, detail ? JSON.stringify(detail) : null);
 };
 
-const getAuditLog = (limit = 50) =>
-  getDb().prepare(`
+// limit sayı DEĞİLSE (örn. ?limit=abc → NaN) SQLite'a NaN bağlanır, bu NULL'a dönüşür ve
+// "LIMIT NULL" = sınırsız olur; yani kötü girdi tüm audit log'u döktürür. Önce tamsayıya
+// indirge, sonra aralığa sıkıştır.
+const getAuditLog = (limit = 50) => {
+  const n = Number.isFinite(Number(limit)) ? Math.trunc(Number(limit)) : 50;
+  return getDb().prepare(`
     SELECT a.*, u.username AS actor_username
     FROM audit_log a JOIN users u ON u.id = a.actor_user_id
     ORDER BY a.created_at DESC, a.id DESC
     LIMIT ?
-  `).all(Math.max(1, Math.min(200, limit)));
+  `).all(Math.max(1, Math.min(200, n)));
+};
 
 // ---------------------------------------------------------------------------
 // Yazma operasyonları - "yeni veriler" artık kalıcı olarak tek yerde tutulur.
@@ -202,7 +239,7 @@ const getAuditLog = (limit = 50) =>
 const createFacility = ({ kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description, isparkCapacity }, actorUserId) =>
   transaction((conn) => {
     const result = conn.prepare(`
-      INSERT INTO facilities (kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description)
+      INSERT INTO facilities (kod, ad, adres, lat, lng, capacity, manual_occupancy, iett_info, vapur_info, transit_transfer, route_description)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       kod, ad, adres || null, lat, lng, capacity, occupancy || 0,
@@ -221,15 +258,19 @@ const createFacility = ({ kod, ad, adres, lat, lng, capacity, occupancy, iett_in
     return getFacilityById(facilityId);
   });
 
-const updateFacilityOccupancy = (id, occupancy, actorUserId) =>
+// Adminin ELLE girdiği göstergeyi günceller (gerçek doluluk değil - o rezervasyonlardan
+// türetilir ve yazılamaz). Bu yüzden fonksiyon ve audit alanları 'manual' der.
+const updateFacilityOccupancy = (id, manualOccupancy, actorUserId) =>
   transaction((conn) => {
-    const before = conn.prepare('SELECT occupancy FROM facilities WHERE id = ?').get(id);
+    const before = conn.prepare('SELECT manual_occupancy FROM facilities WHERE id = ?').get(id);
     if (!before) return null;
     const result = conn.prepare(
-      "UPDATE facilities SET occupancy = ?, updated_at = datetime('now') WHERE id = ?"
-    ).run(occupancy, id);
+      "UPDATE facilities SET manual_occupancy = ?, updated_at = datetime('now') WHERE id = ?"
+    ).run(manualOccupancy, id);
     if (result.changes === 0) return null;
-    logAudit(conn, actorUserId, 'facility.update', 'facility', id, { occupancy_before: before.occupancy, occupancy_after: occupancy });
+    logAudit(conn, actorUserId, 'facility.update', 'facility', id, {
+      manual_occupancy_before: before.manual_occupancy, manual_occupancy_after: manualOccupancy
+    });
     return getFacilityById(id);
   });
 
@@ -247,12 +288,20 @@ const deleteFacility = (id, actorUserId) =>
 const getUserByUsername = (username) =>
   getDb().prepare('SELECT * FROM users WHERE username = ?').get(username) || null;
 
-const createUser = (username, passwordRaw, role = 'user') => {
+const insertUserRow = (username, passwordHash, role) => {
   const result = getDb().prepare(
     'INSERT INTO users (username, password, role) VALUES (?, ?, ?)'
-  ).run(username, hashPassword(passwordRaw), role);
+  ).run(username, passwordHash, role);
   return { id: Number(result.lastInsertRowid), username, role };
 };
+
+// Senkron sürüm: testler ve CLI scriptleri için (bloklaması sorun değil).
+const createUser = (username, passwordRaw, role = 'user') =>
+  insertUserRow(username, hashPassword(passwordRaw), role);
+
+// Async sürüm: HTTP register yolu. Hash'i thread pool'da üretir → event loop bloke olmaz.
+const createUserAsync = async (username, passwordRaw, role = 'user') =>
+  insertUserRow(username, await hashPasswordAsync(passwordRaw), role);
 
 /**
  * Rezervasyon oluşturma - PER-SLOT kapasite muhasebesi (Faz v2-03, ADR-003).
@@ -338,8 +387,11 @@ const getMenu = (facilityId) =>
  *   değişse bile bu siparişin tutarı değişmez.
  * - total sunucuda hesaplanır (istemciye güvenilmez). Yaşam döngüsü: 'submitted' ile başlar;
  *   personel/admin panelinden submitted→served→paid ilerletilir (Faz v2-07, ADR-007).
+ * - İMZA BURADA üretilir, çağıranda DEĞİL: imzanın kapsaması gereken tutar ancak fiyatlar
+ *   menüden okunduktan sonra bilinir. (Eskiden server.js imzayı tutar=0 ile önceden üretiyordu;
+ *   imza tutarı hiç kapsamadığı için bütünlük kontrolü işlevsizdi.)
  */
-const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignature }) =>
+const createOrder = ({ userId, reservationId, items, paymentType }) =>
   transaction((conn) => {
     const reservation = conn.prepare('SELECT id, user_id, facility_id FROM reservations WHERE id = ?').get(reservationId);
     if (!reservation) { const e = new Error('Rezervasyon bulunamadı.'); e.statusCode = 404; throw e; }
@@ -360,9 +412,12 @@ const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignatur
       total += price * it.quantity;
     }
 
+    // İmza artık GERÇEK toplamı kapsıyor: tutar kurcalanırsa imza tutmaz.
+    const signature = signOrder(userId, reservationId, total, items);
+
     const orderRes = conn.prepare(
       "INSERT INTO orders (reservation_id, status, total_minor, crypto_signature, payment_type) VALUES (?, 'submitted', ?, ?, ?)"
-    ).run(reservationId, total, cryptoSignature, paymentType);
+    ).run(reservationId, total, signature, paymentType);
     const orderId = Number(orderRes.lastInsertRowid);
 
     const insItem = conn.prepare('INSERT INTO order_items (order_id, menu_item_id, quantity, unit_price_minor) VALUES (?, ?, ?, ?)');
@@ -371,7 +426,7 @@ const createOrder = ({ userId, reservationId, items, paymentType, cryptoSignatur
     // Rezervasyon tutarına siparişi ekle (kümülatif harcama)
     conn.prepare('UPDATE reservations SET amount_minor = amount_minor + ? WHERE id = ?').run(total, reservationId);
 
-    return { id: orderId, total_minor: total, status: 'submitted', item_count: resolved.length };
+    return { id: orderId, total_minor: total, status: 'submitted', item_count: resolved.length, signature };
   });
 
 const getOrdersByReservation = (reservationId, userId) => {
@@ -395,7 +450,7 @@ const ORDER_TRANSITIONS = {
 
 const updateOrderStatus = (orderId, newStatus, actorUserId) =>
   transaction((conn) => {
-    const order = conn.prepare('SELECT id, status FROM orders WHERE id = ?').get(orderId);
+    const order = conn.prepare('SELECT id, status, reservation_id, total_minor FROM orders WHERE id = ?').get(orderId);
     if (!order) { const e = new Error('Sipariş bulunamadı.'); e.statusCode = 404; throw e; }
     const allowed = ORDER_TRANSITIONS[order.status] || [];
     if (!allowed.includes(newStatus)) {
@@ -404,7 +459,21 @@ const updateOrderStatus = (orderId, newStatus, actorUserId) =>
       throw e;
     }
     conn.prepare('UPDATE orders SET status = ? WHERE id = ?').run(newStatus, orderId);
-    logAudit(conn, actorUserId, 'order.status_change', 'order', orderId, { from: order.status, to: newStatus });
+
+    // PARA GERİ ALMA: createOrder tutarı reservations.amount_minor'a EKLİYOR. İptal bunu geri
+    // almazsa iptal edilmiş sipariş sonsuza dek ciro sayılır (tüm raporlama amount_minor okur).
+    // Ekleme ile çıkarma AYNI transaction'da olduğu için ikisi birlikte commit/rollback olur
+    // (DDIA Böl. 7); amount_minor >= 0 CHECK'i son savunma hattı olarak durur.
+    if (newStatus === 'cancelled' && order.total_minor > 0) {
+      conn.prepare('UPDATE reservations SET amount_minor = amount_minor - ? WHERE id = ?')
+        .run(order.total_minor, order.reservation_id);
+    }
+
+    logAudit(conn, actorUserId, 'order.status_change', 'order', orderId, {
+      from: order.status,
+      to: newStatus,
+      ...(newStatus === 'cancelled' ? { reverted_minor: order.total_minor } : {})
+    });
     return { id: orderId, status: newStatus };
   });
 
@@ -433,6 +502,7 @@ const getAllOrders = (facilityId) =>
 module.exports = {
   getFacilities,
   getFacilityById,
+  createUserAsync,
   getDistricts: getProcessedDistricts,
   getClosestFacilities,
   createFacility,

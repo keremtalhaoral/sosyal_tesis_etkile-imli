@@ -51,22 +51,68 @@ const PBKDF2_ITERATIONS = 600000; // OWASP 2023 önerisi (SHA-256)
 const PBKDF2_KEYLEN = 32;
 const PBKDF2_DIGEST = 'sha256';
 
+// PHC stringini parçalara ayır. Bozuksa null (çağıran sahte doğrulamaya düşer).
+const parsePhc = (stored) => {
+  const parts = String(stored).split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') return null;
+  const iterations = parseInt(parts[1], 10);
+  if (!Number.isInteger(iterations) || iterations <= 0) return null;
+  return { iterations, salt: Buffer.from(parts[2], 'base64'), expected: Buffer.from(parts[3], 'base64') };
+};
+
+/**
+ * DUMMY_PHC - kullanıcı BULUNAMADIĞINDA doğrulanacak sahte hash.
+ *
+ * NEDEN ÖNEMLİ: bir saldırgan "kullanıcı adı var mı?" sorusunu yanıt SÜRESİNDEN okuyabilir.
+ * Bunu engellemenin tek yolu, kullanıcı yokken de VARMIŞ KADAR iş yapmaktır. Kritik olan
+ * alan iterasyon sayısıdır - salt/hash içeriği önemsizdir (nasıl olsa eşleşmeyecek), çünkü
+ * harcanan CPU zamanını yalnız iterasyon belirler. Bu yüzden PBKDF2_ITERATIONS'tan türetilir:
+ * iterasyon ayarı değişirse sahte hash de otomatik takip eder, ikisi asla ayrışamaz.
+ */
+const DUMMY_PHC = `pbkdf2_sha256$${PBKDF2_ITERATIONS}$${Buffer.alloc(16).toString('base64')}$${Buffer.alloc(PBKDF2_KEYLEN).toString('base64')}`;
+
+const buildPhc = (salt, hash) =>
+  `pbkdf2_sha256$${PBKDF2_ITERATIONS}$${salt.toString('base64')}$${hash.toString('base64')}`;
+
+// --- Senkron sürümler: seed / CLI scriptleri içindir (tek seferlik, bloklaması sorun değil).
+// HTTP yolunda ASLA kullanma - 600k iterasyon tek thread'i ~300ms dondurur (bkz. async sürümler).
 const hashPassword = (password) => {
   const salt = crypto.randomBytes(16);
-  const hash = crypto.pbkdf2Sync(String(password), salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, PBKDF2_DIGEST);
-  return `pbkdf2_sha256$${PBKDF2_ITERATIONS}$${salt.toString('base64')}$${hash.toString('base64')}`;
+  return buildPhc(salt, crypto.pbkdf2Sync(String(password), salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, PBKDF2_DIGEST));
 };
 
 // Sabit-zamanlı doğrulama (timing attack'a karşı). Stored = PHC string.
 const verifyPassword = (password, stored) => {
   try {
-    const parts = String(stored).split('$');
-    if (parts.length !== 4 || parts[0] !== 'pbkdf2_sha256') return false;
-    const iterations = parseInt(parts[1], 10);
-    const salt = Buffer.from(parts[2], 'base64');
-    const expected = Buffer.from(parts[3], 'base64');
-    const actual = crypto.pbkdf2Sync(String(password), salt, iterations, expected.length, PBKDF2_DIGEST);
-    return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+    const p = parsePhc(stored);
+    if (!p) return false;
+    const actual = crypto.pbkdf2Sync(String(password), p.salt, p.iterations, p.expected.length, PBKDF2_DIGEST);
+    return actual.length === p.expected.length && crypto.timingSafeEqual(actual, p.expected);
+  } catch {
+    return false;
+  }
+};
+
+// --- Async sürümler: HTTP yolunun (login/register) kullandıkları.
+// crypto.pbkdf2 işi libuv thread pool'una atar → event loop bloke olmaz, sunucu eşzamanlı
+// login altında donmaz. Senkron sürümlerle AYNI PHC formatını üretir/okur (çapraz uyumlu).
+const pbkdf2Async = (password, salt, iterations, keylen) =>
+  new Promise((resolve, reject) => {
+    crypto.pbkdf2(String(password), salt, iterations, keylen, PBKDF2_DIGEST, (err, key) =>
+      err ? reject(err) : resolve(key));
+  });
+
+const hashPasswordAsync = async (password) => {
+  const salt = crypto.randomBytes(16);
+  return buildPhc(salt, await pbkdf2Async(password, salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN));
+};
+
+const verifyPasswordAsync = async (password, stored) => {
+  try {
+    const p = parsePhc(stored);
+    if (!p) return false;
+    const actual = await pbkdf2Async(password, p.salt, p.iterations, p.expected.length);
+    return actual.length === p.expected.length && crypto.timingSafeEqual(actual, p.expected);
   } catch {
     return false;
   }
@@ -278,6 +324,22 @@ const MIGRATIONS = [
         CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
       `);
     }
+  },
+  {
+    // Migration v7: 'occupancy' -> 'manual_occupancy' (ADLANDIRMA DÜZELTMESİ).
+    //
+    // Kolon hiçbir zaman gerçek doluluğu göstermiyordu: yalnız seed'den ve adminin elle
+    // girdiği PATCH'ten değişiyor, createReservation ona hiç dokunmuyordu. Yani harita
+    // "doluluk oranı" diye adminin elle yazdığı bir sayıyı gösteriyordu; bir yıllık
+    // rezervasyon üretilse bile değişmiyordu.
+    //
+    // Karar: kolonu OLDUĞU ŞEY gibi adlandır (elle girilen gösterge/override), gerçek
+    // doluluğu ise rezervasyonlardan TÜRET (bkz. db.js occupancySelect). DDIA Böl. 11:
+    // türetilmiş veri kaynaktan hesaplanır, elle tutulan kopya kaynak sayılmaz.
+    version: 7,
+    up: (db) => {
+      db.exec('ALTER TABLE facilities RENAME COLUMN occupancy TO manual_occupancy;');
+    }
   }
 ];
 
@@ -346,9 +408,11 @@ const seedDatabase = (conn) => {
       insertDistrict.run(d.name, d.population);
     }
 
+    // seed.json'daki 'occupancy' alanı elle girilmiş bir göstergedir → manual_occupancy'ye
+    // gider (migration v7). Gerçek doluluk rezervasyonlardan türetilir, seed'den değil.
     const insertFacility = conn.prepare(`
       INSERT OR IGNORE INTO facilities
-        (id, kod, ad, adres, lat, lng, capacity, occupancy, iett_info, vapur_info, transit_transfer, route_description)
+        (id, kod, ad, adres, lat, lng, capacity, manual_occupancy, iett_info, vapur_info, transit_transfer, route_description)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     for (const f of seed.facilities || []) {
@@ -411,4 +475,9 @@ const transaction = (fn) => {
   }
 };
 
-module.exports = { getDb, transaction, hashPassword, verifyPassword, SLOTS, DB_PATH };
+module.exports = {
+  getDb, transaction, SLOTS, DB_PATH,
+  hashPassword, verifyPassword,             // senkron - seed/CLI
+  hashPasswordAsync, verifyPasswordAsync,   // async - HTTP yolu
+  DUMMY_PHC, PBKDF2_ITERATIONS
+};

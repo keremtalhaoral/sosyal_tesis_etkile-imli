@@ -119,6 +119,8 @@ const cancellationRate = (granularity = 'month') => {
 };
 
 // --- Menü kategori satış kırılımı ------------------------------------------
+// İptal edilen SİPARİŞLERİN kalemleri hariç: rezervasyon bazlı ciro (kpiSummary/revenueTimeSeries)
+// iptalleri düşüyor; burada düşmezsek aynı iptal bir raporda var, diğerinde yok olur.
 const categorySales = () =>
   getDb().prepare(`
     SELECT m.category AS category,
@@ -126,6 +128,8 @@ const categorySales = () =>
            SUM(oi.quantity * oi.unit_price_minor) AS revenue_minor
     FROM order_items oi
     JOIN menu_items m ON m.id = oi.menu_item_id
+    JOIN orders o ON o.id = oi.order_id
+    WHERE o.${NOT_CANCELLED}
     GROUP BY m.category ORDER BY revenue_minor DESC
   `).all();
 
@@ -149,12 +153,14 @@ const rebuildDailyStats = () => {
              0
       FROM reservations GROUP BY reserve_date, facility_id
     `);
-    // Sipariş sayısını ekle (order -> reservation -> gün/tesis)
+    // Sipariş sayısını ekle (order -> reservation -> gün/tesis). İptal edilen siparişler
+    // sayılmaz - revenue_minor da onları içermiyor, iki metrik aynı evreni anlatmalı.
     db.exec(`
       UPDATE daily_stats SET order_count = COALESCE((
         SELECT COUNT(*) FROM orders o
         JOIN reservations r ON r.id = o.reservation_id
         WHERE r.reserve_date = daily_stats.stat_date AND r.facility_id = daily_stats.facility_id
+          AND o.${NOT_CANCELLED}
       ), 0)
     `);
     db.exec('COMMIT');

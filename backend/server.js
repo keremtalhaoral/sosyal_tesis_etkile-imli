@@ -14,10 +14,15 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./db');
 const analytics = require('./analytics');
-const { signJwt, verifyJwt, signReservation, signOrder } = require('./security');
+const { signJwt, verifyJwt, signReservation } = require('./security');
+const { verifyPasswordAsync, DUMMY_PHC } = require('./database');
 const { validateReservationInput, validateOrderInput } = require('./validate');
 const http = require('http');
-const crypto = require('crypto');
+
+// Async handler'da fırlatılan hata Express 4'e KENDİLİĞİNDEN ulaşmaz (reddedilen Promise
+// yakalanmaz, istek asılı kalır). Bu sarmalayıcı reddi next()'e bağlar → alttaki hata
+// middleware'i devreye girer.
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
 const app = express();
 const PORT = process.env.PORT || 8085;
@@ -55,13 +60,13 @@ const requireAdmin = (req, res, next) => {
 };
 
 // --- Auth API ---------------------------------------------------------------
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password || String(password).length < 4) {
     return res.status(400).json({ error: 'Geçerli bir kullanıcı adı ve en az 4 karakterlik parola gerekli.' });
   }
   try {
-    const user = db.createUser(String(username).trim(), password);
+    const user = await db.createUserAsync(String(username).trim(), password);
     res.status(201).json({ token: signJwt(user), user });
   } catch (err) {
     if (String(err.message).includes('UNIQUE')) {
@@ -69,20 +74,21 @@ app.post('/api/auth/register', (req, res) => {
     }
     throw err;
   }
-});
+}));
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
-  const { verifyPassword } = require('./database');
   const record = username ? db.getUserByUsername(String(username).trim()) : null;
-  // verifyPassword sabit-zamanlıdır; kullanıcı yoksa da sahte doğrulama ile timing sızıntısını azaltırız.
-  const valid = verifyPassword(password || '', record ? record.password : 'pbkdf2_sha256$1$AA==$AA==');
+  // Kullanıcı yoksa da GERÇEK parametrelerle (600k iterasyon) sahte bir doğrulama koştururuz:
+  // "kullanıcı yok" ile "parola yanlış" aynı süreyi harcar, yani yanıt süresi kullanıcı adının
+  // var olup olmadığını SIZDIRMAZ. DUMMY_PHC iterasyon sayısını PBKDF2_ITERATIONS'tan alır.
+  const valid = await verifyPasswordAsync(password || '', record ? record.password : DUMMY_PHC);
   if (!record || !valid) {
     return res.status(401).json({ error: 'Kullanıcı adı veya parola hatalı.' });
   }
   const user = { id: record.id, username: record.username, role: record.role };
   res.json({ token: signJwt(user), user });
-});
+}));
 
 // --- Facilities API ----------------------------------------------------------
 // Endpoint: Retrieve Social Facilities (from central SQLite database)
@@ -168,9 +174,9 @@ app.post('/api/orders', requireAuth, (req, res) => {
   if (!v.ok) return res.status(400).json({ error: v.error });
   const { reservationId, items, paymentType } = v.value;
   try {
-    const signature = signOrder(req.user.id, reservationId, 0, items); // ön-imza (istemci bütünlüğü)
-    const result = db.createOrder({ userId: req.user.id, reservationId, items, paymentType, cryptoSignature: signature });
-    res.status(201).json({ id: result.id, total_minor: result.total_minor, status: result.status, item_count: result.item_count, signature });
+    // İmza createOrder içinde, GERÇEK toplam hesaplandıktan sonra üretilir (bkz. db.js).
+    const result = db.createOrder({ userId: req.user.id, reservationId, items, paymentType });
+    res.status(201).json(result);
   } catch (err) {
     res.status(err.statusCode || 500).json({ error: err.message });
   }
@@ -388,6 +394,18 @@ const generateRealisticMockWeather = (lat, lng) => {
     isMock: true
   };
 };
+
+// --- Global hata middleware'i (4 argüman = Express bunu hata işleyici sayar) --------
+// Önceden hiç yoktu: bir handler beklenmedik şekilde fırlattığında Express'in varsayılan
+// işleyicisi devreye girip yığın izini (stack trace) istemciye basıyordu. Artık iç detay
+// sunucu log'unda kalır, istemci sade bir mesaj alır.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error(`[error] ${req.method} ${req.url}:`, err);
+  if (res.headersSent) return;
+  const status = err.statusCode || 500;
+  res.status(status).json({ error: status === 500 ? 'Sunucu hatası.' : err.message });
+});
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Müfettiş GIS Backend Server listening at http://localhost:${PORT}`);

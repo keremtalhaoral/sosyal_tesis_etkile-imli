@@ -116,6 +116,35 @@ assert('per-slot: kalan yere sığan rezervasyon kabul edildi', fit.booked === 5
 const otherSlot = db.createReservation({ userId: su1.id, facilityId: smallFac.id, reserveDate: '2026-09-01', reserveTime: '13:00', guests: 4, cryptoSignature: 'c' });
 assert('per-slot: farklı slot bağımsız kapasiteye sahip', otherSlot.booked === 4);
 
+// 8b-2. TÜRETİLMİŞ DOLULUK (migration v7): dolulukOrani artık elle girilen bir alan değil,
+// o günün iptal edilmemiş rezervasyonlarından hesaplanır. Eskiden seed/admin PATCH dışında
+// hiç değişmiyordu - bir yıllık rezervasyon üretilse bile harita aynı sabit sayıyı gösteriyordu.
+const OCC_DATE = '2026-09-01';   // yukarıda smallFac'in 19:00 (5 koltuk) + 13:00 (4 koltuk) dolduğu gün
+const occFac = db.getFacilityById(smallFac.id, OCC_DATE);
+assert('doluluk: o günün rezerve koltukları sayıldı (5+4=9)', occFac.dolulukKaynagi.rezerveKoltuk === 9);
+assert('doluluk: kapasiteye oranla hesaplandı ve 100 ile sınırlandı (9/5 -> 100)',
+  occFac.dolulukOrani === 100);
+assert('doluluk: hesabın hangi tarihe ait olduğu şeffaf', occFac.dolulukKaynagi.tarih === OCC_DATE);
+
+const emptyDay = db.getFacilityById(smallFac.id, '2027-01-01');
+assert('doluluk: rezervasyonsuz günde 0', emptyDay.dolulukOrani === 0 && emptyDay.dolulukKaynagi.rezerveKoltuk === 0);
+
+// Elle girilen gösterge ayrı alanda durur ve gerçek doluluğu ARTIK EZMİYOR.
+const manualFac = db.createFacility({ kod: 'OCC-01', ad: 'Doluluk Testi', lat: 41, lng: 29, capacity: 10, occupancy: 95 }, admin.id);
+const manualRead = db.getFacilityById(manualFac.id, '2027-03-01');
+assert('doluluk: elle girilen 95 gerçek doluluğu ezmiyor (gerçek = 0)', manualRead.dolulukOrani === 0);
+assert('doluluk: elle girilen işaret ayrı alanda korunuyor', manualRead.dolulukKaynagi.manuelIsaret === 95);
+
+db.createReservation({ userId: su1.id, facilityId: manualFac.id, reserveDate: '2027-03-01', reserveTime: '13:00', guests: 5, cryptoSignature: 'c' });
+assert('doluluk: yeni rezervasyon doluluğu ANINDA yükseltti (5/10 -> 50)',
+  db.getFacilityById(manualFac.id, '2027-03-01').dolulukOrani === 50);
+
+// İptal edilen rezervasyon doluluğa sayılmamalı
+const cancelRes = db.createReservation({ userId: su2.id, facilityId: manualFac.id, reserveDate: '2027-03-01', reserveTime: '16:00', guests: 4, cryptoSignature: 'c' });
+getDb().prepare("UPDATE reservations SET status='cancelled' WHERE id=?").run(cancelRes.id);
+assert('doluluk: iptal edilen rezervasyon sayılmıyor (hâlâ 50)',
+  db.getFacilityById(manualFac.id, '2027-03-01').dolulukOrani === 50);
+
 // 8c. İSPARK atomik take/release + CHECK (seed'li tesis 1 üzerinde)
 const ISPARK_FAC = 1;
 const ip = db.getIsparkStatus(ISPARK_FAC);

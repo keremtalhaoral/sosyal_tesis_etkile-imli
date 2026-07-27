@@ -5,8 +5,8 @@
 --   * Yapı  : backend/database.js  (MIGRATIONS dizisi)
 --   * Veri  : data/seed.json  (kanonik başlangıç verisi)
 -- Yeniden üretmek için:  node scripts/export-schema.js
--- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6
--- Üretim zamanı: 2026-07-24T08:42:02.210Z
+-- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6, 7
+-- Üretim zamanı: 2026-07-27T06:36:59.181Z
 -- Tam veri dökümü (yapı + satırlar) için:  sqlite3 data/app.db .dump > data/full.sql
 -- =============================================================================
 
@@ -48,7 +48,7 @@ CREATE TABLE facilities (
           lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
           lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
           capacity INTEGER NOT NULL CHECK (capacity > 0),
-          occupancy INTEGER NOT NULL DEFAULT 0 CHECK (occupancy BETWEEN 0 AND 100),
+          manual_occupancy INTEGER NOT NULL DEFAULT 0 CHECK (manual_occupancy BETWEEN 0 AND 100),
           iett_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
           vapur_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
           transit_transfer TEXT NOT NULL DEFAULT 'Mevcut Değil',
