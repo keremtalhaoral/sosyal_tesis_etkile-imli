@@ -1,0 +1,8 @@
+{
+  "_comment": "SUNUM hesapları - yalnız `demo` şemasında yaşarlar. Parolalar SABİT ve BİLİNİR olmak ZORUNDA: sunum sırasında giriş yapılabilmesi gerekiyor. Gerçek `public` şemasındaki kullanıcıların parolaları hâlâ rastgele üretiliyor ve data/dev-credentials.json'da (gitignored) duruyor. Bu dosya iki yerden okunur: scripts/demo-reset.js (hesapları kurar) ve backend/database.js describeDevLogins() (açılışta hatırlatır).",
+  "users": [
+    { "username": "demo_admin", "password": "DemoAdmin2026", "role": "admin" },
+    { "username": "ayse", "password": "AyseParola26", "role": "user" },
+    { "username": "mehmet", "password": "MehmetParola26", "role": "user" }
+  ]
+}

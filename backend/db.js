@@ -320,18 +320,84 @@ const getIsparkStatus = (facilityId) =>
  * N eşzamanlı çağrıdan tam (capacity) tanesi başarılı olur (lost update imkansız).
  * Burada write skew YOK - çakışma VAR OLAN tek satır üzerinde, bu yüzden SERIALIZABLE
  * gerekmez; satır kilidi yeterlidir (ADR-003 / ADR-009).
+ *
+ * SAHİPLİK (migration v9): sayaç artık tek başına yetmiyor. Kim kaptıysa ispark_holds'a
+ * bir satır düşer; böylece 'release' başkasının yerini bırakamaz. Sayaç ile hold satırı
+ * AYNI transaction'da değişir - biri olup diğeri olmazsa sayaç gerçeği yansıtmaz.
+ *
+ * userId verilmezse (eski çağrı yolu / test) yalnız sayaç işletilir.
  */
-const takeIsparkSpot = async (facilityId) =>
-  (await db().run(
-    'UPDATE ispark_status SET occupied = occupied + 1, updated_at = now() WHERE facility_id = $1 AND occupied < capacity',
-    [facilityId]
-  )) === 1;
+const takeIsparkSpot = (facilityId, userId = null) =>
+  transaction(async (tx) => {
+    if (userId !== null) {
+      // Zaten yeri varsa ikinci kez kapamasın (UNIQUE bunu DB'de de garanti eder).
+      const existing = await tx.one('SELECT id FROM ispark_holds WHERE facility_id = $1 AND user_id = $2', [facilityId, userId]);
+      if (existing) { const e = new Error('Bu otoparkta zaten bir yeriniz var.'); e.statusCode = 409; throw e; }
+    }
+    const changed = await tx.run(
+      'UPDATE ispark_status SET occupied = occupied + 1, updated_at = now() WHERE facility_id = $1 AND occupied < capacity',
+      [facilityId]
+    );
+    if (changed !== 1) return false;   // dolu
+    if (userId !== null) {
+      await tx.run('INSERT INTO ispark_holds (facility_id, user_id) VALUES ($1, $2)', [facilityId, userId]);
+    }
+    return true;
+  }, { isolation: 'READ COMMITTED' });   // tek satır çakışması; SSI gereksiz
 
-const releaseIsparkSpot = async (facilityId) =>
-  (await db().run(
-    'UPDATE ispark_status SET occupied = occupied - 1, updated_at = now() WHERE facility_id = $1 AND occupied > 0',
-    [facilityId]
-  )) === 1;
+const releaseIsparkSpot = (facilityId, userId = null) =>
+  transaction(async (tx) => {
+    if (userId !== null) {
+      // Yalnız KENDİ kaydını bırakabilir. Kayıt yoksa sayaç da düşmez.
+      const removed = await tx.run('DELETE FROM ispark_holds WHERE facility_id = $1 AND user_id = $2', [facilityId, userId]);
+      if (removed !== 1) { const e = new Error('Bu otoparkta kapadığınız bir yer yok.'); e.statusCode = 409; throw e; }
+    }
+    return (await tx.run(
+      'UPDATE ispark_status SET occupied = occupied - 1, updated_at = now() WHERE facility_id = $1 AND occupied > 0',
+      [facilityId]
+    )) === 1;
+  }, { isolation: 'READ COMMITTED' });
+
+/**
+ * Rezervasyon iptali (v9). Eskiden BÖYLE BİR UÇ YOKTU: `status` kolonu 'cancelled' değerini
+ * kabul ediyordu ama onu oraya getirecek hiçbir yol yoktu. Sonuç: kullanıcı rezervasyonunu
+ * iptal edemiyor, "iptal oranı" grafiği yalnız üretilmiş dummy veriden besleniyordu.
+ *
+ * SİLMEK YERİNE İPTAL: satır durur, `status='cancelled'` olur (DDIA Böl. 11 - gerçekleşmiş
+ * olay silinmez). Kısmi benzersiz indeks sayesinde iptal edilen satır slotu artık BLOKE ETMEZ,
+ * yani kullanıcı aynı yere tekrar rezervasyon yapabilir.
+ *
+ * Bağlı siparişler de iptal edilir ve TUTARLARI GERİ ALINIR - aksi halde iptal edilmiş bir
+ * rezervasyonun siparişi ciroda kalmaya devam ederdi (Faz 1'deki H1 hatasının aynısı).
+ * Hepsi tek transaction: ya hepsi olur ya hiçbiri.
+ */
+const cancelReservation = (reservationId, userId) =>
+  transaction(async (tx) => {
+    const resv = await tx.one('SELECT id, user_id, status, amount_minor FROM reservations WHERE id = $1', [reservationId]);
+    if (!resv) { const e = new Error('Rezervasyon bulunamadı.'); e.statusCode = 404; throw e; }
+    if (resv.user_id !== userId) { const e = new Error('Bu rezervasyon size ait değil.'); e.statusCode = 403; throw e; }
+    if (resv.status === 'cancelled') { const e = new Error('Bu rezervasyon zaten iptal edilmiş.'); e.statusCode = 409; throw e; }
+
+    // Aktif siparişleri iptal et; toplamları rezervasyon tutarından düş.
+    const openOrders = await tx.all(
+      "SELECT id, total_minor FROM orders WHERE reservation_id = $1 AND status <> 'cancelled'", [reservationId]
+    );
+    let reverted = 0;
+    for (const o of openOrders) {
+      await tx.run("UPDATE orders SET status = 'cancelled' WHERE id = $1", [o.id]);
+      reverted += o.total_minor;
+    }
+
+    await tx.run(
+      "UPDATE reservations SET status = 'cancelled', amount_minor = GREATEST(0, amount_minor - $1) WHERE id = $2",
+      [reverted, reservationId]
+    );
+
+    await logAudit(tx, userId, 'reservation.cancel', 'reservation', reservationId, {
+      cancelled_orders: openOrders.length, reverted_minor: reverted,
+    });
+    return { id: reservationId, status: 'cancelled', cancelled_orders: openOrders.length, reverted_minor: reverted };
+  });
 
 const getReservationsByUserId = (userId) =>
   db().all(`
@@ -448,26 +514,59 @@ const updateOrderStatus = (orderId, newStatus, actorUserId) =>
   });
 
 // --- Admin gözetim (requireAdmin uçlarınca kullanılır; sahiplik filtresi YOK) -
-const getAllReservations = (facilityId) =>
-  db().all(`
-    SELECT r.*, f.ad AS facility_name, u.username AS owner_username
-    FROM reservations r
-    JOIN facilities f ON f.id = r.facility_id
-    JOIN users u ON u.id = r.user_id
-    WHERE ($1::int IS NULL OR r.facility_id = $1::int)
-    ORDER BY r.reserve_date DESC, r.reserve_time DESC
-  `, [facilityId ?? null]);
+//
+// SAYFALAMA ZORUNLU. Bu uçlar eskiden TÜM satırları döndürüyordu; ölçüldü:
+// 425.139 satır / 142 MB / 8,7 saniye. Tarayıcı sekmesini kilitliyor, birkaç eşzamanlı
+// istek sunucu belleğini tüketiyordu. Artık pencere + toplam sayı dönüyor.
+const DEFAULT_PAGE = 100;
+const MAX_PAGE = 500;
 
-const getAllOrders = (facilityId) =>
-  db().all(`
-    SELECT o.*, r.facility_id, f.ad AS facility_name, u.username AS owner_username
-    FROM orders o
-    JOIN reservations r ON r.id = o.reservation_id
-    JOIN facilities f ON f.id = r.facility_id
-    JOIN users u ON u.id = r.user_id
-    WHERE ($1::int IS NULL OR r.facility_id = $1::int)
-    ORDER BY o.created_at DESC
-  `, [facilityId ?? null]);
+/** limit/offset'i güvenli aralığa sıkıştırır (NaN, negatif, devasa değerlere karşı). */
+const pageParams = ({ limit, offset } = {}) => {
+  const l = Number.isFinite(Number(limit)) ? Math.trunc(Number(limit)) : DEFAULT_PAGE;
+  const o = Number.isFinite(Number(offset)) ? Math.trunc(Number(offset)) : 0;
+  return { limit: Math.max(1, Math.min(MAX_PAGE, l)), offset: Math.max(0, o) };
+};
+
+const getAllReservations = async (facilityId, page) => {
+  const { limit, offset } = pageParams(page);
+  const fid = facilityId ?? null;
+  const [rows, count] = await Promise.all([
+    db().all(`
+      SELECT r.*, f.ad AS facility_name, u.username AS owner_username
+      FROM reservations r
+      JOIN facilities f ON f.id = r.facility_id
+      JOIN users u ON u.id = r.user_id
+      WHERE ($1::int IS NULL OR r.facility_id = $1::int)
+      ORDER BY r.reserve_date DESC, r.reserve_time DESC, r.id DESC
+      LIMIT $2 OFFSET $3
+    `, [fid, limit, offset]),
+    db().one('SELECT COUNT(*)::int AS n FROM reservations WHERE ($1::int IS NULL OR facility_id = $1::int)', [fid]),
+  ]);
+  return { rows, total: count.n, limit, offset };
+};
+
+const getAllOrders = async (facilityId, page) => {
+  const { limit, offset } = pageParams(page);
+  const fid = facilityId ?? null;
+  const [rows, count] = await Promise.all([
+    db().all(`
+      SELECT o.*, r.facility_id, f.ad AS facility_name, u.username AS owner_username
+      FROM orders o
+      JOIN reservations r ON r.id = o.reservation_id
+      JOIN facilities f ON f.id = r.facility_id
+      JOIN users u ON u.id = r.user_id
+      WHERE ($1::int IS NULL OR r.facility_id = $1::int)
+      ORDER BY o.created_at DESC, o.id DESC
+      LIMIT $2 OFFSET $3
+    `, [fid, limit, offset]),
+    db().one(`
+      SELECT COUNT(*)::int AS n FROM orders o
+      JOIN reservations r ON r.id = o.reservation_id
+      WHERE ($1::int IS NULL OR r.facility_id = $1::int)`, [fid]),
+  ]);
+  return { rows, total: count.n, limit, offset };
+};
 
 module.exports = {
   getFacilities,
@@ -481,6 +580,7 @@ module.exports = {
   createUser,
   createUserAsync,
   createReservation,
+  cancelReservation,
   getReservationsByUserId,
   getIsparkStatus,
   takeIsparkSpot,

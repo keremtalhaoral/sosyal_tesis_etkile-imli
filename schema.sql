@@ -7,8 +7,8 @@
 -- Yeniden üretmek için:  node scripts/export-schema.js
 --
 -- Veritabanı: PostgreSQL 16.13 + PostGIS 3.4.2
--- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6, 7, 8
--- Üretim zamanı: 2026-07-27T07:02:44.629Z
+-- Uygulanmış migration sürümleri: 1, 2, 3, 4, 5, 6, 7, 8, 9
+-- Üretim zamanı: 2026-07-27T12:13:56.842Z
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS postgis;
@@ -24,6 +24,8 @@ CREATE TABLE audit_log (
   CONSTRAINT audit_log_pkey PRIMARY KEY (id),
   CONSTRAINT audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(id)
 );
+
+CREATE INDEX idx_audit_log_created ON public.audit_log USING btree (created_at DESC, id DESC);
 
 CREATE INDEX idx_audit_log_entity ON public.audit_log USING btree (entity_type, entity_id);
 
@@ -79,6 +81,19 @@ CREATE TABLE facilities (
 CREATE INDEX idx_facilities_geog ON public.facilities USING gist (((geom)::geography));
 
 CREATE INDEX idx_facilities_geom ON public.facilities USING gist (geom);
+
+CREATE TABLE ispark_holds (
+  id integer GENERATED ALWAYS AS IDENTITY NOT NULL,
+  facility_id integer NOT NULL,
+  user_id integer NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT ispark_holds_pkey PRIMARY KEY (id),
+  CONSTRAINT ispark_holds_facility_id_user_id_key UNIQUE (facility_id, user_id),
+  CONSTRAINT ispark_holds_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
+  CONSTRAINT ispark_holds_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ispark_holds_user ON public.ispark_holds USING btree (user_id);
 
 CREATE TABLE ispark_status (
   facility_id integer NOT NULL,
@@ -153,7 +168,6 @@ CREATE TABLE reservations (
   payment_type text,
   highchair_count integer DEFAULT 0 NOT NULL,
   CONSTRAINT reservations_pkey PRIMARY KEY (id),
-  CONSTRAINT reservations_user_id_facility_id_reserve_date_reserve_time_key UNIQUE (user_id, facility_id, reserve_date, reserve_time),
   CONSTRAINT reservations_facility_id_fkey FOREIGN KEY (facility_id) REFERENCES facilities(id) ON DELETE CASCADE,
   CONSTRAINT reservations_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT reservations_amount_minor_check CHECK ((amount_minor >= 0)),
@@ -170,6 +184,8 @@ CREATE INDEX idx_reservations_facility_date ON public.reservations USING btree (
 CREATE INDEX idx_reservations_slot ON public.reservations USING btree (facility_id, reserve_date, reserve_time);
 
 CREATE INDEX idx_reservations_user ON public.reservations USING btree (user_id);
+
+CREATE UNIQUE INDEX uq_reservations_active_slot ON public.reservations USING btree (user_id, facility_id, reserve_date, reserve_time) WHERE (status <> 'cancelled'::text);
 
 CREATE TABLE schema_migrations (
   version integer NOT NULL,

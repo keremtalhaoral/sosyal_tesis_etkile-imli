@@ -43,6 +43,27 @@ Projenin yerel bilgisayarınızda çalıştırılması için aşağıdaki adıml
    cd docs && python3 -m http.server 8092         # http://localhost:8092
    ```
 
+### 🔑 Hangi hesapla giriş yapılır?
+
+Parolalar **çalıştığınız moda göre değişir** — en sık takılınan yer burası.
+`npm start` açılışta hangi hesapların geçerli olduğunu **konsola yazar**; oraya bakmak
+en hızlı yol.
+
+| Mod | Nasıl anlarım | Kullanıcı / parola |
+|---|---|---|
+| **Canlı — `public` şeması** (`npm start`) | sayfada "● Canlı veritabanı" rozeti | `admin` ve `user`; parolalar **rastgele üretilir** → `data/dev-credentials.json` (gitignored). Açılış logunda da yazar. |
+| **Canlı — `demo` şeması** (`npm run demo:start`) | sunum modu, 5 tesis / 0 rezervasyon | `demo_admin / DemoAdmin2026`, `ayse / AyseParola26`, `mehmet / MehmetParola26` → `data/demo-users.json` |
+| **Çevrimdışı replika** (backend kapalı ya da GitHub Pages) | sayfada "○ Çevrimdışı replika" rozeti | `admin / admin1234`, `user / user1234`, `demo / demo1234`, `demo-admin / demo1234` |
+
+> **Neden üç ayrı set?** `public` şemasının parolaları ADR-002 gereği rastgele üretilir ve
+> **git'e hiç girmez** — bu yüzden onları ancak yerel dosyadan (ya da açılış logundan)
+> öğrenebilirsiniz. `demo` şemasınınkiler sunumda giriş yapılabilsin diye **kasıtlı olarak
+> sabit ve git'te**. Çevrimdışı replikanınkiler ise gerçek değil, tarayıcı içinde yaşayan
+> taklit hesaplar.
+
+> **`429` alıyorsanız** parola yanlış demek değil: 15 dakikada 5 başarısız denemeden sonra
+> hız sınırı devreye giriyor. Bekleyin ya da sunucuyu yeniden başlatın (sayaç bellekte).
+
 4. **Testleri çalıştırın** (her test kendi izole şemasında koşar, gerçek veriye dokunmaz):
    ```bash
    npm test
@@ -53,9 +74,36 @@ Projenin yerel bilgisayarınızda çalıştırılması için aşağıdaki adıml
    (GTFS ingest), `test-admin.js` (audit log), `test-auth.js` (parola/zamanlama).
 
 ## 📚 Belgeler
+
+### 🎓 "Hiçbir şey bilmiyorum, nereden başlamalıyım?"
+
+→ **[`docs/ogrenme/`](docs/ogrenme/)** — projeyi sıfırdan anlatan öğrenme kitabı.
+Feynman tekniğiyle yazıldı: her konu tek cümleyle başlar, benzetmeyle devam eder,
+**benzetmenin nerede bozulduğunu** söyler, sonra derinleşir. Her bölümde çalıştırılabilir
+komutlar ve "mentör sorarsa" cevapları var.
+
+- **Katmanlı kitap (00→12):** [proje ne yapıyor](docs/ogrenme/00-bu-proje-ne-yapiyor.md) →
+  [web](docs/ogrenme/01-web-nasil-calisir.md) →
+  [veritabanı](docs/ogrenme/02-veritabani-nedir.md) →
+  [SQL](docs/ogrenme/03-sql-ile-konusmak.md) →
+  [neden PostgreSQL](docs/ogrenme/04-neden-postgresql.md) →
+  [PostGIS](docs/ogrenme/05-harita-verisi-postgis.md) →
+  [eşzamanlılık](docs/ogrenme/06-ayni-anda-iki-kisi.md) →
+  [kimlik/kripto](docs/ogrenme/07-kimlik-ve-sifreleme.md) →
+  [backend](docs/ogrenme/08-backend-node-express.md) →
+  [frontend](docs/ogrenme/09-frontend-harita.md) →
+  [veri kaynakları](docs/ogrenme/10-veri-nereden-geliyor.md) →
+  [canlı güncelleme](docs/ogrenme/12-canli-guncelleme.md) →
+  [sözlük](docs/ogrenme/11-sozluk.md)
+- **Teknoloji başına derin dosyalar:** [`docs/ogrenme/teknoloji/`](docs/ogrenme/teknoloji/)
+  — 17 dosya. Her biri: *ne olduğu, hangi problemi çözmek için doğduğu, alternatifleri ve
+  neden seçilmedikleri, bu projede tam olarak nerede, bilinmesi gereken tuzaklar.*
+
+### Diğer belgeler
 - [`CLAUDE.md`](CLAUDE.md) — proje rehberi / giriş kapısı, mimari ve gömülü kararlar.
 - [`docs/anlatim-rehberi.md`](docs/anlatim-rehberi.md) — projeyi anlatma rehberi: ne gerçek / ne demo, savunma soruları.
+- [`docs/dbeaver-rehberi.md`](docs/dbeaver-rehberi.md) — **DBeaver sıfırdan + 9 adımlık sunum senaryosu** (ne diyeceğiniz dahil).
 - [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
 - [`docs/sorgu-defteri.md`](docs/sorgu-defteri.md) + [`queries.sql`](queries.sql) — her özelliği SQL ile gösterme.
 - [`DATABASE.md`](DATABASE.md) — merkezi veri mimarisi (DDIA tabanlı) ve API tablosu.
-- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-009).
+- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-010).

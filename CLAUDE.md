@@ -25,9 +25,12 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
   (tek kanonik kopya; Pages de aynı dosyayı okur).
 - **`docs/`** = GitHub Pages (sunucusuz). `dashboard.html`/`order.html`: gerçek çift mod (önce canlı
   API dener, `localStorage`+`seed.json`'a düşer). `index.html` (ana harita+admin panel): **kasıtlı
-  olarak her zaman mock** — `docs/app.js`'teki `window.fetch` override'ı bilinen uçları tarayıcı-içi
-  simüle eder (statik siteye gerçek backend parola hash'i asla gönderilmez, ADR-002/ADR-007);
-  bilinmeyen uçlar gerçek ağa düşer (`originalFetch` passthrough).
+  **çift mod** — açılışta backend yoklanır: erişilebiliyorsa TÜM çağrılar gerçek backend'e gider
+  (yerel sunum; veriler PostgreSQL'e yazılır), erişilemiyorsa `docs/app.js`'teki `window.fetch`
+  override'ı bilinen uçları tarayıcı-içi simüle eder (GitHub Pages modu). Sayfada hangi modda
+  olunduğunu gösteren bir rozet var. Mock'un sebebi **Pages'in sunucu çalıştıramaması**dır —
+  eskiden burada "parola hash'i sızmasın" yazıyordu, bu YANLIŞTI: `/api/auth/login` zaten hash
+  göndermiyor, yalnız token ve `{id, username, role}` dönüyor.
 - **`scripts/`**: `generate-data.js` (dummy veri, `--scale`), `export-analytics.js` (Pages snapshot),
   `build-routes.js` (GTFS → `docs/data/transit-routes.geojson`; ham GTFS `data/gtfs/` gitignored,
   türetilmiş slim çıktı commit — ADR-006. `stop_times` EKSİKSİZ olmalı; kesikse kapsam kısıtlı).
@@ -58,6 +61,10 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 - `audit_log` **append-only** (yalnız INSERT, mutasyonla aynı transaction); sipariş durumu
   whitelist state machine (`submitted→served→paid`, sıçrama yasak); admin gözetim uçları
   sahiplik filtresiz (`requireAdmin` ile korunur). (ADR-007)
+- Canlı güncelleme **SSE** ile (WebSocket/yoklama değil): akış tek yönlü, `ws` paketi
+  gerekmiyor, `EventSource` tarayıcıda yerleşik. Olay **veri TAŞIMAZ**, yalnız "şu değişti"
+  işareti — istemci taze veriyi normal uçtan çeker, böylece yetkilendirme tek yerde kalır.
+  Chart'lar `destroy()` değil `chart.update()` ile **yerinde** güncellenir (animasyon). (ADR-010)
 
 ## Çalıştırma & test
 ```bash
@@ -71,7 +78,7 @@ npm run export:analytics # -> docs/data/analytics.json (Pages snapshot)
 npm run export:schema    # -> schema.sql (türetilmiş DDL; elle düzenlenmez)
 npm run build:routes     # GTFS -> docs/data/transit-routes.geojson (ADR-006)
 # Testler (her test kendi izole PostgreSQL şemasında; gerçek veriye dokunmaz)
-npm test                 # 168 test: şema/kısıt/PostGIS, sipariş, analytics,
+npm test                 # 301 test: şema/kısıt/PostGIS, sipariş, analytics,
                          # eşzamanlılık (write-skew), GTFS, audit log, parola/zamanlama
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092
 # Her özelliği SQL ile gösterme: queries.sql (psql/DBeaver) + anlatımı docs/sorgu-defteri.md

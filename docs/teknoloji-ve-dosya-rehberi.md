@@ -121,6 +121,17 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `test-analytics.js` | 69 | Analitik: KPI (iptaller hariç), aylık/yıllık bucket, ödeme kırılımı, **ROLLUP == LIVE** invaryantı, ısı haritası. |
 | `test-admin.js` | 75 | Admin (Faz v2-07): CRUD audit satırları, admin gözetim (sahiplik filtresiz), durum whitelist, audit sorgu (yeni→eski, limit, actor join), `requireAdmin`. |
 | `test-routes.js` | 62 | GTFS ingest (Faz v2-06): `build-routes.js`'i fixture'a karşı çalıştırır; slim GeoJSON yapısı, gerçek geometri, mod sınıflama, palet renkleri, yürüyüş bacağı, `[lng,lat]` sırası. |
+| `env.js` | 59 | **Bağımlılıksız `.env` okuyucu.** Satır satır `KEY=VALUE`; `process.env`'de zaten tanımlı olanı **ezmez** (gerçek ortam değişkeni her zaman kazanır). `server.js`'in EN BAŞINDA yüklenir — `security.js`/`database.js` sırları modül yüklenme anında okuduğu için sıra bozulursa `.env` hiç görülmez. `dotenv` paketi yerine yazıldı. |
+| `weather.js` | 177 | **OpenWeather entegrasyonu + önbellek.** `https` (şifresiz `http` değil — anahtar sorgu dizesinde gidiyor). Koordinat ~1 km'lik tam sayı hücre indeksine yuvarlanır (`toFixed(2)` kayan nokta sınırında tutarsız). TTL `WEATHER_CACHE_TTL_MS` (varsayılan 10 dk, `0` = kapalı). Yanıtta `observed_at` + `cached` → tazelik kanıtı. **Asla fırlatmaz**: ağ engeli / `401` / `429` / timeout / anahtarsız → `isMock: true` + `reason`. Ağ engelini anahtar hatasından **ayırt eder**. |
+| `ratelimit.js` | 74 | **Kayan pencere hız sınırlayıcı** (bağımlılıksız, `express-rate-limit` yerine). Login: 15 dk'da 5, anahtar `${req.ip}\|${username}` — tek IP arkasındaki kurumsal ağın tamamı bir kişi yüzünden kilitlenmesin. Register: saatte 10. Aşılınca `429` + `Retry-After`. Zincirin başında olduğu için PBKDF2 **hiç çalışmıyor** → CPU tüketme vektörü kapalı. |
+| `events.js` | 114 | **Canlı olay yayını (SSE, ADR-010).** Açık SSE bağlantılarını tutar; `publish(type, detail)` tüm abonelere `event: change` karesi yazar. Olay VERİ TAŞIMAZ, yalnız işaret - yetkilendirme tek yerde kalsın diye (istemci taze veriyi normal uçtan çeker). 25 sn'de bir yorum satırı (`: ping`) ara katmanların bağlantıyı kapatmasını önler. `publish` **asla fırlatmaz**: bildirim yan etkidir, asıl işlem çoktan commit edilmiştir. Bağımlılıksız. |
+| `test-events.js` | 165 | SSE regresyonu (15 test), gerçek HTTP sunucusu + gerçek akışla: başlıklar (`text/event-stream`, `no-cache`, `X-Accel-Buffering`), `hello`/`retry` karesi, yayın tüm istemcilere gidiyor mu, kopan bağlantı listeden düşüyor mu, **olayda iş verisi olmadığı** (sözleşme testi). |
+| `demo-users.js` | 27 | **`demo` şemasının sunum hesapları — tek kaynak.** Veri `data/demo-users.json`'da (git'te; sunumda giriş yapılabilmesi için BİLİNİR olmak zorunda). İki yer okuyor: `scripts/demo-reset.js` hesapları kurar, `database.js` `describeDevLogins()` açılışta hatırlatır. Önce `demo-reset.js` içinde inline'dı; iki kopya olsaydı biri güncellenmeden kalır ve sunum ortasında "parola yanlış" denirdi. |
+| `test-auth.js` | 86 | Parola/JWT: PHC ayrıştırma, salt benzersizliği, `timingSafeEqual`, `DUMMY_PHC` ile zamanlama eşitliği, `exp` süre dolumu, kurcalanmış imza reddi. |
+| `test-weather.js` | 160 | **Yerel sahte OpenWeather sunucusuna** karşı (`WEATHER_API_BASE`): yanıt ayrıştırma, önbellek isabeti (ikinci çağrı upstream'e gitmiyor), TTL dolunca yeniden çağırma, `401`/`429`/timeout/bağlantı reddi/bozuk JSON → mock'a düşme, anahtarsız → mock. Gerçek ağ gerektirmez. |
+| `test-api-hardening.js` | 173 | Denetim bulgularının regresyon testleri: D3 (sayfalama), D5 (hız sınırı `429` + `Retry-After`), D6 (parola ≥ 8), D7 (İSPARK sahipliği), D9 (rezervasyon iptali + para geri alma), D10 (kısmi UNIQUE), D14 (`audit_log` indeksi — planda `Sort` yok). |
+| `test-ibb-parse.js` | 166 | İBB ayrıştırıcıları **gerçek bayt dizileriyle**: mojibake onarımı, koordinat sırası/virgüllü ondalık düzeltme, alan adı esnekliği, İstanbul dışı koordinat reddi. Ağ gerektirmez. |
+| `test-helper.js` | 71 | **Şema-başına test izolasyonu.** `PG_SCHEMA` → `search_path`; her test kendi şemasında koşar, gerçek veriye dokunmaz, paralel koşabilir. |
 | *(kaldırıldı)* | — | `backend/package.json` kaldırıldı; npm projesi kökte tekilleşti (`backend/` ve `scripts/` aynı bağımlılıkları paylaşıyor). |
 
 ### 4.3 `docs/` (GitHub Pages statik frontend)
@@ -129,10 +140,10 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `index.html` | 502 | Ana harita kabuğu: cam kenar çubuğu (stat/arama/filtre), Leaflet konteyneri, tema toggle (FOUC önleme). Yükleme sırası: turf → leaflet → `matrix.js` → `app.js`. |
 | `app.js` | 2330 | **Orkestratör** (en büyük dosya). UI state, Leaflet init, districts/transit/İSPARK katmanları, oturum, admin tesis yerleştirme. **Mock fetch interceptor** (gömülü tesisler, demo kullanıcılar, localStorage anahtarları) — backend olmadan çalışır (kasıtlı; ADR-002/007). |
 | `matrix.js` | 192 | `MatrixEngine` — lineer cebir/mekansal: lat/lng→3B kartezyen, matris-vektör çarpımı, KNN, TOPSIS çok-kriterli karar skoru (karar destek). |
-| `dashboard.html` / `dashboard.js` | 148 / 168 | Analitik sayfası (Faz v2-04). Çift mod: canlı `/api/analytics/*` → yoksa `data/analytics.json`. Chart.js grafikleri, renkler CSS değişkenlerinden (dataviz paleti), tema değişince yeniden çizim. |
+| `dashboard.html` / `dashboard.js` | ~180 / ~235 | Analitik sayfası (Faz v2-04). Çift mod: canlı `/api/analytics/*` → yoksa `data/analytics.json`. Chart.js grafikleri, renkler CSS değişkenlerinden (dataviz paleti), tema değişince yeniden çizim. **Canlı güncelleme (ADR-010):** `EventSource` ile `/api/events` dinlenir; 'değişti' işareti gelince taze veri çekilip chart'lar `destroy()` YERİNE `chart.update()` ile **yerinde** güncellenir (animasyon korunur - sunumda çubuğun büyüdüğü görünür). 400 ms biriktirme; canlı akış çubuğu + son güncelleme saati; elle **↻ Yenile** butonu. |
 | `order.html` / `order.js` | 115 / 209 | Müşteri sipariş sayfası (Faz v2-05). Çift mod. "Yeni Sipariş" ve "Siparişlerim"; durum etiketleri v2-07 yaşam döngüsünden. |
 | `style.css` | 1927 | Tasarım sistemi: açık/koyu tema token'ları, dataviz palet CSS değişkenleri, layout, cam kenar çubuğu, harita/marker, bileşenler. |
-| `adr/ADR-001…007-*.md` | ~690 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin. |
+| `adr/ADR-001…010-*.md` | ~1000 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin, İBB açık veri, PostgreSQL+PostGIS, canlı güncelleme (SSE). |
 | `diagrams/er-v2.md` | 134 | v2 varlık-ilişki diyagramı. |
 | `learning/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
 | `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |
@@ -140,7 +151,10 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `data/seed.json` | 692 | Kanonik seed'in frontend mock kopyası. |
 | `data/istanbul-districts.geojson` | ~132k | İlçe poligonları — **tek kanonik kopya** (hem Node backend `db.js` hem Pages statik olarak okur). |
 | `data/transit-routes.geojson` | 1 | Türetilmiş toplu taşıma çizgileri (minified). |
-| `vendor/{leaflet,turf,chartjs}/` | — | Vendored kütüphaneler (CDN'siz, offline). |
+| `vendor/{leaflet,turf,chartjs}/` | ~1 MB | Vendored kütüphaneler (CDN'siz, offline). Leaflet 1.9.4 (148 KB + 15 KB CSS + ikonlar), Turf (590 KB), Chart.js 4.5.1 (209 KB). |
+| `dbeaver-rehberi.md` | ~500 | **DBeaver sıfırdan + 9 adımlık sunum senaryosu.** Kurulum/bağlantı, arayüz turu, ER diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, prova edilmiş senaryo (ne diyeceğiniz dahil), sorun giderme tablosu, sunum öncesi kontrol listesi. |
+| `ogrenme/00…12-*.md` | 13 dosya | **Katmanlı öğrenme kitabı** (Feynman disiplini). Her bölüm sabit 7 adım: bir cümlede → benzetme **ve nerede bozulduğu** → daha derin → projede tam olarak nerede → kendin dene (çalıştırılabilir komut + beklenen çıktı) → mentör sorarsa → sırada ne var. Sıfır ön bilgiyle başlar. |
+| `ogrenme/teknoloji/*.md` | 17 + README | **Teknoloji başına derin dosyalar.** Her biri: ne olduğu → hangi problemi çözmek için doğdu → alternatifleri ve neden seçilmedikleri → bu projede tam olarak nerede → bilinmesi gereken 3 tuzak (mümkünse projede fiilen yaşanmış) → daha fazlası için. `nodejs`, `express`, `postgresql`, `postgis`, `pg-driver`, `docker`, `dbeaver`, `jwt`, `pbkdf2`, `leaflet`, `turf`, `chartjs`, `geojson`, `gtfs`, `soap-vs-rest`, `git-github-pages`, `sse`. |
 
 ### 4.4 `scripts/` (Node yardımcıları)
 | Dosya | ~satır | Amaç |
@@ -259,3 +273,66 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   `scripts/check-consistency.js` eklendi: API tablosu ↔ rotalar, migration ↔ schema.sql, seed replikası,
   ADR numaralandırması, test kapsamı ve platform kalıntıları **makineyle** doğrulanıyor (`npm run check`)
   — belge kayması artık yorumla değil testle korunuyor.
+
+- **2026-07-27 — Denetim bulguları + gerçek hava durumu.** (Faz 5) 18 bulgulu acımasız denetimin
+  düzeltmeleri. En önemlisi **D1**: `index.html` veritabanına hiçbir şey yazmıyordu (`app.js`'teki
+  `fetch` override'ı bilinen uçları tarayıcı içinde simüle ediyordu), yani "uygulamada işlem yap,
+  DBeaver'da gör" demosu **imkânsızdı**. Artık çift mod: açılışta backend yoklanır, erişilebiliyorsa
+  override tamamen atlanır. **D2**: override'ın belgelerdeki güvenlik gerekçesi olgusal olarak
+  yanlıştı (`/api/auth/login` zaten hash döndürmüyor) — gerçek sebep Pages'in kod çalıştıramaması;
+  düzeltildi. **D3**: `/api/admin/*` sayfalamasız 425.139 satır / 142 MB / 8,7 sn döndürüyordu →
+  `LIMIT`/`OFFSET` + `X-Total-Count`. **D4**: kalıcı XSS (`escapeHtml`, gerçek Chromium'la doğrulandı).
+  **D5/D6**: hız sınırı + parola ≥ 8. **D7**: `ispark_holds` ile bırakma sahipliği. **D8/D11/D12**:
+  `backend/env.js` (`.env` hiç okunmuyordu — 7. madde bunsuz çalışmazdı), `http`→`https`,
+  koordinat hücreli önbellek. **D9/D10**: `DELETE /api/reservations/:id` + kısmi UNIQUE indeks
+  (iptal edilen rezervasyon slotu artık bloke etmiyor). **D14**: `idx_audit_log_created`.
+  Yeni: `weather.js`, `ratelimit.js`, `test-weather.js`, `test-api-hardening.js`. Migration v9.
+
+- **2026-07-27 — Demo şeması + sorgu defteri genişletmesi.** (Faz 7) `npm run demo:reset` /
+  `demo:start`: `demo` şemasında 5 tesis, 3 kullanıcı, **0 rezervasyon** — sunumda her işlem gözle
+  görünür. `SEED_FILE` env desteği eklendi; onsuz seed her açılışta silinen tesisleri geri
+  yazıyordu (sunum ortasında yeniden başlatma 5 yerine 30 tesis gösterirdi). `queries.sql` 10 → 16
+  bölüm (586 satır): yazma işlemleri, canlı izleme (önce/sonra sorgu çiftleri), **kısıtları kırmaya
+  çalışma** (hata kodunu görmek kısıtın gerçek olduğunun kanıtı), transaction'ı elle görme
+  (`pg_locks`), türetilmiş veri, şema keşfi. `docs/sorgu-defteri.md` 633 satıra genişledi.
+
+- **2026-07-27 — DBeaver rehberi.** (Faz 8) `docs/dbeaver-rehberi.md`: kurulum, arayüz turu, ER
+  diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, **9 adımlık sunum senaryosu** ve
+  sorun giderme. Senaryonun tamamı canlı veritabanına karşı **prova edildi**; belgedeki her çıktı
+  gerçek çıktı.
+
+- **2026-07-27 — Öğrenme kitabı (Feynman).** (Faz 6) `docs/ogrenme/`: 12 bölümlük katmanlı kitap +
+  `teknoloji/` altında 16 derin dosya. Yöntem: her bölüm tek cümleyle başlar, benzetme kurar ve
+  **benzetmenin nerede bozulduğunu** söyler (atlanırsa yanlış zihinsel model kalıcı olur), sonra
+  derinleşir; her bölümde çalıştırılabilir komut + beklenen çıktı ve "mentör sorarsa" cevapları var.
+  Kitaptaki **her olgusal iddia canlı sisteme karşı doğrulandı** — bu sırada iki gerçek düzeltme
+  çıktı: (a) `geometry` vs `geography` sıralama hatası ilk yazılan koordinatta (Taksim) tekrar
+  etmiyordu, gerçek bir çakışma noktası bulunup (41.01, 28.97) belgelendi — hatanın **çoğu zaman
+  doğru cevap vermesi** asıl tehlike; (b) `public` şemasındaki 200 sentetik kullanıcı hâlâ tek bir
+  hash paylaşıyordu (veri, `generate-data.js` düzeltmesinden önce üretilmişti) → 20 farklı hash'e
+  yeniden atandı, böylece DBeaver'da "her kullanıcıya ayrı salt" anlatısı veriyle çelişmiyor.
+
+- **2026-07-27 — Giriş bilgilerini görünür yapma.** Parolalar çalışılan moda göre değişiyordu ve
+  hiçbir yer bunu söylemiyordu: `public` şemasında rastgele üretilip gitignored dosyaya yazılıyor,
+  `demo` şemasında sabit, çevrimdışı replikada tarayıcı-içi taklit hesaplar. Deneme yanılmaya düşen
+  kullanıcı 5 denemede `429`'a takılıp bunu "parola yanlış" sanıyordu. `describeDevLogins()` açılışta
+  geçerli hesapları yazıyor (üretimde susar); demo hesapları `backend/demo-users.js` +
+  `data/demo-users.json` ile tek kaynağa taşındı; README'ye mod × hesap tablosu eklendi.
+
+- **2026-07-27 — Canlı güncelleme (SSE).** (Faz 9, ADR-010) Analiz paneli veriyi yalnız
+  sayfa açılışında / granülerlik değişince / tema değişince çekiyordu: kullanıcı sipariş
+  verdiğinde grafikler olduğu gibi kalıyor, görmek için sayfayı ELLE yenilemek
+  gerekiyordu — üstelik banner "gerçek zamanlı sorgu" yazıyordu ve bu yanıltıcıydı.
+  Yeni `backend/events.js` (bağımlılıksız SSE yayıncısı) + `GET /api/events`; 10 mutasyon
+  noktası `events.publish(...)` çağırıyor. `docs/dashboard.js` `EventSource` ile dinliyor,
+  400 ms biriktirip TEK yenileme yapıyor ve chart'ları `destroy()` yerine `chart.update()`
+  ile **yerinde** güncelliyor — böylece çubuğun büyümesi animasyonla görünüyor (sunumun
+  asıl anı). Panelde canlı akış çubuğu + son güncelleme saati, ayrıca elle **↻ Yenile**.
+  Yoklama reddedildi (dashboard sorgusu 6 agregasyon koşturuyor; kısa aralık sorgu yağmuru,
+  uzun aralık sunumda ölü bekleme), WebSocket reddedildi (akış tek yönlü + `ws` bağımlılığı).
+  Sözleşme: **olay veri taşımaz**, yalnız işaret — yetkilendirme tek yerde kalsın diye
+  (admin gözetim uçları sahiplik filtresiz, ADR-007). Gerçek tarayıcıyla ölçüldü: 360 ₺'lik
+  sipariş → Toplam Ciro ₺0 → ₺360, rozet "Sipariş değişti", chart instance aynı (yerinde
+  güncelleme). Yeni: `backend/test-events.js` (15 test, gerçek HTTP akışı),
+  `docs/ogrenme/12-canli-guncelleme.md`, `docs/ogrenme/teknoloji/sse.md`,
+  `docs/adr/ADR-010-canli-guncelleme.md`, DBeaver senaryosuna Adım 4b.

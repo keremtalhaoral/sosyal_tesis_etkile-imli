@@ -47,7 +47,12 @@ types.setTypeParser(types.builtins.TIME, (v) => (v ? String(v).slice(0, 5) : v))
 // Bağlantı yapılandırması
 // ---------------------------------------------------------------------------
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const SEED_PATH = path.join(DATA_DIR, 'seed.json');
+// SEED_FILE ile başka bir seed dosyası seçilebilir (sunum için data/seed-demo.json).
+// Seed her açılışta çalıştığı için bu ŞART: aksi halde demo şemasından silinen tesisler
+// sunucu her yeniden başladığında geri gelirdi (yaşandı).
+const SEED_PATH = process.env.SEED_FILE
+  ? path.resolve(process.cwd(), process.env.SEED_FILE)
+  : path.join(DATA_DIR, 'seed.json');
 // Yerel dev parolaları (gitignored). Testte DEV_CREDENTIALS_PATH ile geçici dizine yönlenir.
 const CREDENTIALS_PATH = process.env.DEV_CREDENTIALS_PATH || path.join(DATA_DIR, 'dev-credentials.json');
 
@@ -354,6 +359,38 @@ const MIGRATIONS = [
       ALTER TABLE districts ADD COLUMN IF NOT EXISTS geom geometry(MultiPolygon, 4326);
       CREATE INDEX IF NOT EXISTS idx_districts_geom ON districts USING GIST (geom);
     `
+  },
+  {
+    // v9: iptal edilebilir rezervasyon + eksik indeksler + İSPARK sahipliği.
+    version: 9,
+    up: `
+      -- 1) UNIQUE kısıtı İPTALİ KAPSAMIYORDU.
+      -- UNIQUE(user_id, facility_id, reserve_date, reserve_time) içinde status yok; bu yüzden
+      -- iptal edilen bir rezervasyon o slotu SONSUZA DEK bloke ediyordu - kullanıcı fikrini
+      -- değiştirip aynı yere tekrar rezervasyon YAPAMIYORDU.
+      -- Çözüm: KISMİ (partial) benzersiz indeks. Kural yalnız iptal EDİLMEMİŞ satırlara uygulanır;
+      -- iptal edilenler birikebilir (tarihçe korunur) ama slotu tutmazlar.
+      ALTER TABLE reservations DROP CONSTRAINT IF EXISTS reservations_user_id_facility_id_reserve_date_reserve_time_key;
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_reservations_active_slot
+        ON reservations (user_id, facility_id, reserve_date, reserve_time)
+        WHERE status <> 'cancelled';
+
+      -- 2) audit_log sıralama indeksi. Sorgu her zaman "en yeni önce" (ORDER BY created_at DESC)
+      -- ama indeks yoktu; EXPLAIN 'Sort' gösteriyordu. Log büyüdükçe pahalanırdı.
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log (created_at DESC, id DESC);
+
+      -- 3) İSPARK yer sahipliği. 'take' atomikti ama 'release' KİMİN bıraktığını bilmiyordu:
+      -- herhangi bir oturumlu kullanıcı başkasının yerini bırakabiliyordu. Artık her kapma
+      -- bir satır bırakır; release yalnız kendi satırını silebilir.
+      CREATE TABLE IF NOT EXISTS ispark_holds (
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (facility_id, user_id)   -- bir kullanıcı aynı otoparkta tek yer tutar
+      );
+      CREATE INDEX IF NOT EXISTS idx_ispark_holds_user ON ispark_holds (user_id);
+    `
   }
 ];
 
@@ -570,8 +607,52 @@ const close = async () => {
   if (pool) { await pool.end(); pool = null; initPromise = null; }
 };
 
+/**
+ * Açılışta "hangi hesapla girerim?" sorusunun cevabını verir.
+ *
+ * Neden gerekli: seed parolaları RASTGELE üretiliyor (ADR-002 Karar 4 - ham parola git'e
+ * girmez) ve gitignored bir dosyaya yazılıyor. Yani dosyayı açmayan kimse giriş yapamaz.
+ * Üstelik parolalar ŞEMAYA göre değişiyor: public şemada seed hesapları, demo şemasında
+ * demo-reset.js'in kurduğu sabit hesaplar. Bunu söylemezsek kullanıcı deneme yanılmaya
+ * düşer ve 5 denemede hız sınırına takılır.
+ *
+ * Yalnız geliştirme çıktısıdır: NODE_ENV=production ise hiçbir şey basılmaz.
+ */
+const describeDevLogins = () => {
+  if (process.env.NODE_ENV === 'production') return;
+  const schema = process.env.PG_SCHEMA || 'public';
+  if (schema !== 'public') {
+    // demo şemasının hesapları SABİT ve git'te (data/demo-users.json) - sunumda
+    // giriş yapılabilmesi için bilinir olmak zorundalar.
+    const { DEMO_USERS } = require('./demo-users');
+    if (DEMO_USERS.length) {
+      console.log(`[giriş] Şema '${schema}' - sunum hesapları (data/demo-users.json):`);
+      for (const u of DEMO_USERS) console.log(`[giriş]   ${u.username.padEnd(12)} / ${u.password}   (${u.role})`);
+    } else {
+      console.log(`[giriş] Şema '${schema}' - hesap listesi bulunamadı; 'npm run demo:reset' çıktısına bakın.`);
+    }
+    console.log('[giriş] Not: 15 dakikada 5 başarısız denemeden sonra 429 dönülür (hız sınırı).');
+    return;
+  }
+  if (!fs.existsSync(CREDENTIALS_PATH)) {
+    console.log(`[giriş] ${CREDENTIALS_PATH} yok - seed çalışınca üretilecek.`);
+    return;
+  }
+  try {
+    const store = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
+    const users = store.users || {};
+    const names = Object.keys(users);
+    if (!names.length) return;
+    console.log(`[giriş] Yerel dev hesapları (kaynak: ${CREDENTIALS_PATH}, git'te DEĞİL):`);
+    for (const n of names) console.log(`[giriş]   ${n.padEnd(12)} / ${users[n]}`);
+    console.log('[giriş] Not: 15 dakikada 5 başarısız denemeden sonra 429 dönülür (hız sınırı).');
+  } catch {
+    console.log(`[giriş] ${CREDENTIALS_PATH} okunamadı (bozuk JSON?).`);
+  }
+};
+
 module.exports = {
-  db, getPool, init, close, dropSchema, transaction, wrap,
+  db, getPool, init, close, dropSchema, transaction, wrap, describeDevLogins,
   SLOTS, DATABASE_URL, MIGRATIONS,
   hashPassword, verifyPassword,             // senkron - seed/CLI
   hashPasswordAsync, verifyPasswordAsync,   // async - HTTP yolu

@@ -249,9 +249,17 @@ düz-çizgi + Haversine tahmini yedeğine düşer (etiketli).
 `docs/` statik bir sitedir (Pages'te backend yoktur). Üç davranış:
 1. **`dashboard.html` / `order.html`** — **gerçek çift mod:** önce canlı API, erişilemezse
    `localStorage` + `seed.json` + JSON snapshot.
-2. **`index.html` (ana harita + admin)** — **kasıtlı olarak her zaman mock:** `docs/app.js`'teki
-   `window.fetch` override'ı bilinen uçları tarayıcı içinde simüle eder. Neden? Statik siteye gerçek
-   parola hash'i/backend gönderilmez (ADR-002/007). Bilinmeyen uçlar gerçek ağa geçer.
+2. **`index.html` (ana harita + admin)** — **artık o da çift mod:** açılışta backend yoklanır.
+   Erişilebiliyorsa her çağrı gerçek backend'e gider (yaptığınız her işlem PostgreSQL'e yazılır);
+   erişilemiyorsa `docs/app.js`'teki `window.fetch` override'ı devreye girer. Sol altta hangi modda
+   olduğunuzu gösteren rozet var.
+
+   > **Dürüst düzeltme:** Bu sayfa eskiden HER ZAMAN mock'tu ve belgede gerekçesi "statik siteye
+   > gerçek parola hash'i gönderilmez" diye yazıyordu. Bu **yanlıştı** — `/api/auth/login` zaten
+   > hash göndermiyor, yalnız token ve `{id, username, role}` dönüyor. Gerçek sebep basitçe
+   > GitHub Pages'in sunucu çalıştıramaması. Yanlış gerekçe, olmayan bir güvenlik kaygısını
+   > tasarım kararı gibi gösteriyordu; üstelik "uygulamada işlem yap, DBeaver'da gör" demosunu
+   > imkansız kılıyordu.
 3. **Yerelde canlı:** `npm start` sonra `docs/`'u açarsan gerçek backend'e bağlanır.
 
 ---
