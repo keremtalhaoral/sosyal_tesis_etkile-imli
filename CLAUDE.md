@@ -61,6 +61,10 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
 - `audit_log` **append-only** (yalnız INSERT, mutasyonla aynı transaction); sipariş durumu
   whitelist state machine (`submitted→served→paid`, sıçrama yasak); admin gözetim uçları
   sahiplik filtresiz (`requireAdmin` ile korunur). (ADR-007)
+- Canlı güncelleme **SSE** ile (WebSocket/yoklama değil): akış tek yönlü, `ws` paketi
+  gerekmiyor, `EventSource` tarayıcıda yerleşik. Olay **veri TAŞIMAZ**, yalnız "şu değişti"
+  işareti — istemci taze veriyi normal uçtan çeker, böylece yetkilendirme tek yerde kalır.
+  Chart'lar `destroy()` değil `chart.update()` ile **yerinde** güncellenir (animasyon). (ADR-010)
 
 ## Çalıştırma & test
 ```bash
@@ -74,7 +78,7 @@ npm run export:analytics # -> docs/data/analytics.json (Pages snapshot)
 npm run export:schema    # -> schema.sql (türetilmiş DDL; elle düzenlenmez)
 npm run build:routes     # GTFS -> docs/data/transit-routes.geojson (ADR-006)
 # Testler (her test kendi izole PostgreSQL şemasında; gerçek veriye dokunmaz)
-npm test                 # 168 test: şema/kısıt/PostGIS, sipariş, analytics,
+npm test                 # 301 test: şema/kısıt/PostGIS, sipariş, analytics,
                          # eşzamanlılık (write-skew), GTFS, audit log, parola/zamanlama
 # Pages'i yerelde görmek: cd docs && python3 -m http.server 8092
 # Her özelliği SQL ile gösterme: queries.sql (psql/DBeaver) + anlatımı docs/sorgu-defteri.md

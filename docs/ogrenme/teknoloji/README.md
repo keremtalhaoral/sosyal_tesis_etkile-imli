@@ -33,6 +33,7 @@ Katmanlı kitap ([`../`](../)) **"neden"** anlatır — kararların hikâyesi. B
 | [nodejs.md](nodejs.md) | JavaScript çalışma ortamı, olay döngüsü |
 | [express.md](express.md) | HTTP yönlendirme ve middleware |
 | [jwt.md](jwt.md) | imzalı oturum bileti |
+| [sse.md](sse.md) | sunucudan tarayıcıya canlı bildirim |
 | [pbkdf2.md](pbkdf2.md) | parola hash'leme |
 
 ### Tarayıcı

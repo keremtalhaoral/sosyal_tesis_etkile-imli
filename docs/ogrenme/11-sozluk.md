@@ -106,6 +106,10 @@ JavaScript bu ağacı değiştirince ekran anında değişir. → [09](09-fronte
 
 ## E
 
+**EventSource** — SSE akışını dinleyen, tarayıcıda **yerleşik** JavaScript arayüzü.
+Bağlantı koparsa kendiliğinden yeniden bağlanır. Özel HTTP başlığı gönderemez — projedeki
+`/api/events` ucunun kimliksiz olmasının sebebi bu. → [teknoloji/sse.md](teknoloji/sse.md)
+
 **Endpoint** (uç) — API'nin tek bir adresi; ne yaptığı URL + HTTP fiiliyle belirlenir.
 Projede 24 tane. → [01](01-web-nasil-calisir.md)
 
@@ -316,6 +320,10 @@ ile kapatılıyor. → [06](06-ayni-anda-iki-kisi.md)
 sınırlamak. Projede login için 15 dakikada 5 deneme; aşılırsa `429`. Hem kaba kuvvete hem
 CPU tüketmeye karşı. → [08](08-backend-node-express.md)
 
+**Polling** (yoklama) — "Değişti mi?" diye düzenli aralıklarla sormak. Projede
+**reddedildi**: aralık kısaysa boşuna sorgu yağmuru (dashboard 6 agregasyon koşturuyor),
+uzunsa sunumda ölü bekleme. Yerine SSE. → [12](12-canli-guncelleme.md)
+
 **Repository katmanı** — SQL'i uygulamanın geri kalanından ayıran katman. Projede
 `backend/db.js`. → [08](08-backend-node-express.md)
 
@@ -345,6 +353,11 @@ döndürüyordu. → [08](08-backend-node-express.md)
 çalışmış gibi bir sonuç garanti eder. Projede kapasite koruması bunu **gerektiriyor**;
 çakışan transaction `40001` ile reddedilir ve kod yeniden dener.
 → [06](06-ayni-anda-iki-kisi.md)
+
+**SSE** (Server-Sent Events) — Sunucunun bir HTTP yanıtını bitirmeyip açık tutarak
+tarayıcıya mesaj göndermesi. Projede grafiklerin canlı güncellenmesi bunun üstünde:
+sipariş verildiğinde "değişti" işareti gelir, panel taze veriyi çekip günceller.
+→ [12](12-canli-guncelleme.md), [teknoloji/sse.md](teknoloji/sse.md)
 
 **Snapshot (fiyat)** — Sipariş kalemine, o anki fiyatın kopyalanması. Menü fiyatı sonradan
 değişse bile eski sipariş değişmez. Captured data'nın ders kitabı örneği.
@@ -411,6 +424,11 @@ saldırısına kapalı. Bedel: ~1 MB depo ve elle güncelleme. → [09](09-front
 yapar. → [09](09-frontend-harita.md)
 
 ## W
+
+**WebSocket** — Tarayıcı ile sunucu arasında **çift yönlü** sürekli kanal. Projede
+kullanılMADI: akış tek yönlü (tarayıcının söyleyeceği bir şey yok) ve `ws` paketi
+gerektiriyordu. Kural: tek yönlüyse SSE, çift yönlüyse WebSocket.
+→ [12](12-canli-guncelleme.md)
 
 **WGS84** → bkz. **SRID 4326**.
 

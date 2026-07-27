@@ -82,7 +82,7 @@ Feynman tekniğiyle yazıldı: her konu tek cümleyle başlar, benzetmeyle devam
 **benzetmenin nerede bozulduğunu** söyler, sonra derinleşir. Her bölümde çalıştırılabilir
 komutlar ve "mentör sorarsa" cevapları var.
 
-- **Katmanlı kitap (00→11):** [proje ne yapıyor](docs/ogrenme/00-bu-proje-ne-yapiyor.md) →
+- **Katmanlı kitap (00→12):** [proje ne yapıyor](docs/ogrenme/00-bu-proje-ne-yapiyor.md) →
   [web](docs/ogrenme/01-web-nasil-calisir.md) →
   [veritabanı](docs/ogrenme/02-veritabani-nedir.md) →
   [SQL](docs/ogrenme/03-sql-ile-konusmak.md) →
@@ -93,9 +93,10 @@ komutlar ve "mentör sorarsa" cevapları var.
   [backend](docs/ogrenme/08-backend-node-express.md) →
   [frontend](docs/ogrenme/09-frontend-harita.md) →
   [veri kaynakları](docs/ogrenme/10-veri-nereden-geliyor.md) →
+  [canlı güncelleme](docs/ogrenme/12-canli-guncelleme.md) →
   [sözlük](docs/ogrenme/11-sozluk.md)
 - **Teknoloji başına derin dosyalar:** [`docs/ogrenme/teknoloji/`](docs/ogrenme/teknoloji/)
-  — 16 dosya. Her biri: *ne olduğu, hangi problemi çözmek için doğduğu, alternatifleri ve
+  — 17 dosya. Her biri: *ne olduğu, hangi problemi çözmek için doğduğu, alternatifleri ve
   neden seçilmedikleri, bu projede tam olarak nerede, bilinmesi gereken tuzaklar.*
 
 ### Diğer belgeler
@@ -105,4 +106,4 @@ komutlar ve "mentör sorarsa" cevapları var.
 - [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
 - [`docs/sorgu-defteri.md`](docs/sorgu-defteri.md) + [`queries.sql`](queries.sql) — her özelliği SQL ile gösterme.
 - [`DATABASE.md`](DATABASE.md) — merkezi veri mimarisi (DDIA tabanlı) ve API tablosu.
-- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-009).
+- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-010).

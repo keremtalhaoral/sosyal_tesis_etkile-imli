@@ -159,6 +159,8 @@ Docker kullanmıyorsanız yerel PostgreSQL 16 + PostGIS 3 yeterli; bağlantı i�
 | GET | `/api/admin/orders` | admin | Tüm siparişler (sahiplik filtresiz gözetim) |
 | GET | `/api/admin/audit-log` | admin | Son admin işlemleri (append-only) |
 | GET | `/api/weather?lat&lng` | - | Hava durumu (anahtar yoksa deterministik demo) |
+| GET | `/api/events` | - | **Canlı olay akışı (SSE, ADR-010).** Yanıt bitmez; mutasyonlarda `event: change` karesi düşer. Olay veri TAŞIMAZ, yalnız işaret |
+| GET | `/api/events/status` | - | Kaç istemci dinliyor (tanı) |
 
 Varsayılan kullanıcılar (`admin`, `user`): parolalar **rastgele üretilir**,
 `data/dev-credentials.json`'a yazılır (gitignored; ADR-002).

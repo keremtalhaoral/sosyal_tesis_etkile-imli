@@ -6,7 +6,7 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "test": "node backend/test-db.js && node backend/test-orders.js && node backend/test-analytics.js && node backend/test-concurrency.js && node backend/test-routes.js && node backend/test-ibb-parse.js && node backend/test-admin.js && node backend/test-auth.js && node backend/test-weather.js && node backend/test-api-hardening.js",
+    "test": "node backend/test-db.js && node backend/test-orders.js && node backend/test-analytics.js && node backend/test-concurrency.js && node backend/test-routes.js && node backend/test-ibb-parse.js && node backend/test-admin.js && node backend/test-auth.js && node backend/test-weather.js && node backend/test-api-hardening.js && node backend/test-events.js",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:load-geo": "node scripts/load-geo.js",

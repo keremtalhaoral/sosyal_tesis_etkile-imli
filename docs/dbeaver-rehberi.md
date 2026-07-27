@@ -319,6 +319,64 @@ hataları paraya bulaşırdı."*
 
 ---
 
+### Adım 4b — ⭐ Grafikler kendiliğinden güncelleniyor (ADR-010)
+
+**Hazırlık:** üçüncü bir tarayıcı sekmesinde `dashboard.html` açık olsun. Üstünde
+**yeşil nabız atan** bir çubuk görmelisiniz:
+
+```
+● Canlı akış bağlı — veri girdikçe grafikler kendiliğinden güncellenir · son güncelleme 14:32:05
+```
+
+Şimdi Adım 4'teki siparişi verin ve **dashboard sekmesine geçin — hiçbir şeye
+dokunmadan.** Çubuk kısa süre yeşile döner:
+
+```
+● Sipariş değişti — grafikler güncellendi · son güncelleme 14:32:47
+```
+
+Ciro grafiği ve "Toplam Ciro" kartı **animasyonla** yeni değere yükselir.
+
+> *"Burada sayfayı yenilemedim. Sunucu, sipariş yazıldığında açık bir HTTP bağlantısı
+> üstünden 'değişti' işareti gönderdi — buna Server-Sent Events deniyor. Tarayıcı işareti
+> alınca taze veriyi normal analytics ucundan çekti."*
+
+**Mentör "bu gerçekten canlı mı?" derse** iki kanıt var. Biri ekranda: son güncelleme
+saati. Diğeri terminalde:
+
+```bash
+curl -s localhost:8085/api/events/status
+# {"clients":1,"heartbeatMs":25000}
+```
+
+Ve akışı çıplak gözle gösterebilirsiniz — bu komut **kapanmaz**, sipariş verdiğinizde
+satır düşer:
+
+```bash
+curl -sN localhost:8085/api/events
+```
+
+```
+event: change
+data: {"type":"order","at":"2026-07-27T13:42:43.013Z","action":"create"}
+```
+
+> **Anlatılacak asıl karar:** *"Olayın içine siparişin kendisini koymadım, sadece 'bir
+> sipariş oluştu' dedim. Sebebi şu: veriyi olaya koysaydım 'bunu görmeye kimin hakkı var'
+> sorusunu bir de orada cevaplamam gerekirdi — admin gözetim uçlarım sahiplik filtresiz
+> çalışıyor. İki ayrı yetki yolu zamanla ayrışır. Bu yüzden olay yalnız işaret taşıyor;
+> yetki kontrolü tek yerde kalıyor."*
+
+**Neden WebSocket değil?** *"Akış tek yönlü — tarayıcının bana söyleyeceği bir şey yok.
+WebSocket ayrıca bir paket bağımlılığı demekti; projem üç pakette duruyor. SSE düz HTTP
+üstünde çalışıyor ve tarayıcıda `EventSource` yerleşik."*
+
+**Neden yoklama değil?** *"Dashboard sorgum altı ayrı agregasyon koşturuyor. 3 saniyede
+bir tekrarlamak hiçbir şey değişmese bile veritabanını boşuna yorardı; 30 saniye yapsaydım
+şu an burada bekliyor olurduk."*
+
+---
+
 ### Adım 5 — ⭐ Fiyat snapshot: en etkileyici an
 
 **DBeaver'dan** menü fiyatını değiştirin:
@@ -494,6 +552,8 @@ WHERE facility_id=1 AND reserve_date='2026-06-01' AND reserve_time='19:00';
 - [ ] `npm run demo:start` — backend açık, `[weather] GERÇEK` yazıyor
 - [ ] `cd docs && python3 -m http.server 8092` — arayüz açık
 - [ ] Tarayıcıda sol altta **● Canlı veritabanı** rozeti yeşil
+- [ ] `dashboard.html` ayrı sekmede açık ve üstünde **● Canlı akış bağlı** yazıyor
+      (yazmıyorsa: backend kapalı ya da farklı porttadır — `curl -s localhost:8085/api/events/status`)
 - [ ] DBeaver'da 3 sekme hazır, hepsinde `SET search_path = demo, public;` çalıştırılmış
 - [ ] `node backend/test-concurrency.js` bir kez denenmiş (ilk çalıştırma yavaş olabilir)
 - [ ] ER diyagramı PNG olarak dışa aktarılmış (yedek slayt)

@@ -12,7 +12,7 @@
 
 Bu klasörde **iki farklı okuma yolu** var:
 
-### 1. Katmanlı kitap (00 → 11) — "neden" anlatır
+### 1. Katmanlı kitap (00 → 12) — "neden" anlatır
 
 Sırayla okunur. Her bölüm bir öncekini varsayar, sıfır ön bilgiyle başlar.
 
@@ -29,6 +29,7 @@ Sırayla okunur. Her bölüm bir öncekini varsayar, sıfır ön bilgiyle başla
 | [08](08-backend-node-express.md) | Backend: Node ve Express | Olay döngüsü, async, middleware, havuz |
 | [09](09-frontend-harita.md) | Frontend ve harita | DOM, Leaflet, katman, vendoring, çift mod |
 | [10](10-veri-nereden-geliyor.md) | Veri nereden geliyor? | GTFS, İBB API, SOAP vs REST, türetilmiş veri |
+| [12](12-canli-guncelleme.md) | Canlı güncelleme | Yoklama vs SSE vs WebSocket; grafikler nasıl kendiliğinden yenileniyor |
 | [11](11-sozluk.md) | Sözlük | A-Z bütün terimler, her biri bölüme bağlı |
 
 ### 2. Teknoloji dosyaları — "ne" anlatır

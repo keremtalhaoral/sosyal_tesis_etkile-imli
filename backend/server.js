@@ -25,6 +25,7 @@ const { verifyPasswordAsync, DUMMY_PHC, init, DATABASE_URL, describeDevLogins } 
 const { validateReservationInput, validateOrderInput } = require('./validate');
 const { getWeather } = require('./weather');
 const { rateLimit, startCleanup } = require('./ratelimit');
+const events = require('./events');
 
 // Async handler'da fırlatılan hata Express 4'e KENDİLİĞİNDEN ulaşmaz (reddedilen Promise
 // yakalanmaz, istek asılı kalır). Bu sarmalayıcı reddi next()'e bağlar → alttaki hata
@@ -114,6 +115,7 @@ app.post('/api/auth/register', registerLimiter, asyncHandler(async (req, res) =>
   }
   try {
     const user = await db.createUserAsync(String(username).trim(), password);
+    events.publish('user', { action: 'register' });
     res.status(201).json({ token: signJwt(user), user });
   } catch (err) {
     if (err.code === '23505') {  // unique_violation
@@ -150,7 +152,9 @@ app.post('/api/facilities', requireAdmin, asyncHandler(async (req, res) => {
     return res.status(400).json({ error: 'kod, ad, lat, lng (sayı) ve capacity (tamsayı) alanları zorunludur.' });
   }
   try {
-    res.status(201).json(await db.createFacility(req.body, req.user.id));
+    const created = await db.createFacility(req.body, req.user.id);
+    events.publish('facility', { action: 'create' });
+    res.status(201).json(created);
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ error: `'${kod}' kodlu tesis zaten mevcut.` });
@@ -172,6 +176,7 @@ app.patch('/api/facilities/:id', requireAdmin, asyncHandler(async (req, res) => 
   }
   const updated = await db.updateFacilityOccupancy(Number(req.params.id), occupancy, req.user.id);
   if (!updated) return res.status(404).json({ error: 'Tesis bulunamadı.' });
+  events.publish('facility', { action: 'update' });
   res.json(updated);
 }));
 
@@ -180,6 +185,7 @@ app.delete('/api/facilities/:id', requireAdmin, asyncHandler(async (req, res) =>
   if (!await db.deleteFacility(Number(req.params.id), req.user.id)) {
     return res.status(404).json({ error: 'Tesis bulunamadı.' });
   }
+  events.publish('facility', { action: 'delete' });
   res.status(204).end();
 }));
 
@@ -196,6 +202,7 @@ app.post('/api/reservations', requireAuth, asyncHandler(async (req, res) => {
       facilityId, reserveDate, reserveTime, guests, highchairCount,
       cryptoSignature: signature
     });
+    events.publish('reservation', { action: 'create', facilityId });
     res.status(201).json({ id: result.id, booked: result.booked, remaining: result.remaining, signature });
   } catch (err) {
     if (err.code === '23505') {  // unique_violation
@@ -217,7 +224,9 @@ app.delete('/api/reservations/:id', requireAuth, asyncHandler(async (req, res) =
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Geçersiz rezervasyon id.' });
   try {
-    res.json(await db.cancelReservation(id, req.user.id));
+    const cancelled = await db.cancelReservation(id, req.user.id);
+    events.publish('reservation', { action: 'cancel' });
+    res.json(cancelled);
   } catch (err) {
     if (!err.statusCode) throw err;
     res.status(err.statusCode).json({ error: err.message });
@@ -240,6 +249,7 @@ app.post('/api/orders', requireAuth, asyncHandler(async (req, res) => {
   try {
     // İmza createOrder içinde, GERÇEK toplam hesaplandıktan sonra üretilir (bkz. db.js).
     const result = await db.createOrder({ userId: req.user.id, reservationId, items, paymentType });
+    events.publish('order', { action: 'create', reservationId });
     res.status(201).json(result);
   } catch (err) {
     if (!err.statusCode) throw err;
@@ -259,7 +269,9 @@ app.patch('/api/orders/:id/status', requireAdmin, asyncHandler(async (req, res) 
   const { status } = req.body || {};
   if (!status) return res.status(400).json({ error: 'status alanı zorunludur.' });
   try {
-    res.json(await db.updateOrderStatus(Number(req.params.id), status, req.user.id));
+    const updated = await db.updateOrderStatus(Number(req.params.id), status, req.user.id);
+    events.publish('order', { action: 'status', status });
+    res.json(updated);
   } catch (err) {
     if (!err.statusCode) throw err;
     res.status(err.statusCode).json({ error: err.message });
@@ -307,6 +319,7 @@ app.post('/api/ispark/:facilityId/take', requireAuth, asyncHandler(async (req, r
     if (!err.statusCode) throw err;
     return res.status(err.statusCode).json({ error: err.message });
   }
+  events.publish('ispark', { action: 'take', facilityId });
   res.status(201).json(await db.getIsparkStatus(facilityId));
 }));
 
@@ -320,8 +333,27 @@ app.post('/api/ispark/:facilityId/release', requireAuth, asyncHandler(async (req
     if (!err.statusCode) throw err;
     return res.status(err.statusCode).json({ error: err.message });
   }
+  events.publish('ispark', { action: 'release', facilityId });
   res.json(await db.getIsparkStatus(facilityId));
 }));
+
+// --- Canlı olay akışı (SSE, ADR-010) -----------------------------------------
+// Dashboard bunu dinliyor: bir rezervasyon/sipariş yazıldığında "değişti" işareti
+// gelir, istemci normal analytics ucundan TAZE veriyi çeker ve grafikleri günceller.
+//
+// Kimlik doğrulaması YOK ve bu bilinçli: olay hiçbir veri taşımıyor, yalnız "şu tür
+// bir şey değişti" diyor. Asıl veriyi çekerken yetki kontrolü zaten ilgili uçta
+// yapılıyor. Buraya requireAuth koymak, token'ı EventSource ile göndermeyi gerektirir
+// (EventSource özel başlık desteklemez) ve token'ı sorgu dizesine koymak onu tarayıcı
+// geçmişine ve sunucu loglarına yazar - bildirim kanalı için kötü bir takas.
+app.get('/api/events', (req, res) => {
+  events.subscribe(req, res);
+});
+
+// Tanı ucu: kaç istemci dinliyor? (sunumda "canlı mı?" sorusunun cevabı)
+app.get('/api/events/status', (req, res) => {
+  res.json({ clients: events.clientCount(), heartbeatMs: events.HEARTBEAT_MS });
+});
 
 // --- Analytics API (canlı; Pages snapshot ile aynı şekil) ---------------------
 const VALID_GRANULARITY = ['day', 'week', 'month', 'year'];

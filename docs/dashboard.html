@@ -53,6 +53,19 @@
     .btn { border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary);
            padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; }
     .mode-banner { padding: 8px 24px; font-size: 12px; color: var(--text-secondary); background: var(--surface-1); border-bottom: 1px solid var(--border); }
+
+    /* Canlı akış çubuğu (ADR-010) */
+    .live-bar { display: flex; align-items: center; gap: 8px; padding: 7px 24px; font-size: 12px;
+                color: var(--text-secondary); background: var(--surface-1); border-bottom: 1px solid var(--border); }
+    .live-sep { opacity: .45; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+    .live-bar.on  .live-dot { background: #22c55e; animation: live-pulse 2s ease-in-out infinite; }
+    .live-bar.off .live-dot { background: #94a3b8; }
+    .live-bar.hit .live-dot { background: #22c55e; animation: none; box-shadow: 0 0 0 5px rgba(34,197,94,.22); }
+    .live-bar.hit #live-text { color: #16a34a; font-weight: 650; }
+    @keyframes live-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.45); } 50% { box-shadow: 0 0 0 5px rgba(34,197,94,0); } }
+    /* Hareket hassasiyeti olan kullanıcılar için nabzı kapat (erişilebilirlik). */
+    @media (prefers-reduced-motion: reduce) { .live-bar.on .live-dot { animation: none; } }
     main { padding: 20px 24px 48px; max-width: 1360px; margin: 0 auto; }
 
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
@@ -95,10 +108,20 @@
       <button data-g="month" class="active">Aylık</button>
       <button data-g="year">Yıllık</button>
     </div>
+    <button class="btn" id="refresh" title="Veriyi şimdi yeniden çek">↻ Yenile</button>
     <button class="btn" id="theme-toggle" title="Tema değiştir">🌓 Tema</button>
     <a class="btn" href="index.html">🗺️ Haritaya dön</a>
   </header>
   <div class="mode-banner" id="mode-banner">Veri kaynağı belirleniyor…</div>
+  <!-- Canlı akış durumu (ADR-010). SSE bağlıyken yeşil nabız atar; bir değişiklik
+       geldiğinde kısa süre "güncellendi" yazar. Sunumda "gerçekten canlı mı?"
+       sorusunun ekrandaki cevabı burasıdır. -->
+  <div class="live-bar" id="live-bar" hidden>
+    <span class="live-dot" id="live-dot"></span>
+    <span id="live-text">Canlı akış bağlanıyor…</span>
+    <span class="live-sep">·</span>
+    <span id="live-stamp">son güncelleme —</span>
+  </div>
 
   <main>
     <div class="kpis" id="kpis"></div>

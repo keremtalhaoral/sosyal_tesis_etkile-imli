@@ -124,6 +124,8 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `env.js` | 59 | **Bağımlılıksız `.env` okuyucu.** Satır satır `KEY=VALUE`; `process.env`'de zaten tanımlı olanı **ezmez** (gerçek ortam değişkeni her zaman kazanır). `server.js`'in EN BAŞINDA yüklenir — `security.js`/`database.js` sırları modül yüklenme anında okuduğu için sıra bozulursa `.env` hiç görülmez. `dotenv` paketi yerine yazıldı. |
 | `weather.js` | 177 | **OpenWeather entegrasyonu + önbellek.** `https` (şifresiz `http` değil — anahtar sorgu dizesinde gidiyor). Koordinat ~1 km'lik tam sayı hücre indeksine yuvarlanır (`toFixed(2)` kayan nokta sınırında tutarsız). TTL `WEATHER_CACHE_TTL_MS` (varsayılan 10 dk, `0` = kapalı). Yanıtta `observed_at` + `cached` → tazelik kanıtı. **Asla fırlatmaz**: ağ engeli / `401` / `429` / timeout / anahtarsız → `isMock: true` + `reason`. Ağ engelini anahtar hatasından **ayırt eder**. |
 | `ratelimit.js` | 74 | **Kayan pencere hız sınırlayıcı** (bağımlılıksız, `express-rate-limit` yerine). Login: 15 dk'da 5, anahtar `${req.ip}\|${username}` — tek IP arkasındaki kurumsal ağın tamamı bir kişi yüzünden kilitlenmesin. Register: saatte 10. Aşılınca `429` + `Retry-After`. Zincirin başında olduğu için PBKDF2 **hiç çalışmıyor** → CPU tüketme vektörü kapalı. |
+| `events.js` | 114 | **Canlı olay yayını (SSE, ADR-010).** Açık SSE bağlantılarını tutar; `publish(type, detail)` tüm abonelere `event: change` karesi yazar. Olay VERİ TAŞIMAZ, yalnız işaret - yetkilendirme tek yerde kalsın diye (istemci taze veriyi normal uçtan çeker). 25 sn'de bir yorum satırı (`: ping`) ara katmanların bağlantıyı kapatmasını önler. `publish` **asla fırlatmaz**: bildirim yan etkidir, asıl işlem çoktan commit edilmiştir. Bağımlılıksız. |
+| `test-events.js` | 165 | SSE regresyonu (15 test), gerçek HTTP sunucusu + gerçek akışla: başlıklar (`text/event-stream`, `no-cache`, `X-Accel-Buffering`), `hello`/`retry` karesi, yayın tüm istemcilere gidiyor mu, kopan bağlantı listeden düşüyor mu, **olayda iş verisi olmadığı** (sözleşme testi). |
 | `demo-users.js` | 27 | **`demo` şemasının sunum hesapları — tek kaynak.** Veri `data/demo-users.json`'da (git'te; sunumda giriş yapılabilmesi için BİLİNİR olmak zorunda). İki yer okuyor: `scripts/demo-reset.js` hesapları kurar, `database.js` `describeDevLogins()` açılışta hatırlatır. Önce `demo-reset.js` içinde inline'dı; iki kopya olsaydı biri güncellenmeden kalır ve sunum ortasında "parola yanlış" denirdi. |
 | `test-auth.js` | 86 | Parola/JWT: PHC ayrıştırma, salt benzersizliği, `timingSafeEqual`, `DUMMY_PHC` ile zamanlama eşitliği, `exp` süre dolumu, kurcalanmış imza reddi. |
 | `test-weather.js` | 160 | **Yerel sahte OpenWeather sunucusuna** karşı (`WEATHER_API_BASE`): yanıt ayrıştırma, önbellek isabeti (ikinci çağrı upstream'e gitmiyor), TTL dolunca yeniden çağırma, `401`/`429`/timeout/bağlantı reddi/bozuk JSON → mock'a düşme, anahtarsız → mock. Gerçek ağ gerektirmez. |
@@ -138,10 +140,10 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `index.html` | 502 | Ana harita kabuğu: cam kenar çubuğu (stat/arama/filtre), Leaflet konteyneri, tema toggle (FOUC önleme). Yükleme sırası: turf → leaflet → `matrix.js` → `app.js`. |
 | `app.js` | 2330 | **Orkestratör** (en büyük dosya). UI state, Leaflet init, districts/transit/İSPARK katmanları, oturum, admin tesis yerleştirme. **Mock fetch interceptor** (gömülü tesisler, demo kullanıcılar, localStorage anahtarları) — backend olmadan çalışır (kasıtlı; ADR-002/007). |
 | `matrix.js` | 192 | `MatrixEngine` — lineer cebir/mekansal: lat/lng→3B kartezyen, matris-vektör çarpımı, KNN, TOPSIS çok-kriterli karar skoru (karar destek). |
-| `dashboard.html` / `dashboard.js` | 148 / 168 | Analitik sayfası (Faz v2-04). Çift mod: canlı `/api/analytics/*` → yoksa `data/analytics.json`. Chart.js grafikleri, renkler CSS değişkenlerinden (dataviz paleti), tema değişince yeniden çizim. |
+| `dashboard.html` / `dashboard.js` | ~180 / ~235 | Analitik sayfası (Faz v2-04). Çift mod: canlı `/api/analytics/*` → yoksa `data/analytics.json`. Chart.js grafikleri, renkler CSS değişkenlerinden (dataviz paleti), tema değişince yeniden çizim. **Canlı güncelleme (ADR-010):** `EventSource` ile `/api/events` dinlenir; 'değişti' işareti gelince taze veri çekilip chart'lar `destroy()` YERİNE `chart.update()` ile **yerinde** güncellenir (animasyon korunur - sunumda çubuğun büyüdüğü görünür). 400 ms biriktirme; canlı akış çubuğu + son güncelleme saati; elle **↻ Yenile** butonu. |
 | `order.html` / `order.js` | 115 / 209 | Müşteri sipariş sayfası (Faz v2-05). Çift mod. "Yeni Sipariş" ve "Siparişlerim"; durum etiketleri v2-07 yaşam döngüsünden. |
 | `style.css` | 1927 | Tasarım sistemi: açık/koyu tema token'ları, dataviz palet CSS değişkenleri, layout, cam kenar çubuğu, harita/marker, bileşenler. |
-| `adr/ADR-001…007-*.md` | ~690 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin. |
+| `adr/ADR-001…010-*.md` | ~1000 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin, İBB açık veri, PostgreSQL+PostGIS, canlı güncelleme (SSE). |
 | `diagrams/er-v2.md` | 134 | v2 varlık-ilişki diyagramı. |
 | `learning/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
 | `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |
@@ -151,8 +153,8 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `data/transit-routes.geojson` | 1 | Türetilmiş toplu taşıma çizgileri (minified). |
 | `vendor/{leaflet,turf,chartjs}/` | ~1 MB | Vendored kütüphaneler (CDN'siz, offline). Leaflet 1.9.4 (148 KB + 15 KB CSS + ikonlar), Turf (590 KB), Chart.js 4.5.1 (209 KB). |
 | `dbeaver-rehberi.md` | ~500 | **DBeaver sıfırdan + 9 adımlık sunum senaryosu.** Kurulum/bağlantı, arayüz turu, ER diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, prova edilmiş senaryo (ne diyeceğiniz dahil), sorun giderme tablosu, sunum öncesi kontrol listesi. |
-| `ogrenme/00…11-*.md` | 12 dosya | **Katmanlı öğrenme kitabı** (Feynman disiplini). Her bölüm sabit 7 adım: bir cümlede → benzetme **ve nerede bozulduğu** → daha derin → projede tam olarak nerede → kendin dene (çalıştırılabilir komut + beklenen çıktı) → mentör sorarsa → sırada ne var. Sıfır ön bilgiyle başlar. |
-| `ogrenme/teknoloji/*.md` | 16 + README | **Teknoloji başına derin dosyalar.** Her biri: ne olduğu → hangi problemi çözmek için doğdu → alternatifleri ve neden seçilmedikleri → bu projede tam olarak nerede → bilinmesi gereken 3 tuzak (mümkünse projede fiilen yaşanmış) → daha fazlası için. `nodejs`, `express`, `postgresql`, `postgis`, `pg-driver`, `docker`, `dbeaver`, `jwt`, `pbkdf2`, `leaflet`, `turf`, `chartjs`, `geojson`, `gtfs`, `soap-vs-rest`, `git-github-pages`. |
+| `ogrenme/00…12-*.md` | 13 dosya | **Katmanlı öğrenme kitabı** (Feynman disiplini). Her bölüm sabit 7 adım: bir cümlede → benzetme **ve nerede bozulduğu** → daha derin → projede tam olarak nerede → kendin dene (çalıştırılabilir komut + beklenen çıktı) → mentör sorarsa → sırada ne var. Sıfır ön bilgiyle başlar. |
+| `ogrenme/teknoloji/*.md` | 17 + README | **Teknoloji başına derin dosyalar.** Her biri: ne olduğu → hangi problemi çözmek için doğdu → alternatifleri ve neden seçilmedikleri → bu projede tam olarak nerede → bilinmesi gereken 3 tuzak (mümkünse projede fiilen yaşanmış) → daha fazlası için. `nodejs`, `express`, `postgresql`, `postgis`, `pg-driver`, `docker`, `dbeaver`, `jwt`, `pbkdf2`, `leaflet`, `turf`, `chartjs`, `geojson`, `gtfs`, `soap-vs-rest`, `git-github-pages`, `sse`. |
 
 ### 4.4 `scripts/` (Node yardımcıları)
 | Dosya | ~satır | Amaç |
@@ -316,3 +318,21 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   kullanıcı 5 denemede `429`'a takılıp bunu "parola yanlış" sanıyordu. `describeDevLogins()` açılışta
   geçerli hesapları yazıyor (üretimde susar); demo hesapları `backend/demo-users.js` +
   `data/demo-users.json` ile tek kaynağa taşındı; README'ye mod × hesap tablosu eklendi.
+
+- **2026-07-27 — Canlı güncelleme (SSE).** (Faz 9, ADR-010) Analiz paneli veriyi yalnız
+  sayfa açılışında / granülerlik değişince / tema değişince çekiyordu: kullanıcı sipariş
+  verdiğinde grafikler olduğu gibi kalıyor, görmek için sayfayı ELLE yenilemek
+  gerekiyordu — üstelik banner "gerçek zamanlı sorgu" yazıyordu ve bu yanıltıcıydı.
+  Yeni `backend/events.js` (bağımlılıksız SSE yayıncısı) + `GET /api/events`; 10 mutasyon
+  noktası `events.publish(...)` çağırıyor. `docs/dashboard.js` `EventSource` ile dinliyor,
+  400 ms biriktirip TEK yenileme yapıyor ve chart'ları `destroy()` yerine `chart.update()`
+  ile **yerinde** güncelliyor — böylece çubuğun büyümesi animasyonla görünüyor (sunumun
+  asıl anı). Panelde canlı akış çubuğu + son güncelleme saati, ayrıca elle **↻ Yenile**.
+  Yoklama reddedildi (dashboard sorgusu 6 agregasyon koşturuyor; kısa aralık sorgu yağmuru,
+  uzun aralık sunumda ölü bekleme), WebSocket reddedildi (akış tek yönlü + `ws` bağımlılığı).
+  Sözleşme: **olay veri taşımaz**, yalnız işaret — yetkilendirme tek yerde kalsın diye
+  (admin gözetim uçları sahiplik filtresiz, ADR-007). Gerçek tarayıcıyla ölçüldü: 360 ₺'lik
+  sipariş → Toplam Ciro ₺0 → ₺360, rozet "Sipariş değişti", chart instance aynı (yerinde
+  güncelleme). Yeni: `backend/test-events.js` (15 test, gerçek HTTP akışı),
+  `docs/ogrenme/12-canli-guncelleme.md`, `docs/ogrenme/teknoloji/sse.md`,
+  `docs/adr/ADR-010-canli-guncelleme.md`, DBeaver senaryosuna Adım 4b.
