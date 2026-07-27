@@ -354,6 +354,38 @@ const MIGRATIONS = [
       ALTER TABLE districts ADD COLUMN IF NOT EXISTS geom geometry(MultiPolygon, 4326);
       CREATE INDEX IF NOT EXISTS idx_districts_geom ON districts USING GIST (geom);
     `
+  },
+  {
+    // v9: iptal edilebilir rezervasyon + eksik indeksler + İSPARK sahipliği.
+    version: 9,
+    up: `
+      -- 1) UNIQUE kısıtı İPTALİ KAPSAMIYORDU.
+      -- UNIQUE(user_id, facility_id, reserve_date, reserve_time) içinde status yok; bu yüzden
+      -- iptal edilen bir rezervasyon o slotu SONSUZA DEK bloke ediyordu - kullanıcı fikrini
+      -- değiştirip aynı yere tekrar rezervasyon YAPAMIYORDU.
+      -- Çözüm: KISMİ (partial) benzersiz indeks. Kural yalnız iptal EDİLMEMİŞ satırlara uygulanır;
+      -- iptal edilenler birikebilir (tarihçe korunur) ama slotu tutmazlar.
+      ALTER TABLE reservations DROP CONSTRAINT IF EXISTS reservations_user_id_facility_id_reserve_date_reserve_time_key;
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_reservations_active_slot
+        ON reservations (user_id, facility_id, reserve_date, reserve_time)
+        WHERE status <> 'cancelled';
+
+      -- 2) audit_log sıralama indeksi. Sorgu her zaman "en yeni önce" (ORDER BY created_at DESC)
+      -- ama indeks yoktu; EXPLAIN 'Sort' gösteriyordu. Log büyüdükçe pahalanırdı.
+      CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log (created_at DESC, id DESC);
+
+      -- 3) İSPARK yer sahipliği. 'take' atomikti ama 'release' KİMİN bıraktığını bilmiyordu:
+      -- herhangi bir oturumlu kullanıcı başkasının yerini bırakabiliyordu. Artık her kapma
+      -- bir satır bırakır; release yalnız kendi satırını silebilir.
+      CREATE TABLE IF NOT EXISTS ispark_holds (
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (facility_id, user_id)   -- bir kullanıcı aynı otoparkta tek yer tutar
+      );
+      CREATE INDEX IF NOT EXISTS idx_ispark_holds_user ON ispark_holds (user_id);
+    `
   }
 ];
 

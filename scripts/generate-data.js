@@ -54,11 +54,20 @@ const placeholders = (rows, cols) =>
     await conn.run("DELETE FROM users WHERE username LIKE 'musteri\\_%'");
   }
 
-  // 1) Sentetik müşteri havuzu (idempotent). Tek paylaşılan hash: 200 kez 600k PBKDF2
-  // koşturmanın anlamı yok, bunlar giriş yapmayacak sentetik kayıtlar.
+  // 1) Sentetik müşteri havuzu (idempotent).
+  //
+  // HASH ÇEŞİTLİLİĞİ ÖNEMLİ: eskiden 200 kullanıcının HEPSİ tek bir hash'i paylaşıyordu
+  // (hız için). Ama DBeaver'da `users` tablosu açıldığında mentör 200 ÖZDEŞ satır görüyor -
+  // tam da "her kullanıcıya ayrı rastgele salt" anlatısının yanında. Doğru olan bir şeyi
+  // yanlış gösteren veri, yanlış veri kadar zararlı.
+  //
+  // 200 kez 600k iterasyon PBKDF2 koşturmak ~20 saniye sürerdi; bunun yerine küçük bir
+  // havuz (20 farklı hash) üretip döndürüyoruz: tablo gerçekçi görünüyor, üretim hızlı kalıyor.
   console.log(`[gen] ${USER_POOL} sentetik müşteri hazırlanıyor...`);
-  const sharedHash = require('../backend/database').hashPassword('musteri-' + Date.now());
-  const userRows = Array.from({ length: USER_POOL }, (_, i) => [`musteri_${String(i + 1).padStart(4, '0')}`, sharedHash]);
+  const { hashPassword } = require('../backend/database');
+  const HASH_POOL = 20;
+  const hashes = Array.from({ length: HASH_POOL }, (_, i) => hashPassword(`musteri-${Date.now()}-${i}`));
+  const userRows = Array.from({ length: USER_POOL }, (_, i) => [`musteri_${String(i + 1).padStart(4, '0')}`, hashes[i % HASH_POOL]]);
   await conn.run(
     `INSERT INTO users (username, password, role) VALUES ${placeholders(userRows, 2).replace(/\$(\d+)\)/g, '$$$1,\'user\')')} ON CONFLICT (username) DO NOTHING`,
     userRows.flat()

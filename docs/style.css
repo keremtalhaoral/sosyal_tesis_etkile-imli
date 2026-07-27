@@ -1940,3 +1940,34 @@ body {
   color: var(--text-secondary);
   font-size: 11px;
 }
+
+/* --- Mod rozeti (çift mod göstergesi) -------------------------------------
+   Ekrandaki verinin GERÇEK veritabanından mı yoksa tarayıcı-içi replikadan mı geldiğini
+   gizlemiyoruz. Sunumda da işe yarar: mentör rozete bakıp hangi modda olduğunu görür. */
+.mode-badge {
+  position: fixed;
+  bottom: 12px;
+  left: 12px;
+  z-index: 1200;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: default;
+  user-select: none;
+  border: 1px solid transparent;
+  backdrop-filter: blur(6px);
+}
+.mode-badge--live {
+  background: rgba(27, 175, 122, 0.14);
+  border-color: rgba(27, 175, 122, 0.45);
+  color: #0e7a52;
+}
+.mode-badge--offline {
+  background: rgba(137, 135, 129, 0.16);
+  border-color: rgba(137, 135, 129, 0.45);
+  color: #5d5b57;
+}
+[data-theme="dark"] .mode-badge--live    { color: #4ee0a6; }
+[data-theme="dark"] .mode-badge--offline { color: #b6b3ad; }

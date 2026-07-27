@@ -35,6 +35,25 @@ const state = {
 // API Base configuration
 const API_BASE = 'http://127.0.0.1:8085';
 
+/**
+ * escapeHtml - innerHTML'e giden HER kullanıcı/veritabanı kökenli metin buradan geçer.
+ *
+ * NEDEN: tesis adı, kullanıcı adı, menü adı gibi alanlar veritabanından geliyor ve şablon
+ * dizesiyle doğrudan innerHTML'e basılıyordu. Admin, adı `<img src=x onerror=alert(1)>` olan
+ * bir tesis eklerse o tesisi GÖREN HERKESTE kod çalışırdı - kalıcı (stored) XSS.
+ * Veriyi yazan ile veriyi gören farklı kişiler olduğu için tehlike gerçek.
+ *
+ * Kural: metin gösteriyorsan ya textContent kullan ya da bu fonksiyondan geçir.
+ * `&` EN BAŞTA değiştirilmeli, yoksa sonraki değişimlerin ürettiği & işaretlerini de bozar.
+ */
+const escapeHtml = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
+
 // ==========================================
 // MOCK FETCH INTERCEPTOR FOR SERVERLESS PROD
 // ==========================================
@@ -183,8 +202,52 @@ const generateMockSignature = (dataStr) => {
   return "MOCK_SIG_" + hex.toUpperCase();
 };
 
+// ==========================================================================
+// ÇİFT MOD (dual mode) — canlı backend varsa gerçek, yoksa tarayıcı-içi replika
+// ==========================================================================
+// ÖNCEDEN: bu sayfa HER ZAMAN mock'tu. Aşağıdaki override tüm bilinen uçları yakalıyordu,
+// yani index.html'de yapılan rezervasyon/sipariş yalnızca localStorage'a gidiyordu -
+// VERİTABANINA HİÇBİR ŞEY YAZILMIYORDU. (Bu, "uygulamada işlem yap, DBeaver'da satırın
+// belirdiğini gör" demosunu imkansız kılıyordu.)
+//
+// Belgelerdeki gerekçe de yanlıştı: "statik siteye gerçek parola hash'i gönderilmez"
+// deniyordu, ama /api/auth/login zaten hash göndermiyor - yalnız token ve
+// { id, username, role } dönüyor. GERÇEK sebep basitçe şu: GitHub Pages sunucu
+// çalıştıramaz, dolayısıyla orada bağlanacak bir backend yok.
+//
+// ŞİMDİ: order.html'in zaten yaptığı deseni izliyoruz. Açılışta backend'e kısa bir yoklama:
+//   erişilebiliyorsa -> override devre dışı, her şey GERÇEK backend'e gider (yerel sunum)
+//   erişilemiyorsa   -> mock (GitHub Pages), sayfada görünür "çevrimdışı replika" rozeti
+// Override SİLİNMEDİ, yalnız bayrakla atlanıyor: yoklama başarısızsa davranış birebir eskisi.
+const Live = {
+  active: false,          // backend erişilebilir mi?
+  checked: false,         // yoklama tamamlandı mı?
+  async probe() {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 2500);
+      // originalFetch kullanılmalı: override henüz devrede ve bu çağrıyı da yakalardı.
+      const res = await originalFetch(`${API_BASE}/api/menu?facilityId=1`, { signal: ctrl.signal });
+      clearTimeout(timer);
+      this.active = res.ok;
+    } catch {
+      this.active = false;
+    }
+    this.checked = true;
+    console.info(this.active
+      ? '[mod] CANLI: gerçek backend kullanılıyor, veriler PostgreSQL\'e yazılıyor.'
+      : '[mod] ÇEVRİMDIŞI REPLİKA: backend yok, veriler yalnız bu tarayıcıda (localStorage).');
+    return this.active;
+  }
+};
+
 const originalFetch = window.fetch;
 window.fetch = async function (url, options) {
+  // CANLI mod: hiçbir şeyi taklit etme, doğrudan gerçek backend'e geç.
+  if (Live.active && typeof url === 'string' && url.startsWith(API_BASE)) {
+    return originalFetch.apply(this, arguments);
+  }
+
   if (typeof url === 'string' && url.startsWith('http://127.0.0.1:8085/api/')) {
     const endpoint = url.replace('http://127.0.0.1:8085/api/', '');
     const cleanEndpoint = endpoint.split('?')[0];
@@ -572,10 +635,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initMap();
   setupUIEvents();
-  await bootstrapCentralSeed(); // veri, merkezi seed'den gelsin (loadData'dan önce)
+  // Mod yoklaması HER ŞEYDEN ÖNCE: veri yükleme yolu buna göre değişiyor.
+  await Live.probe();
+  renderModeBadge();
+  // Çevrimdışı replikayı yalnız GEREKİYORSA kur. Canlı modda mock hiç çalışmayacağı için
+  // localStorage'ı seed'lemek hem gereksiz hem kafa karıştırıcı olurdu (iki veri kaynağı).
+  if (!Live.active) await bootstrapCentralSeed();
   loadData();
   Auth.checkSession();
 });
+
+/**
+ * Hangi modda olduğumuzu KULLANICIYA söyle. Dürüstlük kuralı: ekrandaki verinin gerçek
+ * veritabanından mı yoksa tarayıcı-içi replikadan mı geldiği gizlenmemeli. Sunumda da işe
+ * yarar: mentör rozete bakıp "bu gerçekten veritabanına yazıyor" diyebilir.
+ */
+const renderModeBadge = () => {
+  const badge = document.createElement('div');
+  badge.id = 'mode-badge';
+  badge.className = Live.active ? 'mode-badge mode-badge--live' : 'mode-badge mode-badge--offline';
+  badge.textContent = Live.active ? '● Canlı veritabanı' : '○ Çevrimdışı replika';
+  badge.title = Live.active
+    ? 'Backend erişilebilir. Yaptığınız her işlem PostgreSQL veritabanına yazılıyor.'
+    : 'Backend erişilemiyor (ör. GitHub Pages). Veriler yalnız bu tarayıcıda saklanıyor; '
+      + 'gerçek veritabanına yazılmıyor. Canlı mod için: npm start';
+  document.body.appendChild(badge);
+};
 
 // Theme Management
 const initTheme = () => {
@@ -928,7 +1013,7 @@ const renderFacilityList = () => {
     item.dataset.id = f.id;
     item.innerHTML = `
       <div class="facility-item-header">
-        <span class="facility-item-name">${f.ad}</span>
+        <span class="facility-item-name">${escapeHtml(f.ad)}</span>
         <span class="status-pill ${statusClass}">${statusLabel}</span>
       </div>
       <div class="facility-item-detail">
@@ -1060,7 +1145,7 @@ const selectDistrict = (feature, layer) => {
     list.forEach(f => {
       const item = document.createElement('div');
       item.className = 'facility-item mini';
-      item.innerHTML = `<strong>${f.ad}</strong><br/><small>Kapasite: ${f.kapasite} | Doluluk: %${f.dolulukOrani}</small>`;
+      item.innerHTML = `<strong>${escapeHtml(f.ad)}</strong><br/><small>Kapasite: ${f.kapasite} | Doluluk: %${f.dolulukOrani}</small>`;
       item.onclick = () => selectFacility(f);
       listContainer.appendChild(item);
     });
@@ -1089,7 +1174,7 @@ const renderFacilityMarkers = () => {
     }).addTo(state.map);
 
     // Hover Tooltip actions
-    marker.bindTooltip(`<strong>${f.ad}</strong><br/>Kapasite Doluluk: %${f.dolulukOrani}`, {
+    marker.bindTooltip(`<strong>${escapeHtml(f.ad)}</strong><br/>Kapasite Doluluk: %${f.dolulukOrani}`, {
       direction: 'top',
       offset: [0, -10]
     });
@@ -1250,7 +1335,7 @@ const fetchMenu = async (facilityId) => {
       const row = document.createElement('div');
       row.className = 'menu-item-row';
       row.innerHTML = `
-        <span class="menu-item-name">${item.name}</span>
+        <span class="menu-item-name">${escapeHtml(item.name)}</span>
         <span class="menu-item-price">${priceStr} TL</span>
       `;
       container.appendChild(row);
@@ -1278,7 +1363,7 @@ const fetchWeather = async (lat, lng, elementId) => {
     
     container.innerHTML = `
       <div class="weather-temp">${data.temp}°C</div>
-      <div class="weather-desc">${data.desc}</div>
+      <div class="weather-desc">${escapeHtml(data.desc)}</div>
       <div class="weather-detail">Nem: %${data.humidity}</div>
       <div class="weather-detail">Rüzgar: ${data.wind_speed} km/s</div>
     `;
@@ -2064,8 +2149,8 @@ const renderAdminOversight = (orders) => {
     return `
       <div class="admin-oversight-row">
         <div class="admin-oversight-main">
-          <strong>${o.facility_name}</strong>
-          <span class="admin-oversight-owner">${o.owner_username}</span>
+          <strong>${escapeHtml(o.facility_name)}</strong>
+          <span class="admin-oversight-owner">${escapeHtml(o.owner_username)}</span>
           <span class="order-status-badge status-${o.status}">${ORDER_STATUS_LABEL[o.status] || o.status}</span>
         </div>
         <div class="admin-oversight-sub">
@@ -2255,7 +2340,7 @@ const Auth = (() => {
           const row = document.createElement('tr');
           const truncSign = r.crypto_signature ? `${r.crypto_signature.slice(0, 18)}...` : '-';
           row.innerHTML = `
-            <td><strong>${r.facility_name}</strong></td>
+            <td><strong>${escapeHtml(r.facility_name)}</strong></td>
             <td>${r.reserve_date}</td>
             <td>${r.reserve_time}</td>
             <td>${r.guests} kişi</td>

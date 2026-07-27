@@ -10,6 +10,12 @@
  * 3. Comments Describe Rationale: Critical handlers have comments explaining coordinate ordering constraints and error masking logic.
  */
 
+// .env EN ÖNCE yüklenir: aşağıdaki modüller require edilirken process.env'i okuyor
+// (security.js JWT_SECRET'i, database.js DATABASE_URL'i modül yüklenme anında çözüyor).
+// Sıra bozulursa .env'deki değerler hiç görülmez.
+const { loadEnv } = require('./env');
+const envResult = loadEnv();
+
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
@@ -17,7 +23,8 @@ const analytics = require('./analytics');
 const { signJwt, verifyJwt, signReservation } = require('./security');
 const { verifyPasswordAsync, DUMMY_PHC, init, DATABASE_URL } = require('./database');
 const { validateReservationInput, validateOrderInput } = require('./validate');
-const http = require('http');
+const { getWeather } = require('./weather');
+const { rateLimit, startCleanup } = require('./ratelimit');
 
 // Async handler'da fırlatılan hata Express 4'e KENDİLİĞİNDEN ulaşmaz (reddedilen Promise
 // yakalanmaz, istek asılı kalır). Bu sarmalayıcı reddi next()'e bağlar → alttaki hata
@@ -27,8 +34,45 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 const app = express();
 const PORT = process.env.PORT || 8085;
 
-app.use(cors());
-app.use(express.json());
+// --- Hız sınırları (bkz. backend/ratelimit.js) -------------------------------
+// Login en pahalı uç: her deneme 600k PBKDF2 = ~100 ms CPU. Sınırsız bırakmak hem kaba
+// kuvvete hem CPU tüketmeye açık kapı. Anahtar = IP + denenen kullanıcı adı: tek bir IP
+// arkasındaki kurumsal ağın tamamı, biri yanlış parola girdi diye kilitlenmesin.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const loginLimiter = rateLimit({
+  windowMs: LOGIN_WINDOW_MS,
+  max: Number(process.env.LOGIN_RATE_MAX || 5),
+  keyOf: (req) => `${req.ip}|${String((req.body && req.body.username) || '').toLowerCase()}`,
+  message: 'Çok fazla başarısız giriş denemesi. Lütfen biraz bekleyip tekrar deneyin.',
+});
+// Kayıt da PBKDF2 çalıştırıyor (aynı CPU maliyeti) - o da sınırlanmalı.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: Number(process.env.REGISTER_RATE_MAX || 10),
+  message: 'Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin.',
+});
+startCleanup(LOGIN_WINDOW_MS);
+
+// CORS: varsayılan olarak açık (geliştirme + GitHub Pages'ten yerel backend'e erişim).
+// CORS_ORIGIN verilirse yalnız o kaynaklara izin verilir (virgülle ayrılmış liste).
+//
+// NOT: Bu API oturumu Authorization başlığıyla taşıyor, çerezle DEĞİL. Tarayıcı bu başlığı
+// başka bir siteye kendiliğinden eklemez; dolayısıyla klasik CSRF yüzeyi yok ve açık CORS
+// burada göründüğü kadar tehlikeli değil. Yine de üretimde daraltılabilsin diye ayar var.
+const corsOrigins = (process.env.CORS_ORIGIN || '').split(',').map((s) => s.trim()).filter(Boolean);
+app.use(cors(corsOrigins.length ? { origin: corsOrigins } : undefined));
+
+// Temel güvenlik başlıkları (bağımsız; helmet paketine gerek yok).
+// Bu API yalnız JSON döndürüyor, HTML değil - bu yüzden başlık seti küçük ve hedefli.
+app.use((req, res, next) => {
+  res.set('X-Content-Type-Options', 'nosniff');   // tarayıcı içerik tipini tahmin etmesin
+  res.set('X-Frame-Options', 'DENY');             // clickjacking: iframe'e gömülemez
+  res.set('Referrer-Policy', 'no-referrer');      // dış sitelere URL sızdırma
+  next();
+});
+
+// Gövde boyutu sınırı: varsayılan 100kb yeterli ama AÇIKÇA yazılsın ki bilinçli bir karar olsun.
+app.use(express.json({ limit: '100kb' }));
 
 // Log incoming API queries for visibility
 app.use((req, res, next) => {
@@ -60,10 +104,13 @@ const requireAdmin = (req, res, next) => {
 };
 
 // --- Auth API ---------------------------------------------------------------
-app.post('/api/auth/register', asyncHandler(async (req, res) => {
+app.post('/api/auth/register', registerLimiter, asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
-  if (!username || !password || String(password).length < 4) {
-    return res.status(400).json({ error: 'Geçerli bir kullanıcı adı ve en az 4 karakterlik parola gerekli.' });
+  // En az 8 karakter. Önceki sınır 4'tü: "1234" kabul ediliyordu ve 600k iterasyonlu PBKDF2
+  // bile bu kadar küçük bir arama uzayını koruyamaz (4 haneli sayı = 10.000 olasılık).
+  // Hash'in gücü, parolanın entropisi kadardır.
+  if (!username || !password || String(password).length < 8) {
+    return res.status(400).json({ error: 'Geçerli bir kullanıcı adı ve en az 8 karakterlik parola gerekli.' });
   }
   try {
     const user = await db.createUserAsync(String(username).trim(), password);
@@ -76,7 +123,7 @@ app.post('/api/auth/register', asyncHandler(async (req, res) => {
   }
 }));
 
-app.post('/api/auth/login', asyncHandler(async (req, res) => {
+app.post('/api/auth/login', loginLimiter, asyncHandler(async (req, res) => {
   const { username, password } = req.body || {};
   const record = username ? await db.getUserByUsername(String(username).trim()) : null;
   // Kullanıcı yoksa da GERÇEK parametrelerle (600k iterasyon) sahte bir doğrulama koştururuz:
@@ -163,6 +210,20 @@ app.get('/api/reservations', requireAuth, asyncHandler(async (req, res) => {
   res.json(await db.getReservationsByUserId(req.user.id));
 }));
 
+// Rezervasyon iptali (v9). Satır SİLİNMEZ, status='cancelled' olur - gerçekleşmiş olay
+// silinmez (DDIA Böl. 11). Bağlı siparişler de iptal edilir ve tutarları geri alınır.
+// Kısmi benzersiz indeks sayesinde iptal edilen kayıt slotu artık bloke etmez.
+app.delete('/api/reservations/:id', requireAuth, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'Geçersiz rezervasyon id.' });
+  try {
+    res.json(await db.cancelReservation(id, req.user.id));
+  } catch (err) {
+    if (!err.statusCode) throw err;
+    res.status(err.statusCode).json({ error: err.message });
+  }
+}));
+
 // --- Menü + Sipariş API (Faz v2-05) ------------------------------------------
 app.get('/api/menu', asyncHandler(async (req, res) => {
   const facilityId = Number(req.query.facilityId);
@@ -206,14 +267,21 @@ app.patch('/api/orders/:id/status', requireAdmin, asyncHandler(async (req, res) 
 }));
 
 // --- Admin gözetim API (Faz v2-07) - sahiplik filtresi YOK, requireAdmin ile korunur ---
+// SAYFALAMA ZORUNLU: bu uçlar eskiden tüm satırları döndürüyordu (ölçüldü: 425.139 satır /
+// 142 MB / 8,7 s). Toplam sayı X-Total-Count başlığında; gövde yalnız istenen pencere.
+const sendPage = (res, page) => {
+  res.set('X-Total-Count', String(page.total));
+  res.json({ rows: page.rows, total: page.total, limit: page.limit, offset: page.offset });
+};
+
 app.get('/api/admin/reservations', requireAdmin, asyncHandler(async (req, res) => {
   const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
-  res.json(await db.getAllReservations(facilityId));
+  sendPage(res, await db.getAllReservations(facilityId, req.query));
 }));
 
 app.get('/api/admin/orders', requireAdmin, asyncHandler(async (req, res) => {
   const facilityId = req.query.facilityId ? Number(req.query.facilityId) : undefined;
-  res.json(await db.getAllOrders(facilityId));
+  sendPage(res, await db.getAllOrders(facilityId, req.query));
 }));
 
 app.get('/api/admin/audit-log', requireAdmin, asyncHandler(async (req, res) => {
@@ -231,8 +299,13 @@ app.get('/api/ispark/:facilityId', asyncHandler(async (req, res) => {
 app.post('/api/ispark/:facilityId/take', requireAuth, asyncHandler(async (req, res) => {
   const facilityId = Number(req.params.facilityId);
   if (!await db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
-  if (!await db.takeIsparkSpot(facilityId)) {
-    return res.status(409).json({ error: 'Otopark dolu, boş yer yok.' });
+  try {
+    if (!await db.takeIsparkSpot(facilityId, req.user.id)) {
+      return res.status(409).json({ error: 'Otopark dolu, boş yer yok.' });
+    }
+  } catch (err) {
+    if (!err.statusCode) throw err;
+    return res.status(err.statusCode).json({ error: err.message });
   }
   res.status(201).json(await db.getIsparkStatus(facilityId));
 }));
@@ -240,7 +313,13 @@ app.post('/api/ispark/:facilityId/take', requireAuth, asyncHandler(async (req, r
 app.post('/api/ispark/:facilityId/release', requireAuth, asyncHandler(async (req, res) => {
   const facilityId = Number(req.params.facilityId);
   if (!await db.getIsparkStatus(facilityId)) return res.status(404).json({ error: 'Bu tesis için İSPARK kaydı yok.' });
-  await db.releaseIsparkSpot(facilityId);
+  try {
+    // Yalnız KENDİ kapadığı yeri bırakabilir (v9). Eskiden herkes herkesinkini bırakabiliyordu.
+    await db.releaseIsparkSpot(facilityId, req.user.id);
+  } catch (err) {
+    if (!err.statusCode) throw err;
+    return res.status(err.statusCode).json({ error: err.message });
+  }
   res.json(await db.getIsparkStatus(facilityId));
 }));
 
@@ -279,125 +358,19 @@ app.get('/api/proximity', asyncHandler(async (req, res) => {
   res.json(await db.getClosestFacilities(lat, lng, 3));
 }));
 
-// Endpoint: Weather API with automatic fail-safe fallback
-app.get('/api/weather', async (req, res) => {
+// Endpoint: Hava durumu. Gerçek OpenWeather verisi (anahtar .env'den); erişilemezse
+// deterministik demo yanıtı - ama her zaman dürüstçe `isMock` etiketiyle.
+// Ayrıntı ve önbellek gerekçesi: backend/weather.js
+app.get('/api/weather', asyncHandler(async (req, res) => {
   const { lat, lng } = req.query;
-  
   if (!lat || !lng) {
-    return res.status(400).json({ error: "Missing coordinates: lat and lng are required." });
+    return res.status(400).json({ error: 'lat ve lng sorgu parametreleri zorunludur.' });
   }
-
-  const apiKey = process.env.OPENWEATHER_API_KEY;
-  
-  // Define errors out of existence: If no key is set, immediately bypass external call to avoid timeouts
-  if (!apiKey) {
-    return res.json(generateRealisticMockWeather(lat, lng));
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
+    return res.status(400).json({ error: 'lat ve lng sayı olmalıdır.' });
   }
-
-  // If API key is present, attempt real OpenWeatherMap request
-  const url = `http://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&units=metric&appid=${apiKey}`;
-  
-  // Tek-yanıt guard'ı: timeout + error + end yarışabilir; yalnız ilki yanıtı gönderir.
-  let settled = false;
-  const reply = (payload) => { if (settled) return; settled = true; res.json(payload); };
-
-  const request = http.get(url, (apiRes) => {
-    let data = '';
-
-    apiRes.on('data', (chunk) => {
-      data += chunk;
-    });
-
-    apiRes.on('end', () => {
-      try {
-        if (apiRes.statusCode === 200) {
-          const weatherJson = JSON.parse(data);
-          reply({
-            temp: parseFloat(weatherJson.main.temp.toFixed(1)),
-            desc: translateConditionToTurkish(weatherJson.weather[0].main),
-            humidity: weatherJson.main.humidity,
-            wind_speed: parseFloat((weatherJson.wind.speed * 3.6).toFixed(1)), // Convert m/s to km/h
-            isMock: false
-          });
-        } else {
-          // If OpenWeather returns error (e.g. invalid key), serve mock weather instead of failing
-          console.warn(`OpenWeather API returned status code ${apiRes.statusCode}. Falling back to mock.`);
-          reply(generateRealisticMockWeather(lat, lng));
-        }
-      } catch (err) {
-        reply(generateRealisticMockWeather(lat, lng));
-      }
-    });
-  });
-
-  // Askıda kalan soket koruması: 3 sn içinde yanıt gelmezse mock'a düş (aksi halde
-  // ne 'end' ne 'error' tetiklenmeyip istek sonsuza dek asılı kalabilir).
-  request.setTimeout(3000, () => {
-    console.warn("OpenWeather isteği zaman aşımına uğradı; mock'a düşülüyor.");
-    request.destroy();
-    reply(generateRealisticMockWeather(lat, lng));
-  });
-
-  request.on('error', (err) => {
-    console.warn("OpenWeather connection failed (e.g. offline sandbox). Falling back to mock.");
-    // Mask exception: serve mock weather so frontend functions uninterrupted
-    reply(generateRealisticMockWeather(lat, lng));
-  });
-});
-
-// Helper: Translate basic weather conditions to Turkish
-const translateConditionToTurkish = (mainCondition) => {
-  const translations = {
-    "Clear": "Açık / Güneşli",
-    "Clouds": "Bulutlu",
-    "Rain": "Yağmurlu",
-    "Drizzle": "Çiseleyen Yağmur",
-    "Thunderstorm": "Fırtınalı Yağmur",
-    "Snow": "Karlı",
-    "Mist": "Sisli",
-    "Smoke": "Dumanlı",
-    "Haze": "Puslu",
-    "Dust": "Tozlu",
-    "Fog": "Sisli",
-    "Sand": "Kum Fırtınası",
-    "Squall": "Kasırga",
-    "Tornado": "Hortum"
-  };
-  return translations[mainCondition] || mainCondition;
-};
-
-// Helper: Generates realistic mock weather for Istanbul based on lat/lng coordinates
-const generateRealisticMockWeather = (lat, lng) => {
-  // Use a pseudo-random hash based on coordinates to keep the values stable for a specific location
-  const seed = Math.sin(parseFloat(lat)) * Math.cos(parseFloat(lng));
-  const tempOffset = Math.round(seed * 4); // Variations between -4°C and +4°C
-  
-  // Istanbul average summer temperature (approx. 26°C in June)
-  const baseTemp = 25;
-  const temp = baseTemp + tempOffset;
-  
-  // Determine weather condition based on coordinate decimals
-  const index = Math.abs(Math.floor(seed * 10)) % 4;
-  const conditions = [
-    "Açık / Güneşli",
-    "Hafif Rüzgarlı / Güneşli",
-    "Parçalı Bulutlu",
-    "Az Bulutlu"
-  ];
-  const condition = conditions[index];
-  
-  const humidity = Math.abs(Math.floor(seed * 25)) + 55; // 55% - 80%
-  const wind_speed = parseFloat((Math.abs(seed * 12) + 6).toFixed(1)); // 6 - 18 km/h
-  
-  // Tek sözleşme: { temp, desc, humidity, wind_speed } — frontend'in okuduğu alan isimleri.
-  return {
-    temp,
-    desc: condition,
-    humidity,
-    wind_speed,
-    isMock: true
-  };
-};
+  res.json(await getWeather(lat, lng));
+}));
 
 // --- Global hata middleware'i (4 argüman = Express bunu hata işleyici sayar) --------
 // Önceden hiç yoktu: bir handler beklenmedik şekilde fırlattığında Express'in varsayılan
@@ -417,6 +390,17 @@ init()
   .then(() => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Müfettiş GIS Backend Server listening at http://localhost:${PORT}`);
+      // Açılışta yapılandırmayı GÖRÜNÜR yap: "anahtarı .env'e yazdım ama demo veri geliyor"
+      // sorununun kaynağı çoğu zaman burada anlaşılır.
+      if (envResult.loaded) {
+        console.log(`[env] .env yüklendi: ${envResult.keys.length} değişken`
+          + (envResult.skipped.length ? ` (${envResult.skipped.length} tanesi ortamda zaten tanımlı olduğu için atlandı)` : ''));
+      } else {
+        console.log('[env] .env dosyası yok (.env.example\'ı kopyalayabilirsiniz)');
+      }
+      console.log(process.env.OPENWEATHER_API_KEY
+        ? `[weather] GERÇEK OpenWeather verisi aktif (önbellek TTL: ${process.env.WEATHER_CACHE_TTL_MS ?? '600000'} ms)`
+        : '[weather] OPENWEATHER_API_KEY yok -> deterministik DEMO verisi (isMock: true)');
     });
   })
   .catch((err) => {

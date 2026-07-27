@@ -116,7 +116,8 @@ kaynak `data/seed.json`, Pages kopyası ondan türetilir.
 - `data/seed.json` değişince `docs/data/seed.json`'a kopyalanmalı ve `version` artırılmalıdır.
 - Leaflet/Turf/Chart.js CDN yerine `docs/vendor/` altında (kurum ağı / çevrimdışı demo).
 - Pages girişleri (`seed.json -> demo_users`) gerçek backend parolalarından **bağımsızdır**:
-  `demo/demo1234`, `demo-admin/demo1234` (statik siteye gerçek hash asla gönderilmez, ADR-002).
+  `demo/demo1234`, `demo-admin/demo1234`. Bu hesaplar yalnız çevrimdışı replika içindir;
+  backend erişilebiliyorsa sayfa gerçek API'yi kullanır ve gerçek kullanıcılarla giriş yapılır.
 
 ## Çalıştırma
 
@@ -144,6 +145,7 @@ Docker kullanmıyorsanız yerel PostgreSQL 16 + PostGIS 3 yeterli; bağlantı i�
 | GET | `/api/proximity?lat&lng` | - | En yakın 3 tesis (KNN `<->`, metre) |
 | GET | `/api/reservations` | Bearer | Kullanıcının rezervasyonları |
 | POST | `/api/reservations` | Bearer | Rezervasyon (SERIALIZABLE; çifte kayıt 409) |
+| DELETE | `/api/reservations/:id` | Bearer | Rezervasyonu iptal et (satır silinmez, `status='cancelled'`; bağlı siparişlerin parası geri alınır) |
 | GET | `/api/menu?facilityId` | - | Tesis menüsü |
 | POST | `/api/orders` | Bearer | Sipariş (tutar sunucuda hesaplanır ve imzalanır) |
 | GET | `/api/reservations/:id/orders` | Bearer | Rezervasyonun siparişleri (sahiplik zorunlu) |

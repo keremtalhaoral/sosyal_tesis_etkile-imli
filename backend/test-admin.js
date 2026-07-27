@@ -47,18 +47,24 @@ const { signJwt, verifyJwt } = require('./security');
   // 3. Admin gözetim: sahiplik filtresi YOK
   const resA = await db.createReservation({ userId: alice.id, facilityId: 1, reserveDate: '2027-06-01', reserveTime: '19:00', guests: 2, cryptoSignature: 'a' });
   const resB = await db.createReservation({ userId: bob.id, facilityId: 1, reserveDate: '2027-06-01', reserveTime: '13:00', guests: 3, cryptoSignature: 'b' });
+  // NOT: bu uçlar artık SAYFALI dönüyor ({ rows, total, limit, offset }). Eskiden düz dizi
+  // döndürüyorlardı ve tüm satırları tek yanıtta veriyorlardı (ölçüldü: 142 MB).
   const allRes = await db.getAllReservations();
   assert('admin gözetim: iki farklı kullanıcının rezervasyonu da listede',
-    allRes.some(r => r.id === resA.id) && allRes.some(r => r.id === resB.id));
-  assert('admin gözetim: facilityId filtresi çalışıyor', (await db.getAllReservations(1)).every(r => r.facility_id === 1));
-  assert('admin gözetim: sahip olmayan tesis filtrelenince boş döner', (await db.getAllReservations(999999)).length === 0);
+    allRes.rows.some(r => r.id === resA.id) && allRes.rows.some(r => r.id === resB.id));
+  assert('admin gözetim: sayfalama meta verisi dönüyor',
+    typeof allRes.total === 'number' && allRes.limit === 100);
+  assert('admin gözetim: facilityId filtresi çalışıyor',
+    (await db.getAllReservations(1)).rows.every(r => r.facility_id === 1));
+  assert('admin gözetim: sahip olmayan tesis filtrelenince boş döner',
+    (await db.getAllReservations(999999)).rows.length === 0);
 
   // 4. Admin gözetim: siparişler de sahiplik-filtresiz
   const menu = await db.getMenu(1);
   const orderA = await db.createOrder({ userId: alice.id, reservationId: resA.id, paymentType: 'cash', items: [{ menuItemId: menu[0].id, quantity: 1 }] });
   const allOrders = await db.getAllOrders();
   assert('admin gözetim: başka kullanıcının siparişi görünür',
-    allOrders.some(o => o.id === orderA.id && o.owner_username === 'alice_admin_test'));
+    allOrders.rows.some(o => o.id === orderA.id && o.owner_username === 'alice_admin_test'));
 
   // 5. Sipariş durum makinesi: geçersiz durum string'i de reddedilir (whitelist dışı)
   const garbage = await t.expectThrow(() => db.updateOrderStatus(orderA.id, 'kahve_getir', admin.id));

@@ -25,9 +25,12 @@ kod ikincil, **öğrenme ve belgelenmiş karar** birincildir.
   (tek kanonik kopya; Pages de aynı dosyayı okur).
 - **`docs/`** = GitHub Pages (sunucusuz). `dashboard.html`/`order.html`: gerçek çift mod (önce canlı
   API dener, `localStorage`+`seed.json`'a düşer). `index.html` (ana harita+admin panel): **kasıtlı
-  olarak her zaman mock** — `docs/app.js`'teki `window.fetch` override'ı bilinen uçları tarayıcı-içi
-  simüle eder (statik siteye gerçek backend parola hash'i asla gönderilmez, ADR-002/ADR-007);
-  bilinmeyen uçlar gerçek ağa düşer (`originalFetch` passthrough).
+  **çift mod** — açılışta backend yoklanır: erişilebiliyorsa TÜM çağrılar gerçek backend'e gider
+  (yerel sunum; veriler PostgreSQL'e yazılır), erişilemiyorsa `docs/app.js`'teki `window.fetch`
+  override'ı bilinen uçları tarayıcı-içi simüle eder (GitHub Pages modu). Sayfada hangi modda
+  olunduğunu gösteren bir rozet var. Mock'un sebebi **Pages'in sunucu çalıştıramaması**dır —
+  eskiden burada "parola hash'i sızmasın" yazıyordu, bu YANLIŞTI: `/api/auth/login` zaten hash
+  göndermiyor, yalnız token ve `{id, username, role}` dönüyor.
 - **`scripts/`**: `generate-data.js` (dummy veri, `--scale`), `export-analytics.js` (Pages snapshot),
   `build-routes.js` (GTFS → `docs/data/transit-routes.geojson`; ham GTFS `data/gtfs/` gitignored,
   türetilmiş slim çıktı commit — ADR-006. `stop_times` EKSİKSİZ olmalı; kesikse kapsam kısıtlı).
