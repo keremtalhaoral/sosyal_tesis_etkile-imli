@@ -16,7 +16,9 @@
     "build:routes": "node scripts/build-routes.js",
     "check": "node scripts/check-consistency.js",
     "fetch:ibb": "node scripts/fetch-ibb.js",
-    "build:transit": "node scripts/build-transit.js"
+    "build:transit": "node scripts/build-transit.js",
+    "demo:reset": "node scripts/demo-reset.js",
+    "demo:start": "PG_SCHEMA=demo node backend/server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
