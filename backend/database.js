@@ -607,8 +607,52 @@ const close = async () => {
   if (pool) { await pool.end(); pool = null; initPromise = null; }
 };
 
+/**
+ * Açılışta "hangi hesapla girerim?" sorusunun cevabını verir.
+ *
+ * Neden gerekli: seed parolaları RASTGELE üretiliyor (ADR-002 Karar 4 - ham parola git'e
+ * girmez) ve gitignored bir dosyaya yazılıyor. Yani dosyayı açmayan kimse giriş yapamaz.
+ * Üstelik parolalar ŞEMAYA göre değişiyor: public şemada seed hesapları, demo şemasında
+ * demo-reset.js'in kurduğu sabit hesaplar. Bunu söylemezsek kullanıcı deneme yanılmaya
+ * düşer ve 5 denemede hız sınırına takılır.
+ *
+ * Yalnız geliştirme çıktısıdır: NODE_ENV=production ise hiçbir şey basılmaz.
+ */
+const describeDevLogins = () => {
+  if (process.env.NODE_ENV === 'production') return;
+  const schema = process.env.PG_SCHEMA || 'public';
+  if (schema !== 'public') {
+    // demo şemasının hesapları SABİT ve git'te (data/demo-users.json) - sunumda
+    // giriş yapılabilmesi için bilinir olmak zorundalar.
+    const { DEMO_USERS } = require('./demo-users');
+    if (DEMO_USERS.length) {
+      console.log(`[giriş] Şema '${schema}' - sunum hesapları (data/demo-users.json):`);
+      for (const u of DEMO_USERS) console.log(`[giriş]   ${u.username.padEnd(12)} / ${u.password}   (${u.role})`);
+    } else {
+      console.log(`[giriş] Şema '${schema}' - hesap listesi bulunamadı; 'npm run demo:reset' çıktısına bakın.`);
+    }
+    console.log('[giriş] Not: 15 dakikada 5 başarısız denemeden sonra 429 dönülür (hız sınırı).');
+    return;
+  }
+  if (!fs.existsSync(CREDENTIALS_PATH)) {
+    console.log(`[giriş] ${CREDENTIALS_PATH} yok - seed çalışınca üretilecek.`);
+    return;
+  }
+  try {
+    const store = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
+    const users = store.users || {};
+    const names = Object.keys(users);
+    if (!names.length) return;
+    console.log(`[giriş] Yerel dev hesapları (kaynak: ${CREDENTIALS_PATH}, git'te DEĞİL):`);
+    for (const n of names) console.log(`[giriş]   ${n.padEnd(12)} / ${users[n]}`);
+    console.log('[giriş] Not: 15 dakikada 5 başarısız denemeden sonra 429 dönülür (hız sınırı).');
+  } catch {
+    console.log(`[giriş] ${CREDENTIALS_PATH} okunamadı (bozuk JSON?).`);
+  }
+};
+
 module.exports = {
-  db, getPool, init, close, dropSchema, transaction, wrap,
+  db, getPool, init, close, dropSchema, transaction, wrap, describeDevLogins,
   SLOTS, DATABASE_URL, MIGRATIONS,
   hashPassword, verifyPassword,             // senkron - seed/CLI
   hashPasswordAsync, verifyPasswordAsync,   // async - HTTP yolu

@@ -33,11 +33,11 @@ const { loadDistrictGeometry } = require('../backend/geo');
 // Sunumda giriş yapabilmek için parolalar SABİT ve BİLİNİR olmalı.
 // Bunlar yalnız `demo` şemasında yaşar; gerçek `public` şemasındaki kullanıcıların
 // parolaları hâlâ rastgele üretiliyor ve data/dev-credentials.json'da (gitignored).
-const DEMO_USERS = [
-  { username: 'demo_admin',   password: 'DemoAdmin2026', role: 'admin' },
-  { username: 'ayse',         password: 'AyseParola26',  role: 'user'  },
-  { username: 'mehmet',       password: 'MehmetParola26', role: 'user' },
-];
+//
+// Liste data/demo-users.json'da: backend/database.js'teki describeDevLogins() de aynı
+// dosyayı okuyor. Tek kaynak - iki yerde ayrı ayrı yazılırsa biri güncellenmeden kalır
+// ve sunum ortasında "parola yanlış" denir.
+const { DEMO_USERS } = require('../backend/demo-users');
 
 (async () => {
   const schema = process.env.PG_SCHEMA;

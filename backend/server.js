@@ -21,7 +21,7 @@ const cors = require('cors');
 const db = require('./db');
 const analytics = require('./analytics');
 const { signJwt, verifyJwt, signReservation } = require('./security');
-const { verifyPasswordAsync, DUMMY_PHC, init, DATABASE_URL } = require('./database');
+const { verifyPasswordAsync, DUMMY_PHC, init, DATABASE_URL, describeDevLogins } = require('./database');
 const { validateReservationInput, validateOrderInput } = require('./validate');
 const { getWeather } = require('./weather');
 const { rateLimit, startCleanup } = require('./ratelimit');
@@ -401,6 +401,9 @@ init()
       console.log(process.env.OPENWEATHER_API_KEY
         ? `[weather] GERÇEK OpenWeather verisi aktif (önbellek TTL: ${process.env.WEATHER_CACHE_TTL_MS ?? '600000'} ms)`
         : '[weather] OPENWEATHER_API_KEY yok -> deterministik DEMO verisi (isMock: true)');
+      // Seed parolaları rastgele üretilip gitignored dosyaya yazılıyor; dosyayı açmayan
+      // kimse giriş yapamaz. Açılışta söyleyelim ki deneme yanılmaya gerek kalmasın.
+      describeDevLogins();
     });
   })
   .catch((err) => {

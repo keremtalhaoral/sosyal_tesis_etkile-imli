@@ -479,6 +479,8 @@ WHERE facility_id=1 AND reserve_date='2026-06-01' AND reserve_time='19:00';
 | **`relation "reservations" does not exist`** | Sekmenin başına `SET search_path = demo, public;` yazmayı unuttunuz. |
 | **`ST_Contains` bulunamadı** | `search_path`'te `public` yok. `demo, public` yazın — PostGIS fonksiyonları `public`'te. |
 | **Uygulamada işlem yaptım, DBeaver'da yok** | (a) Sayfadaki rozet gri mi? Backend kapalı → `npm run demo:start`. (b) <kbd>F5</kbd>'e bastınız mı? (c) `demo` şemasına mı bakıyorsunuz, `public`'e mi? |
+| **Giriş yapamıyorum** | Parolalar **moda göre değişiyor.** Backend açılırken konsola `[giriş]` satırlarını yazar — geçerli hesaplar orada. `demo` şemasında: `demo_admin / DemoAdmin2026`, `ayse / AyseParola26`, `mehmet / MehmetParola26`. `public` şemasında parolalar rastgele: `data/dev-credentials.json`. Backend kapalıyken (çevrimdışı replika) taklit hesaplar geçerli: `admin / admin1234`. |
+| **Giriş `429` dönüyor** | Parola yanlış değil — 15 dakikada 5 başarısız denemeden sonra hız sınırı devreye girdi. Bekleyin ya da backend'i yeniden başlatın (sayaç bellekte tutuluyor). |
 | **Türkçe karakterler bozuk** | Bağlantı ayarlarında encoding `UTF-8` olmalı (varsayılan). |
 | **Sorgu takılı kaldı, dönmüyor** | Başka bir sekmede açık transaction satırı kilitliyor olabilir. `ROLLBACK;` yazın ya da `pg_stat_activity`'ye bakın (sorgu defteri 14.3). |
 | **Hava durumu "demo" diyor** | `.env` dosyasında `OPENWEATHER_API_KEY` var mı? Backend açılırken `[weather] GERÇEK ... aktif` yazmalı. |

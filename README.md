@@ -43,6 +43,27 @@ Projenin yerel bilgisayarınızda çalıştırılması için aşağıdaki adıml
    cd docs && python3 -m http.server 8092         # http://localhost:8092
    ```
 
+### 🔑 Hangi hesapla giriş yapılır?
+
+Parolalar **çalıştığınız moda göre değişir** — en sık takılınan yer burası.
+`npm start` açılışta hangi hesapların geçerli olduğunu **konsola yazar**; oraya bakmak
+en hızlı yol.
+
+| Mod | Nasıl anlarım | Kullanıcı / parola |
+|---|---|---|
+| **Canlı — `public` şeması** (`npm start`) | sayfada "● Canlı veritabanı" rozeti | `admin` ve `user`; parolalar **rastgele üretilir** → `data/dev-credentials.json` (gitignored). Açılış logunda da yazar. |
+| **Canlı — `demo` şeması** (`npm run demo:start`) | sunum modu, 5 tesis / 0 rezervasyon | `demo_admin / DemoAdmin2026`, `ayse / AyseParola26`, `mehmet / MehmetParola26` → `data/demo-users.json` |
+| **Çevrimdışı replika** (backend kapalı ya da GitHub Pages) | sayfada "○ Çevrimdışı replika" rozeti | `admin / admin1234`, `user / user1234`, `demo / demo1234`, `demo-admin / demo1234` |
+
+> **Neden üç ayrı set?** `public` şemasının parolaları ADR-002 gereği rastgele üretilir ve
+> **git'e hiç girmez** — bu yüzden onları ancak yerel dosyadan (ya da açılış logundan)
+> öğrenebilirsiniz. `demo` şemasınınkiler sunumda giriş yapılabilsin diye **kasıtlı olarak
+> sabit ve git'te**. Çevrimdışı replikanınkiler ise gerçek değil, tarayıcı içinde yaşayan
+> taklit hesaplar.
+
+> **`429` alıyorsanız** parola yanlış demek değil: 15 dakikada 5 başarısız denemeden sonra
+> hız sınırı devreye giriyor. Bekleyin ya da sunucuyu yeniden başlatın (sayaç bellekte).
+
 4. **Testleri çalıştırın** (her test kendi izole şemasında koşar, gerçek veriye dokunmaz):
    ```bash
    npm test
