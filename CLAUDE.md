@@ -2,8 +2,8 @@
 
 Bu dosya, projeyi devralan her Claude oturumunun **giriş kapısıdır**. Derin gerekçeler için
 `docs/adr/` (ADR'ler) ve `DATABASE.md`'ye bak. **Her teknoloji ve dosyanın tek tek amacı** için
-→ `TEKNOLOJI_VE_DOSYA_REHBERI.md` (yaşayan katalog). **Projeyi mentöre/juriye anlatmak** için
-→ `PROJE_ANLATIM_REHBERI.md` (ne gerçek/ne demo + savunma soruları).
+→ `docs/teknoloji-ve-dosya-rehberi.md` (yaşayan katalog). **Projeyi mentöre/juriye anlatmak** için
+→ `docs/anlatim-rehberi.md` (ne gerçek/ne demo + savunma soruları).
 
 ## Proje
 İstanbul sosyal tesisleri için etkileşimli Web GIS + karar destek. Harita, rezervasyon,
@@ -81,7 +81,7 @@ npm test                 # 168 test: şema/kısıt/PostGIS, sipariş, analytics,
 - Şema değişince `backend/database.js` MIGRATIONS güncellenir (şema tek yerde tanımlıdır);
   yeni faz = yeni migration versiyonu. Ardından `npm run export:schema`
   ile **`schema.sql` yeniden üretilir** (türetilmiş DDL dokümanı; elle düzenlenmez).
-- **Yeni dosya/teknoloji eklenince** `TEKNOLOJI_VE_DOSYA_REHBERI.md` güncellenir (dosya-dosya
+- **Yeni dosya/teknoloji eklenince** `docs/teknoloji-ve-dosya-rehberi.md` güncellenir (dosya-dosya
   katalog + değişiklik günlüğü güncel kalır).
 - Her fazın çıktısı: kod + **ADR** (`docs/adr/`) + testler + (UI ise) açık/koyu tema doğrulaması.
 - Chart/görsel iş: **dataviz** becerisini yükle, doğrulanmış paleti kullan.

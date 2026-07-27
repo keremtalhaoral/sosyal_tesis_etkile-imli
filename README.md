@@ -10,7 +10,7 @@ Bu proje, sosyal tesislerin coğrafi verilerini harita üzerinde etkileşimli ol
 
 ## 🛠️ Teknolojiler ve Bağımlılıklar
 Projenin geliştirilmesinde aşağıdaki teknoloji yığını kullanılmıştır. Her seçimin **neden** yapıldığı
-ve her dosyanın **ne işe yaradığı** için → [`TEKNOLOJI_VE_DOSYA_REHBERI.md`](TEKNOLOJI_VE_DOSYA_REHBERI.md).
+ve her dosyanın **ne işe yaradığı** için → [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md).
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+) — `docs/` altında, sunucusuz (GitHub Pages).
 - **Harita / GIS:** **Leaflet** (harita render) + **Turf.js** (mekansal analiz) + **Chart.js** (analitik grafik) — hepsi `docs/vendor/`'da vendored (CDN'siz, offline çalışır).
 - **Backend:** Node.js + Express + `cors` + `pg`.
@@ -54,6 +54,8 @@ Projenin yerel bilgisayarınızda çalıştırılması için aşağıdaki adıml
 
 ## 📚 Belgeler
 - [`CLAUDE.md`](CLAUDE.md) — proje rehberi / giriş kapısı, mimari ve gömülü kararlar.
-- [`TEKNOLOJI_VE_DOSYA_REHBERI.md`](TEKNOLOJI_VE_DOSYA_REHBERI.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
+- [`docs/anlatim-rehberi.md`](docs/anlatim-rehberi.md) — projeyi anlatma rehberi: ne gerçek / ne demo, savunma soruları.
+- [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
+- [`docs/sorgu-defteri.md`](docs/sorgu-defteri.md) + [`queries.sql`](queries.sql) — her özelliği SQL ile gösterme.
 - [`DATABASE.md`](DATABASE.md) — merkezi veri mimarisi (DDIA tabanlı) ve API tablosu.
 - [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-009).

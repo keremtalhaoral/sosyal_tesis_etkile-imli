@@ -19,7 +19,7 @@
 5. **Şema değişince `backend/database.js` MIGRATIONS güncellenir** (şema tek yerde tanımlıdır);
    yeni faz = yeni migration versiyonu.
 6. **Her faz bir bütün teslim eder:** kod + **ADR** + testler + (UI ise) açık/koyu tema doğrulaması.
-7. **Yeni dosya/teknoloji = belge güncelle:** `TEKNOLOJI_VE_DOSYA_REHBERI.md` (dosya-dosya katalog +
+7. **Yeni dosya/teknoloji = belge güncelle:** `docs/teknoloji-ve-dosya-rehberi.md` (dosya-dosya katalog +
    değişiklik günlüğü). CDN yok — dış kütüphaneler `docs/vendor/`'a alınır, offline çalışmalı.
 
 > Not: Bu kurallar `CLAUDE.md`'deki gömülü kararların özeti/pekiştirmesidir; çelişki olursa ADR'ler esastır.

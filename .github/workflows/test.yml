@@ -1,0 +1,68 @@
+# Testler + belge tutarlılığı.
+#
+# Önceden CI YALNIZ Pages deploy ediyordu; hiçbir test otomatik koşmuyordu. Yani bir
+# regresyon ancak biri elle test çalıştırırsa fark ediliyordu. Bu workflow iki şeyi korur:
+#   1. 213 test (şema/kısıt/PostGIS, sipariş, analytics, eşzamanlılık, GTFS, İBB, audit, auth)
+#   2. Belge ↔ kod tutarlılığı (npm run check) - belge kayması artık PR'da yakalanır
+name: test
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Uygulamanın gerçekten koştuğu şeyle aynı imaj (docker-compose.yml ile senkron).
+      # PostGIS olmadan mekansal testler anlamsız olurdu.
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: mufettis
+          POSTGRES_USER: mufettis
+          POSTGRES_PASSWORD: mufettis-dev
+        ports: ['5432:5432']
+        # Testler DB gerçekten sorgu kabul edene kadar başlamamalı; "container ayakta"
+        # yeterli değil (initdb sırasında port açık ama veritabanı hazır olmayabiliyor).
+        options: >-
+          --health-cmd "pg_isready -U mufettis -d mufettis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: mufettis
+      PGUSER: mufettis
+      PGPASSWORD: mufettis-dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: PostGIS eklentisini etkinleştir
+        run: PGPASSWORD=$PGPASSWORD psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+
+      - name: Testler
+        run: npm test
+
+      - name: Belge ↔ kod tutarlılığı
+        run: npm run check
+
+      - name: queries.sql gerçekten koşuyor mu?
+        # Sorgu defteri "mentöre gösterilecek" diye duruyor; bozuk SQL'le durmasın.
+        run: |
+          npm start & sleep 8            # migration + seed
+          node scripts/load-geo.js
+          PGPASSWORD=$PGPASSWORD psql -h $PGHOST -U $PGUSER -d $PGDATABASE -v ON_ERROR_STOP=1 -f queries.sql > /dev/null
+          echo "queries.sql: hatasız"
