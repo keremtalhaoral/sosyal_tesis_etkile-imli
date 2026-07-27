@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetHatResponse xmlns="http://tempuri.org/">
+      <GetHatResult>
+        <Table><SDURAKADI>Kadıköy İskele</SDURAKADI><XKOORDINATI>29.0250</XKOORDINATI><YKOORDINATI>40.9910</YKOORDINATI><SIRANO>1</SIRANO></Table>
+        <Table><SDURAKADI>Söğütlüçeşme</SDURAKADI><XKOORDINATI>29.0400</XKOORDINATI><YKOORDINATI>40.9930</YKOORDINATI><SIRANO>2</SIRANO></Table>
+        <Table><SDURAKADI>Acıbadem</SDURAKADI><XKOORDINATI>29.0430</XKOORDINATI><YKOORDINATI>41.0035</YKOORDINATI><SIRANO>3</SIRANO></Table>
+      </GetHatResult>
+    </GetHatResponse>
+  </soap:Body>
+</soap:Envelope>
