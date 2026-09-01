@@ -152,6 +152,8 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `data/istanbul-districts.geojson` | ~132k | İlçe poligonları — **tek kanonik kopya** (hem Node backend `db.js` hem Pages statik olarak okur). |
 | `data/transit-routes.geojson` | 1 | Türetilmiş toplu taşıma çizgileri (minified). |
 | `vendor/{leaflet,turf,chartjs}/` | ~1 MB | Vendored kütüphaneler (CDN'siz, offline). Leaflet 1.9.4 (148 KB + 15 KB CSS + ikonlar), Turf (590 KB), Chart.js 4.5.1 (209 KB). |
+| `gadesim/index.html` | 830 | **Gadeşim** — tek dosyalık Canvas 2D oyunu (Flappy Bird mekaniği). Dış bağımlılık yok: yüz fotoğrafı `data:` URI olarak gömülü, tüm grafik prosedürel çizim. Sabit 60 Hz simülasyon adımı (120 Hz ProMotion'da da aynı zorluk), sanal 288 px genişlik + ekran oranına göre uyarlanan yükseklik. Seslendirme Web Speech API (`tr-TR`), efektler Web Audio. 10 engel = 1 level; level geçişinde 2 sn boyunca zıplama repliği susar. |
+| `gadesim/{icon.png,kapak.png}` | — | Ana ekran ikonu + WhatsApp/Twitter link önizlemesi (`og:image`). |
 | `dbeaver-rehberi.md` | ~500 | **DBeaver sıfırdan + 9 adımlık sunum senaryosu.** Kurulum/bağlantı, arayüz turu, ER diyagramı, PostGIS harita sekmesi, `EXPLAIN` görselleştirme, prova edilmiş senaryo (ne diyeceğiniz dahil), sorun giderme tablosu, sunum öncesi kontrol listesi. |
 | `ogrenme/00…12-*.md` | 13 dosya | **Katmanlı öğrenme kitabı** (Feynman disiplini). Her bölüm sabit 7 adım: bir cümlede → benzetme **ve nerede bozulduğu** → daha derin → projede tam olarak nerede → kendin dene (çalıştırılabilir komut + beklenen çıktı) → mentör sorarsa → sırada ne var. Sıfır ön bilgiyle başlar. |
 | `ogrenme/teknoloji/*.md` | 17 + README | **Teknoloji başına derin dosyalar.** Her biri: ne olduğu → hangi problemi çözmek için doğdu → alternatifleri ve neden seçilmedikleri → bu projede tam olarak nerede → bilinmesi gereken 3 tuzak (mümkünse projede fiilen yaşanmış) → daha fazlası için. `nodejs`, `express`, `postgresql`, `postgis`, `pg-driver`, `docker`, `dbeaver`, `jwt`, `pbkdf2`, `leaflet`, `turf`, `chartjs`, `geojson`, `gtfs`, `soap-vs-rest`, `git-github-pages`, `sse`. |
@@ -196,6 +198,13 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 ---
 
 ## 6. Değişiklik günlüğü
+
+- **2026-09-01 — `docs/gadesim/` oyunu.** Projeye bağımsız, tek dosyalık bir Canvas oyunu eklendi
+  (Flappy Bird mekaniği + Türkçe seslendirme). Backend'e, veritabanına ve `docs/` içindeki diğer
+  sayfalara **hiç dokunmuyor**; Pages iş akışı `docs/`'u zaten yayınladığı için ayrı bir dağıtım
+  adımı yok. Proje kuralına uygun olarak CDN kullanılmadı: fotoğraf `data:` URI, kütüphane yok.
+  Konuşma için Web Speech API kullanıldı (tarayıcıda yerleşik, ses dosyası taşımaya gerek yok);
+  Türkçe ses yoksa oyun sessiz ama oynanır kalır — replikler ayrıca ekranda yazıyla da görünür.
 
 - **2026-07-10 — İlk sürüm.** Belge oluşturuldu (teknoloji + dosya kataloğu). Yanında hedefli
   sadeleştirme: ham parolalı `advanced-gis/evaluation/golden_dataset.json`, yetim `advanced-gis/server.py`
