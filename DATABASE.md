@@ -1,14 +1,17 @@
 # Merkezi Veri Mimarisi (DDIA Tabanlı Tasarım)
 
-Bu doküman, projenin veri katmanının neden ve nasıl merkezileştirildiğini açıklar.
+Bu doküman, projenin veri katmanının neden ve nasıl kurulduğunu açıklar.
 Rehber kaynak: **Designing Data-Intensive Applications (Martin Kleppmann)** — aşağıda
 her karar ilgili DDIA bölümüne bağlanmıştır.
+
+> **Platform:** PostgreSQL 16 + PostGIS 3.4. Proje SQLite ile başladı; geçişin gerekçesi,
+> ölçülen kazançları ve **bedeli** [ADR-009](docs/adr/ADR-009-postgresql-postgis.md)'da.
 
 ## Önceki Durum: Üç Kopya, Sıfır Tutarlılık
 
 | Konum | Saklama biçimi | İçerik | Sorun |
 |---|---|---|---|
-| `backend/db.js` | JS kodu içine gömülü sabitler | 30 tesis, ilçe nüfusları | Kalıcılık yok: sunucu kapanınca yeni veri kaybolur |
+| `backend/db.js` | JS koduna gömülü sabitler | 30 tesis, ilçe nüfusları | Kalıcılık yok: sunucu kapanınca yeni veri kaybolur |
 | İkinci bir SQLite (ayrı kopya) | Ayrı SQLite | Sadece 10 tesis, 2 kullanıcı | Ana veriyle kopuk, git'e commit edilmiş türetilmiş binary |
 | `docs/app.js` (GitHub Pages) | Tarayıcı `localStorage` | Kendi mock kopyası | Cihaza hapsolmuş, diğerleriyle senkronsuz |
 
@@ -18,121 +21,146 @@ DDIA'nın deyimiyle klasik bir **çift-yazma (dual write) tutarsızlığı**: ha
 ## Yeni Durum: Tek Gerçek Kaynak
 
 ```
-data/
-├── seed.json    <- KANONİK VERİ (git'te; elle düzenlenir; tüm servisler buradan tohumlar)
-└── app.db       <- ÇALIŞMA ZAMANI VERİTABANI (git'te DEĞİL; seed + kullanıcı yazmalarından türer)
+data/seed.json          <- KANONİK BAŞLANGIÇ VERİSİ (git'te; elle düzenlenir)
+docs/data/
+  istanbul-districts.geojson  <- ilçe geometrisi (git'te; Pages de aynı dosyayı okur)
 
-backend/  (Node/Express)  ──> data/app.db  (SQLite, WAL modu)
+        │  npm start (migration + seed)        │  npm run db:load-geo
+        v                                      v
+PostgreSQL 16 + PostGIS  ────────────────────────────────  tek gerçek kaynak
+        ^
+backend/ (Node/Express + pg)  ──> API, port 8085
 
-docs/  (GitHub Pages)     ──> statik/serverless olduğu için localStorage'da
-                              seed'in TÜRETİLMİŞ bir kopyasını kullanır (çevrimdışı replika)
+docs/ (GitHub Pages)  ──> sunucusuz: seed.json'ın localStorage replikası
+                          + analytics.json snapshot (türetilmiş)
 ```
 
-- **Yeni veriler** (rezervasyonlar, yeni tesisler, kullanıcılar) artık tek yere yazılır: `data/app.db`.
-- Node backend bu dosyayı tek gerçek kaynak olarak kullanır (tek dilli mimari).
+- **Yeni veriler** (rezervasyon, sipariş, tesis, kullanıcı) tek yere yazılır: veritabanı.
 - Parola hash'i (PBKDF2-HMAC-SHA256, **600.000 iterasyon**, kullanıcı başına rastgele salt,
-  PHC formatı) ve JWT (HS256) `backend/security.js` +
-  `backend/database.js` içinde tanımlıdır.
+  PHC formatı) ve JWT (HS256) `backend/security.js` + `backend/database.js` içinde.
 
 ## Kararlar ve DDIA Gerekçeleri
 
-### 1. Neden SQLite? (Bölüm 3 — Storage and Retrieval)
-Tek düğüm, düşük yazma hacmi, ilişkisel veri. Bu profil için sunucusuz, ACID garantili,
-gömülü bir B-tree veritabanı doğru araçtır. Node 22'nin yerleşik `node:sqlite` modülü
-sayesinde sıfır dış bağımlılıkla çalışır. README'deki PostgreSQL + PostGIS hedefi geçerliliğini
-korur; geçiş yolu aşağıda.
+### 1. Neden PostgreSQL + PostGIS? (Bölüm 3 — Storage and Retrieval)
+Proje bir **Web GIS** projesi; mekansal sorgu birinci sınıf ihtiyaç. SQLite bunları
+yapamadığı için point-in-polygon, mesafe ve KNN JS'te elle yazılmıştı. PostGIS ile bunlar
+indeksli SQL oldu. İkinci sebep eşzamanlılık (aşağıda Karar 3). Bedeli — `pg` bağımlılığı
+ve çalışan bir sunucu — ADR-009'da açıkça kabul ediliyor.
 
-### 2. Dayanıklılık: WAL modu (Bölüm 7 — Transactions / Bölüm 3 — WAL)
-`PRAGMA journal_mode = WAL`: onaylanmış her yazma önce log'a gider; süreç çökse bile
-commit edilmiş veri kaybolmaz, okuyucular yazıcıyı bloklamaz. Restart sonrası veri
-kalıcılığı testle doğrulanmıştır.
+### 2. Dayanıklılık: WAL + fsync (Bölüm 7 — Transactions)
+PostgreSQL onaylanmış her yazmayı önce write-ahead log'a yazar; süreç çökse bile commit
+edilmiş veri kaybolmaz.
 
-### 3. Atomik transaction'lar (Bölüm 7 — ACID)
-Rezervasyon oluşturma = kapasite kontrolü + doluluk güncellemesi + kayıt ekleme,
-**tek transaction**. Herhangi bir adım başarısız olursa tamamı geri alınır — doluluk oranı
-ile rezervasyon kayıtları asla birbirinden kopamaz. (`backend/db.js -> createReservation`)
+### 3. Atomik transaction + DOĞRU İZOLASYON (Bölüm 7 — ACID, 7.2.3 — Write Skew)
+Rezervasyon = kapasite kontrolü + kayıt ekleme, **tek transaction**. Ama PostgreSQL çok
+yazıcılı olduğu için atomiklik TEK BAŞINA yetmez: varsayılan READ COMMITTED altında iki
+işlem aynı `SUM(guests)`'i okuyup ikisi de yazabilir (**write skew**).
+
+`transaction()` bu yüzden **SERIALIZABLE** açar ve `40001`'de yeniden dener.
+
+Ölçüm (`npm test` içinde, 40 paralel worker / kapasite 10):
+
+| Yol | Sonuç |
+|---|---|
+| READ COMMITTED | 18-22 rezervasyon → **overbook** |
+| Transaction dışı oku-sonra-yaz | 18-26 rezervasyon → **overbook** |
+| **SERIALIZABLE + retry** | **tam 10** → doğru |
 
 ### 4. Kısıtlar: geçersiz durumu imkânsız kıl (Bölüm 7 — invariants)
-Uygulama koduna güvenmek yerine invariant'lar veritabanı seviyesinde zorlanır:
-- `UNIQUE (user_id, facility_id, reserve_date, reserve_time)` -> çifte rezervasyon imkânsız
-- `CHECK (capacity > 0)`, `CHECK (occupancy BETWEEN 0 AND 100)`, koordinat aralık kontrolleri
-- `FOREIGN KEY ... ON DELETE CASCADE` -> tesis silinince yetim rezervasyon kalmaz
+- `UNIQUE (user_id, facility_id, reserve_date, reserve_time)` → çifte rezervasyon imkânsız
+- `CHECK (capacity > 0)`, `CHECK (manual_occupancy BETWEEN 0 AND 100)`, koordinat aralıkları
+- `FOREIGN KEY ... ON DELETE CASCADE` → tesis silinince yetim rezervasyon kalmaz
+- **Gerçek tipler:** `reserve_date date`, `reserve_time time` → `'2027-13-45'` gibi imkansız
+  tarihler veritabanı seviyesinde reddedilir (SQLite'ta TEXT olduğu için kabul ediliyordu)
+- `facilities.geom` **GENERATED ALWAYS AS ... STORED** → geometri lat/lng ile asla ayrışamaz
 
 ### 5. Şema evrimi: versiyonlu migration (Bölüm 4 — Encoding and Evolution)
-`schema_migrations` tablosu hangi şema versiyonunun uygulandığını izler
-(`backend/database.js -> MIGRATIONS`). Gelecekte kolon eklemek = yeni migration eklemek;
-mevcut veritabanları güvenle ileri taşınır.
+`schema_migrations` tablosu hangi sürümün uygulandığını izler
+(`backend/database.js -> MIGRATIONS`, şu an v1…v8). Her migration kendi transaction'ında
+koşar — PostgreSQL'de DDL transaction'a girdiği için yarım uygulanmış şema oluşamaz.
 
-### 6. İndeksler sorgu desenine göre (Bölüm 3 — B-tree indexes)
-- `idx_reservations_user` -> "kullanıcının rezervasyonları" sorgusu
-- `idx_reservations_facility_date` -> "tesisin o günkü rezervasyonları" sorgusu
-- `users.username` ve `facilities.kod` UNIQUE indeksleri -> login ve kod bazlı erişim
+### 6. İndeksler sorgu desenine göre (Bölüm 3 — B-tree + GiST)
+- `idx_reservations_slot` → per-slot kapasite sorgusu (EXPLAIN ile doğrulandı: Index Scan)
+- `idx_reservations_user`, `idx_reservations_facility_date`, `idx_reservations_date`
+- `idx_facilities_geom` (GiST) → `ST_Contains` mekansal join
+- `idx_facilities_geog` (GiST, `geom::geography`) → KNN `<->` **metre** sıralaması
+- `users.username`, `facilities.kod` UNIQUE → login ve kod bazlı erişim
 
 ### 7. Kanonik seed + türetilmiş veri ayrımı (Bölüm 11 — Derived Data)
-- `data/seed.json` = kayıt sistemi öncesi kanonik başlangıç verisi (git'te, insan-okur)
-- `data/app.db` = türetilmiş + kullanıcı üretimi veri (git'te değil; `.gitignore`)
-- Seed **idempotenttir** (`INSERT OR IGNORE`): tekrar çalıştırmak veriyi bozmaz.
-- Eski `advanced-gis/data/database.db` git geçmişinden çıkarıldı — türetilmiş binary
-  dosyalar versiyon kontrolüne girmez.
+- `data/seed.json` = kanonik başlangıç verisi (git'te, insan-okur)
+- Veritabanı = türetilmiş + kullanıcı üretimi veri
+- `schema.sql`, `docs/data/analytics.json`, `docs/data/transit-routes.geojson` = **türetilmiş
+  dokümanlar**; elle düzenlenmez, script'lerle yeniden üretilir
+- Seed **idempotenttir** (`ON CONFLICT DO NOTHING`): tekrar çalıştırmak veriyi bozmaz
+- `daily_stats` rollup'ı da türetilmiştir: `rebuildDailyStats()` kaynaktan yeniden kurar
 
-### 8. GeoJSON neden veritabanında değil?
-İlçe sınırları (3.7MB geometri) salt-okunur **referans verisidir** ve SQLite'ta mekânsal
-olarak sorgulanamaz. Değişebilen demografi (nüfus) DB'ye taşındı (`districts` tablosu);
-geometri dosyada kaldı. PostGIS'e geçişte geometri `geometry` kolonuna yüklenir.
+### 8. Para: tam sayı kuruş ve TAŞMA (Bölüm 4)
+Para her yerde `*_minor` (kuruş, tam sayı) — float yuvarlama hatası imkansız. **Ama** kuruş
+cinsinden toplamlar `int4` sınırını (2.147.483.647 = ~21,5M TL) kolayca aşar. Bu yüzden tüm
+para toplamları `::bigint` cast edilir; aksi halde PostgreSQL `22003` fırlatır ve dashboard
+tamamen çöker (yaşandı, regresyon testi eklendi).
 
-## GitHub Pages (docs/) Neden Hâlâ localStorage?
-Pages statik hosting'dir; sunucu süreci çalıştıramaz. `docs/app.js` bu yüzden seed verisinin
-tarayıcı içi **çevrimdışı replikasını** kullanır. Bu bilinçli bir "derived data" kararıdır:
-kanonik kaynak `data/seed.json`'dır, Pages kopyası ondan türetilir ve sunum/demo amaçlıdır.
+### 9. Doluluk türetilmiştir, saklanmaz (Bölüm 11)
+`facilities.manual_occupancy` adminin **elle girdiği bir işarettir** ve öyle adlandırılmıştır.
+Kullanıcıya gösterilen gerçek doluluk, o günün iptal edilmemiş rezervasyonlarından
+LATERAL alt sorguyla hesaplanır. Önceden kolon `occupancy` adını taşıyor ama rezervasyonlarla
+hiç güncellenmiyordu — bir yıllık veri üretilse bile harita aynı sabit sayıyı gösteriyordu.
 
-Uygulanışı (`docs/app.js -> bootstrapCentralSeed`):
-- Sayfa açılışında `docs/data/seed.json` (kanonik seed'in kopyası) fetch edilir ve
-  localStorage replikası tohumlanır - koda gömülü 10 tesislik eski mock kaldırıldı,
-  Pages artık merkezi 30 tesislik veriyle birebir aynıdır.
-- `mufettis_seed_version` anahtarı ile versiyon takibi yapılır: seed.json'da `version`
-  yükseltilirse ziyaretçilerin eski replikası otomatik yenilenir (rezervasyonlardan
-  hâlâ geçerli tesise ait olanlar korunur). Türetilmiş veri her zaman kaynaktan
-  yeniden inşa edilebilir (DDIA Bölüm 11).
-- `data/seed.json` değiştiğinde `docs/data/seed.json`'a kopyalanmalı ve `version`
-  artırılmalıdır: `cp data/seed.json docs/data/seed.json`
-- Leaflet ve Turf.js kütüphaneleri CDN yerine `docs/vendor/` altına alındı: site,
-  unpkg/jsdelivr erişimi olmayan ağlarda da (kurum ağı, çevrimdışı demo) çalışır.
-  Varsayılan Pages girişleri (`data/seed.json` -> `demo_users`, gerçek backend parolalarından
-  BAĞIMSIZ - statik siteye gerçek hash asla gönderilmez, ADR-002): `demo/demo1234` (user),
-  `demo-admin/demo1234` (admin).
+## GitHub Pages (docs/) Neden localStorage?
+Pages statik hosting'dir; sunucu süreci çalıştıramaz. `docs/app.js` seed verisinin tarayıcı
+içi **çevrimdışı replikasını** kullanır. Bu bilinçli bir "derived data" kararıdır: kanonik
+kaynak `data/seed.json`, Pages kopyası ondan türetilir.
 
-## PostgreSQL + PostGIS'e Geçiş Yolu
-1. Şema birebir taşınır (tipler zaten uyumlu; `TEXT` tarihler `date`/`time` olur).
-2. `facilities(lat,lng)` -> `geometry(Point, 4326)` kolonu; GeoJSON ilçeler `districts.geom`'a yüklenir.
-3. `backend/db.js` içindeki JS mekânsal fonksiyonları SQL'e çevrilir (kodda karşılıkları yorum
-   olarak hazır): ray-casting -> `ST_Contains`, Haversine -> `ST_Distance`, KNN sıralama -> `<->` operatörü.
-4. Replikasyon/eşzamanlılık ihtiyacı doğduğunda (DDIA Bölüm 5) tek-lider replikasyon yeterlidir.
+- `mufettis_seed_version` anahtarı ile versiyon takibi: `seed.json`'da `version` artınca
+  ziyaretçilerin eski replikası otomatik yenilenir.
+- `data/seed.json` değişince `docs/data/seed.json`'a kopyalanmalı ve `version` artırılmalıdır.
+- Leaflet/Turf/Chart.js CDN yerine `docs/vendor/` altında (kurum ağı / çevrimdışı demo).
+- Pages girişleri (`seed.json -> demo_users`) gerçek backend parolalarından **bağımsızdır**:
+  `demo/demo1234`, `demo-admin/demo1234`. Bu hesaplar yalnız çevrimdışı replika içindir;
+  backend erişilebiliyorsa sayfa gerçek API'yi kullanır ve gerçek kullanıcılarla giriş yapılır.
 
 ## Çalıştırma
 
 ```bash
-# Node backend (ilk açılışta migration + seed otomatik)
-cd backend && npm install && npm start        # http://localhost:8085
-
-# Veri katmanı testleri (geçici DB ile, gerçek veriye dokunmaz)
-node backend/test-db.js
+npm install
+npm run db:up          # PostgreSQL + PostGIS (docker compose)
+npm start              # migration + seed otomatik -> http://localhost:8085
+npm run db:load-geo    # ilçe sınırlarını PostGIS'e yükle (bir kez)
+npm test               # her test kendi izole şemasında; gerçek veriye dokunmaz
 ```
 
-### Yeni API uçları (Node backend)
+Docker kullanmıyorsanız yerel PostgreSQL 16 + PostGIS 3 yeterli; bağlantı için `.env.example`.
+
+### API uçları
+
 | Metod | Yol | Auth | Açıklama |
 |---|---|---|---|
 | POST | `/api/auth/register` | - | Kayıt; token döner |
 | POST | `/api/auth/login` | - | Giriş; token döner |
-| GET | `/api/reservations` | Bearer | Kullanıcının rezervasyonları |
-| POST | `/api/reservations` | Bearer | Rezervasyon (atomik; çifte kayıt 409) |
-| POST | `/api/facilities` | admin | Yeni tesis (kalıcı; opsiyonel İSPARK kapasitesi) |
-| PATCH | `/api/facilities/:id` | admin | Doluluk güncelle |
+| GET | `/api/facilities` | - | Tesisler (doluluk **türetilmiş**) |
+| POST | `/api/facilities` | admin | Yeni tesis (opsiyonel İSPARK kapasitesi) |
+| PATCH | `/api/facilities/:id` | admin | Elle girilen doluluk işaretini güncelle |
 | DELETE | `/api/facilities/:id` | admin | Tesis sil (cascade) |
-| PATCH | `/api/orders/:id/status` | admin | Sipariş durumu ilerlet (submitted→served→paid; ADR-007) |
+| GET | `/api/districts` | - | İlçe sınırları + demografi + alarm (`ST_Contains`) |
+| GET | `/api/proximity?lat&lng` | - | En yakın 3 tesis (KNN `<->`, metre) |
+| GET | `/api/reservations` | Bearer | Kullanıcının rezervasyonları |
+| POST | `/api/reservations` | Bearer | Rezervasyon (SERIALIZABLE; çifte kayıt 409) |
+| DELETE | `/api/reservations/:id` | Bearer | Rezervasyonu iptal et (satır silinmez, `status='cancelled'`; bağlı siparişlerin parası geri alınır) |
+| GET | `/api/menu?facilityId` | - | Tesis menüsü |
+| POST | `/api/orders` | Bearer | Sipariş (tutar sunucuda hesaplanır ve imzalanır) |
+| GET | `/api/reservations/:id/orders` | Bearer | Rezervasyonun siparişleri (sahiplik zorunlu) |
+| PATCH | `/api/orders/:id/status` | admin | Durum ilerlet (submitted→served→paid; ADR-007) |
+| GET | `/api/ispark/:facilityId` | - | Otopark doluluk durumu |
+| POST | `/api/ispark/:facilityId/take` | Bearer | Yer kap (atomik compare-and-set) |
+| POST | `/api/ispark/:facilityId/release` | Bearer | Yer bırak |
+| GET | `/api/analytics/dashboard` | - | Tüm analitik bloklar tek payload |
+| GET | `/api/analytics/revenue` | - | Ciro zaman serisi |
 | GET | `/api/admin/reservations` | admin | Tüm rezervasyonlar (sahiplik filtresiz gözetim) |
 | GET | `/api/admin/orders` | admin | Tüm siparişler (sahiplik filtresiz gözetim) |
 | GET | `/api/admin/audit-log` | admin | Son admin işlemleri (append-only) |
+| GET | `/api/weather?lat&lng` | - | Hava durumu (anahtar yoksa deterministik demo) |
+| GET | `/api/events` | - | **Canlı olay akışı (SSE, ADR-010).** Yanıt bitmez; mutasyonlarda `event: change` karesi düşer. Olay veri TAŞIMAZ, yalnız işaret |
+| GET | `/api/events/status` | - | Kaç istemci dinliyor (tanı) |
 
-Varsayılan kullanıcılar (`admin`, `user`): parolalar **rastgele üretilir**, `data/dev-
-credentials.json`'a yazılır (gitignored; ADR-002). Bkz. yukarıdaki `demo_users` notu (Pages
-girişleri bundan bağımsız, sabit parolalıdır).
+Varsayılan kullanıcılar (`admin`, `user`): parolalar **rastgele üretilir**,
+`data/dev-credentials.json`'a yazılır (gitignored; ADR-002).

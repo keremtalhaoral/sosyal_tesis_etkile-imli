@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GetHat_jsonResponse xmlns="http://tempuri.org/">
+      <GetHat_jsonResult>[{&quot;SDURAKADI&quot;: &quot;Eminönü&quot;, &quot;XKOORDINATI&quot;: &quot;289.700.000.000&quot;, &quot;YKOORDINATI&quot;: &quot;410.161.000.000&quot;, &quot;SIRANO&quot;: &quot;1&quot;, &quot;SYON&quot;: &quot;G&quot;}, {&quot;SDURAKADI&quot;: &quot;Karaköy&quot;, &quot;XKOORDINATI&quot;: &quot;289.750.000.000&quot;, &quot;YKOORDINATI&quot;: &quot;410.230.000.000&quot;, &quot;SIRANO&quot;: &quot;2&quot;, &quot;SYON&quot;: &quot;G&quot;}, {&quot;SDURAKADI&quot;: &quot;Kabataş&quot;, &quot;XKOORDINATI&quot;: &quot;289.900.000.000&quot;, &quot;YKOORDINATI&quot;: &quot;410.330.000.000&quot;, &quot;SIRANO&quot;: &quot;3&quot;, &quot;SYON&quot;: &quot;G&quot;}, {&quot;SDURAKADI&quot;: &quot;BeÅiktaÅ&quot;, &quot;XKOORDINATI&quot;: &quot;290.050.000.000&quot;, &quot;YKOORDINATI&quot;: &quot;410.420.000.000&quot;, &quot;SIRANO&quot;: &quot;4&quot;, &quot;SYON&quot;: &quot;G&quot;}, {&quot;SDURAKADI&quot;: &quot;Bozuk&quot;, &quot;XKOORDINATI&quot;: &quot;0&quot;, &quot;YKOORDINATI&quot;: &quot;0&quot;, &quot;SIRANO&quot;: &quot;5&quot;, &quot;SYON&quot;: &quot;G&quot;}]</GetHat_jsonResult>
+    </GetHat_jsonResponse>
+  </soap:Body>
+</soap:Envelope>

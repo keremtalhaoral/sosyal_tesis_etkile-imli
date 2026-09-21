@@ -1,0 +1,39 @@
+# PostgreSQL + PostGIS (ADR-009)
+#
+# Neden Docker: PostGIS'i elle kurmak platforma göre değişiyor (apt/brew/installer) ve
+# sürüm uyumsuzluğu en sık karşılaşılan kurulum sorunu. İmaj, PostgreSQL ve PostGIS'i
+# birbirine uyumlu sabitlenmiş sürümlerle getirir - "bende çalışıyordu" sınıfı sorun kalmaz.
+#
+# Kullanım:
+#   npm run db:up          # ayağa kaldır
+#   npm start              # migration + seed otomatik koşar
+#   npm run db:load-geo    # ilçe sınırlarını PostGIS'e yükle (bir kez)
+#   npm run db:down        # durdur (veri named volume'da KALIR)
+#
+# Veriyi de silmek için:  docker compose down -v
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: mufettis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-mufettis}
+      POSTGRES_USER: ${PGUSER:-mufettis}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-mufettis-dev}
+      # Türkçe sıralama/karşılaştırma (ilçe adları 'İ', 'ş', 'ğ' içeriyor)
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "${PGPORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Uygulama, DB gerçekten sorgu kabul edene kadar beklemeli; "container ayakta"
+      # yeterli değil (initdb sırasında port açık ama veritabanı hazır olmayabiliyor).
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-mufettis} -d ${PGDATABASE:-mufettis}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

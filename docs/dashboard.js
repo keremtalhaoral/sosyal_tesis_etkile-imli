@@ -58,7 +58,30 @@
   function destroyAll() { Object.values(state.charts).forEach(c => c && c.destroy()); state.charts = {}; }
   const axis = () => ({ grid: { color: css('--grid'), drawBorder: false }, ticks: { color: css('--muted') } });
 
+  /**
+   * Var olan bir chart'ı YENİDEN YARATMADAN günceller.
+   *
+   * Neden önemli: `destroy()` + `new Chart()` grafiği sıfırdan çizer - ekran bir an
+   * boşalır ve yeni değer animasyonsuz belirir. Oysa canlı güncellemede asıl istediğimiz
+   * şey ÇUBUĞUN BÜYÜDÜĞÜNÜ GÖRMEK. `chart.update()` eski veriden yeniye animasyon yapar;
+   * sunumda "sipariş verdim, bakın ciro çubuğu yükseldi" anı tam olarak budur.
+   * (Ayrıca daha ucuz: canvas yeniden kurulmuyor.)
+   *
+   * Aynı id'de chart yoksa ya da tipi değiştiyse `null` döner → çağıran yenisini yaratır.
+   */
+  function updateChart(id, type, labels, data) {
+    const c = state.charts[id];
+    if (!c || c.config.type !== type) return null;
+    c.data.labels = labels;
+    c.data.datasets[0].data = data;
+    // Halka grafikte dilim sayısı değişebilir → renk dizisi de yeniden boyutlanmalı.
+    if (type === 'doughnut') c.data.datasets[0].backgroundColor = catColors().slice(0, labels.length);
+    c.update();
+    return c;
+  }
+
   function lineChart(id, labels, data, colorVar, fmt) {
+    if (updateChart(id, 'line', labels, data)) return;
     const color = css(colorVar);
     state.charts[id] = new Chart(document.getElementById(id), {
       type: 'line',
@@ -71,6 +94,7 @@
   }
 
   function barChart(id, labels, data, colorVar, fmt, horizontal) {
+    if (updateChart(id, 'bar', labels, data)) return;
     const color = css(colorVar);
     state.charts[id] = new Chart(document.getElementById(id), {
       type: 'bar',
@@ -82,6 +106,7 @@
   }
 
   function donutChart(id, labels, data, fmt) {
+    if (updateChart(id, 'doughnut', labels, data)) return;
     state.charts[id] = new Chart(document.getElementById(id), {
       type: 'doughnut',
       data: { labels, datasets: [{ data, backgroundColor: catColors().slice(0, labels.length),
@@ -122,8 +147,10 @@
     document.getElementById('heat-legend').innerHTML = 'az' + ramp.map(c => `<span class="sw" style="background:${c}"></span>`).join('') + 'çok';
   }
 
-  function renderAll(d) {
-    destroyAll();
+  // rebuild=true → chart'lar sıfırdan yaratılır (tema değişimi: renkler options'a gömülü).
+  // rebuild=false → var olanlar YERİNDE güncellenir (canlı akış: animasyon korunur).
+  function renderAll(d, rebuild) {
+    if (rebuild) destroyAll();
     chartDefaults();
     renderKpis(d.kpi);
     renderHeatmap(d.occupancy_heatmap);
@@ -139,25 +166,81 @@
       '--s3', (v) => money(v * 100), true);
   }
 
-  async function refresh() {
+  async function refresh(rebuild) {
     const d = await loadData(state.granularity);
     if (!d) { document.querySelector('main').innerHTML = '<div class="err">Veri yüklenemedi.</div>'; return; }
-    renderAll(d);
+    renderAll(d, rebuild);
+    stampNow();
   }
+
+  // ---- Canlı akış (SSE, ADR-010) --------------------------------------------
+  // Sunucu bir rezervasyon/sipariş yazıldığında "değişti" işareti gönderiyor; biz
+  // işareti alınca TAZE veriyi normal API ucundan çekiyoruz. Olayın içinde veri YOK -
+  // gerekçesi backend/events.js başındaki notta.
+  const liveBar  = document.getElementById('live-bar');
+  const liveText = document.getElementById('live-text');
+  const liveStamp = document.getElementById('live-stamp');
+  let hitTimer = null;
+  let burstTimer = null;
+
+  function stampNow() {
+    if (liveStamp) liveStamp.textContent = 'son güncelleme ' + new Date().toLocaleTimeString('tr-TR');
+  }
+  function setLive(cls, text) {
+    if (!liveBar) return;
+    liveBar.hidden = false;
+    liveBar.classList.remove('on', 'off', 'hit');
+    liveBar.classList.add(cls);
+    liveText.textContent = text;
+  }
+
+  function connectLive() {
+    // EventSource yalnız canlı modda anlamlı: snapshot modunda (Pages) sunucu yok.
+    if (state.mode !== 'live' || typeof EventSource === 'undefined') return;
+
+    const es = new EventSource(`${API_BASE}/api/events`);
+
+    es.addEventListener('hello', () => setLive('on', 'Canlı akış bağlı — veri girdikçe grafikler kendiliğinden güncellenir'));
+
+    es.addEventListener('change', (e) => {
+      let type = 'veri';
+      try { type = (JSON.parse(e.data).type) || 'veri'; } catch { /* bozuk kare: tipi bilmeden de yenile */ }
+
+      // BİRİKTİRME (debounce): bir sipariş tek olay üretmiyor olabilir ve kullanıcı
+      // arka arkaya işlem yapabilir. Dashboard sorgusu 6 ayrı agregasyon koşturuyor;
+      // her olayda ayrı ayrı çekmek sunucuyu boşuna yorar. 400 ms sessizlik bekleyip
+      // TEK yenileme yapıyoruz - insan gözü için zaten anlık.
+      clearTimeout(burstTimer);
+      burstTimer = setTimeout(async () => {
+        await refresh(false);           // rebuild=false → chart'lar YERİNDE güncellenir (animasyonlu)
+        setLive('hit', `${TYPE_LABEL[type] || 'Veri'} değişti — grafikler güncellendi`);
+        clearTimeout(hitTimer);
+        hitTimer = setTimeout(() => setLive('on', 'Canlı akış bağlı — veri girdikçe grafikler kendiliğinden güncellenir'), 2600);
+      }, 400);
+    });
+
+    // EventSource kopunca KENDİ yeniden bağlanır (sunucu `retry: 3000` gönderiyor).
+    // Burada sadece kullanıcıya durumu söylüyoruz; elle reconnect yazmak gereksiz.
+    es.onerror = () => setLive('off', 'Canlı akış koptu — yeniden bağlanılıyor…');
+  }
+
+  const TYPE_LABEL = { reservation: 'Rezervasyon', order: 'Sipariş', facility: 'Tesis',
+                       ispark: 'İSPARK', user: 'Kullanıcı' };
 
   // ---- Olaylar ----
   document.getElementById('granularity').addEventListener('click', (e) => {
     const g = e.target.dataset.g; if (!g) return;
     state.granularity = g;
     document.querySelectorAll('#granularity button').forEach(b => b.classList.toggle('active', b.dataset.g === g));
-    refresh();
+    refresh(false);
   });
+  document.getElementById('refresh').addEventListener('click', () => refresh(false));
   document.getElementById('theme-toggle').addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('color-scheme', next);
-    refresh(); // renkleri yeni temadan yeniden oku
+    refresh(true); // renkler options'a gömülü → chart'lar sıfırdan yaratılmalı
   });
 
   (async function init() {
@@ -172,8 +255,11 @@
         : '?';
       const n = state.snapshot.kpi ? num(state.snapshot.kpi.reservations) : '?';
       banner.textContent = `📦 Veri anlık görüntüsü: ${gen} · ${n} rezervasyon (sabit demo verisi — Pages modu, canlı backend'de değişir)`;
+      // Pages'te sunucu yok → itilecek olay da yok. Sessiz kalmak yerine sebebini yaz.
+      setLive('off', 'Canlı akış yok — bu modda sunucu çalışmıyor (snapshot okunuyor)');
     }
     else { banner.textContent = '⚠️ Veri kaynağı yok'; document.querySelector('main').innerHTML = '<div class="err">Ne backend ne de snapshot bulunabildi.</div>'; return; }
-    refresh();
+    await refresh(true);
+    connectLive();
   })();
 })();

@@ -1,0 +1,16 @@
+{
+  "Data": [
+    { "Id": 201, "LineId": 2, "DirectionId": 20, "Name": "Yenikapı",   "Latitude": 41.0053, "Longitude": 28.9500, "Order": 1 },
+    { "Id": 202, "LineId": 2, "DirectionId": 20, "Name": "Vezneciler", "Latitude": 41.0130, "Longitude": 28.9560, "Order": 2 },
+    { "Id": 203, "LineId": 2, "DirectionId": 20, "Name": "Haliç",      "Latitude": 41.0245, "Longitude": 28.9640, "Order": 3 },
+    { "Id": 204, "LineId": 2, "DirectionId": 20, "Name": "Şişhane",    "Latitude": 41.0281, "Longitude": 28.9730, "Order": 4 },
+    { "Id": 205, "LineId": 2, "DirectionId": 20, "Name": "Taksim",     "Latitude": 41.0370, "Longitude": 28.9855, "Order": 5 },
+    { "Id": 401, "LineId": 4, "DirectionId": 40, "Name": "Kadıköy",    "Latitude": 40.9910, "Longitude": 29.0250, "Order": 1 },
+    { "Id": 402, "LineId": 4, "DirectionId": 40, "Name": "Ayrılık Çeşmesi", "Latitude": 40.9985, "Longitude": 29.0305, "Order": 2 },
+    { "Id": 403, "LineId": 4, "DirectionId": 40, "Name": "Acıbadem",   "Latitude": 41.0035, "Longitude": 29.0430, "Order": 3 },
+    { "Id": 901, "LineId": 90, "DirectionId": 91, "Name": "Sirkeci",   "Latitude": 41.0155, "Longitude": 28.9770, "Order": 1 },
+    { "Id": 902, "LineId": 90, "DirectionId": 91, "Name": "Üsküdar",   "Latitude": 41.0255, "Longitude": 29.0150, "Order": 2 },
+    { "Id": 903, "LineId": 90, "DirectionId": 91, "Name": "Bozuk Koordinat", "Latitude": 0, "Longitude": 0, "Order": 3 },
+    { "Id": 904, "LineId": 90, "DirectionId": 91, "Name": "Virgüllü Koordinat", "Latitude": "41,0320", "Longitude": "29,0480", "Order": 4 }
+  ]
+}

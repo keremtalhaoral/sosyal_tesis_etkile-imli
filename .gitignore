@@ -12,13 +12,18 @@ dist/
 build/
 .out/
 
-# Veritabanı dosyaları (türetilmiş veri - kanonik kaynak data/seed.json'dır)
+# Veritabanı artık PostgreSQL'de (ADR-009); repoda veri dosyası tutulmaz.
+# Eski SQLite artefaktları (geçmiş çalışmalardan kalmışsa yok sayılsın):
 data/app.db
 *.db-wal
 *.db-shm
-# Tam veri dökümü (yapı + satırlar) türetilmiştir. NOT: yapı-only schema.sql
+# Tam veri dökümü (pg_dump çıktısı) türetilmiştir. NOT: yapı-only schema.sql
 # dokümantasyon olarak commit EDİLİR (scripts/export-schema.js üretir).
 data/full.sql
+
+# İBB ham API yanıt önbelleği (ADR-008) - türetilmiş çıktı
+# docs/data/transit-routes.geojson commit edilir.
+data/ibb-cache/
 
 # Ham GTFS feed'i (İBB/İETT - büyük, üçüncü taraf ham veri). TÜRETİLMİŞ çıktı
 # docs/data/transit-routes.geojson commit edilir (ADR-006). Ham veriyi kullanıcı

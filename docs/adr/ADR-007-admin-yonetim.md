@@ -74,7 +74,11 @@ düzeltildi (yeni özellik değil, mevcut sözleşmenin onarımı):
 
 **Not (mimari netlik):** `docs/index.html`'in girişi **kasıtlı olarak** yalnız `seed.demo_users`
 üzerinden çalışır (satır: "Pages auth yalnız demo_users'tan beslenir (gerçek backend
-kullanıcıları parola taşımaz)") — statik siteye gerçek parola hash'i asla gönderilmez (ADR-002
+kullanıcıları parola taşımaz)") — NOT (düzeltme): burada eskiden "statik siteye gerçek parola
+hash'i asla gönderilmez" gerekçesi yazılıydı ve bu OLGUSAL OLARAK YANLIŞTI; `/api/auth/login`
+hiçbir zaman hash döndürmüyor (yalnız token + `{id, username, role}`). Mock'un gerçek sebebi
+GitHub Pages'in sunucu çalıştıramaması. Faz 5'te sayfa çift moda geçirildi: backend
+erişilebiliyorsa gerçek API kullanılıyor (ADR-002
 ile tutarlı güvenlik sınırı). Bu yüzden ana harita sayfasındaki `window.fetch` override'ı
 (`docs/app.js`) **her zaman** bilinen uçları (facilities/menu/login/vb.) tarayıcı-içi simüle eder;
 gerçek backend'e hiç gitmez. v2-07'de bu simülatöre yeni uçlar (`facilities` PATCH, `orders/:id/
