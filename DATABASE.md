@@ -9,7 +9,7 @@ her karar ilgili DDIA bölümüne bağlanmıştır.
 | Konum | Saklama biçimi | İçerik | Sorun |
 |---|---|---|---|
 | `backend/db.js` | JS kodu içine gömülü sabitler | 30 tesis, ilçe nüfusları | Kalıcılık yok: sunucu kapanınca yeni veri kaybolur |
-| `advanced-gis/data/database.db` | Ayrı SQLite | Sadece 10 tesis, 2 kullanıcı | Ana veriyle kopuk, git'e commit edilmiş türetilmiş binary |
+| İkinci bir SQLite (ayrı kopya) | Ayrı SQLite | Sadece 10 tesis, 2 kullanıcı | Ana veriyle kopuk, git'e commit edilmiş türetilmiş binary |
 | `docs/app.js` (GitHub Pages) | Tarayıcı `localStorage` | Kendi mock kopyası | Cihaza hapsolmuş, diğerleriyle senkronsuz |
 
 Aynı kavramsal veri üç yerde, üç biçimde ve üç farklı içerikle yaşıyordu.
@@ -22,18 +22,17 @@ data/
 ├── seed.json    <- KANONİK VERİ (git'te; elle düzenlenir; tüm servisler buradan tohumlar)
 └── app.db       <- ÇALIŞMA ZAMANI VERİTABANI (git'te DEĞİL; seed + kullanıcı yazmalarından türer)
 
-backend/  (Node/Express)  ──┐
-                            ├──> data/app.db  (paylaşılan SQLite, WAL modu)
-advanced-gis/  (Python)   ──┘
+backend/  (Node/Express)  ──> data/app.db  (SQLite, WAL modu)
 
 docs/  (GitHub Pages)     ──> statik/serverless olduğu için localStorage'da
                               seed'in TÜRETİLMİŞ bir kopyasını kullanır (çevrimdışı replika)
 ```
 
 - **Yeni veriler** (rezervasyonlar, yeni tesisler, kullanıcılar) artık tek yere yazılır: `data/app.db`.
-- Node backend ve Python advanced-gis servisi **aynı dosyayı, aynı şemayla** kullanır.
-- Parola hash'i (PBKDF2-HMAC-SHA256, 100k iterasyon) ve JWT (HS256) iki dilde **bit-uyumludur**;
-  bir serviste açılan hesapla diğerine giriş yapılabilir.
+- Node backend bu dosyayı tek gerçek kaynak olarak kullanır (tek dilli mimari).
+- Parola hash'i (PBKDF2-HMAC-SHA256, **600.000 iterasyon**, kullanıcı başına rastgele salt,
+  PHC formatı) ve JWT (HS256) `backend/security.js` +
+  `backend/database.js` içinde tanımlıdır.
 
 ## Kararlar ve DDIA Gerekçeleri
 
@@ -51,8 +50,7 @@ kalıcılığı testle doğrulanmıştır.
 ### 3. Atomik transaction'lar (Bölüm 7 — ACID)
 Rezervasyon oluşturma = kapasite kontrolü + doluluk güncellemesi + kayıt ekleme,
 **tek transaction**. Herhangi bir adım başarısız olursa tamamı geri alınır — doluluk oranı
-ile rezervasyon kayıtları asla birbirinden kopamaz. (`backend/db.js -> createReservation`,
-`advanced-gis/app/models.py -> create_reservation`)
+ile rezervasyon kayıtları asla birbirinden kopamaz. (`backend/db.js -> createReservation`)
 
 ### 4. Kısıtlar: geçersiz durumu imkânsız kıl (Bölüm 7 — invariants)
 Uygulama koduna güvenmek yerine invariant'lar veritabanı seviyesinde zorlanır:
@@ -115,10 +113,6 @@ Uygulanışı (`docs/app.js -> bootstrapCentralSeed`):
 ```bash
 # Node backend (ilk açılışta migration + seed otomatik)
 cd backend && npm install && npm start        # http://localhost:8085
-
-# Python advanced-gis (aynı veritabanını kullanır)
-cd advanced-gis && python3 scripts/seed.py    # idempotent
-python3 server.py
 
 # Veri katmanı testleri (geçici DB ile, gerçek veriye dokunmaz)
 node backend/test-db.js

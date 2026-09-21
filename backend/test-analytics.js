@@ -65,9 +65,5 @@ const heat = analytics.occupancyHeatmap();
 const at19 = heat.filter(h => h.slot === '19:00').reduce((s, h) => s + h.reservations, 0);
 assert('heatmap: 19:00 slotunda 2 onaylı (iptal hariç)', at19 === 2);
 
-// 7. Benchmark çalışıyor + tutarlı bucket sayısı
-const bench = analytics.benchmark('month');
-assert('benchmark: canlı ve rollup aynı bucket sayısı', bench.buckets_live === bench.buckets_rollup);
-
 console.log(`\n${passed} başarılı, ${failed} başarısız`);
 process.exit(failed === 0 ? 0 : 1);

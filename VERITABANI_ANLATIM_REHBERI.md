@@ -14,7 +14,7 @@
 
 > "Projenin tüm kalıcı verisi — tesisler, kullanıcılar, rezervasyonlar, ilçe demografisi —
 > repo kökündeki **`data/app.db`** adlı tek bir SQLite veritabanında tutuluyor. Node.js
-> backend'i ve Python servisi aynı dosyayı paylaşıyor; başlangıç verisi **`data/seed.json`**
+> backend'i bu dosyayı kullanıyor; başlangıç verisi **`data/seed.json`**
 > adlı kanonik kaynaktan geliyor. Yani tek gerçek kaynak (single source of truth) ilkesini
 > uyguluyorum."
 
@@ -28,7 +28,7 @@ Bu cümleden sonra mentör detaya inecektir. Aşağıdaki bölümler o detaylar.
 |---|---|---|
 | `data/seed.json` | 30 tesis + ulaşım bilgisi, 39 ilçe nüfusu (TÜİK 2023), varsayılan kullanıcılar | **Kanonik başlangıç verisi.** İnsan-okur, git'te versiyonlanır. Veritabanı silinse bile buradan yeniden inşa edilir. |
 | `data/app.db` | Çalışma zamanındaki CANLI veri: seed + sonradan eklenen her şey (yeni kullanıcılar, yeni tesisler, rezervasyonlar) | **Tek gerçek kaynak.** SQLite, WAL modunda. Git'te DEĞİL (`.gitignore`) çünkü türetilmiş veridir — kod deposuna binary veritabanı konmaz. |
-| `backend/data/istanbul-districts.geojson` | İlçe sınır geometrileri (3.7 MB poligon verisi) | **Statik referans verisi.** Hiç değişmez, mekânsal sorgusu SQLite'ta yapılamaz. PostGIS'e geçilirse `geometry` kolonuna taşınır. |
+| `docs/data/istanbul-districts.geojson` | İlçe sınır geometrileri (3.7 MB poligon verisi) | **Statik referans verisi** (tek kanonik kopya; hem Node backend hem Pages okur). Hiç değişmez, mekânsal sorgusu SQLite'ta yapılamaz. PostGIS'e geçilirse `geometry` kolonuna taşınır. |
 | GitHub Pages (`docs/`) → tarayıcı `localStorage` | Seed'in **türetilmiş çevrimdışı replikası** | Pages statik hosting'dir, sunucu/veritabanı çalıştıramaz. Sayfa açılışında `docs/data/seed.json` fetch edilip localStorage'a yazılır; versiyon numarasıyla güncel tutulur. |
 
 **Mentöre söyleyeceğin kritik ayrım:** *"Kanonik veri ile türetilmiş veriyi ayırıyorum.
@@ -44,8 +44,8 @@ denir. Merkezileştirince bu sınıf hata tamamen ortadan kalktı.
 
 ## 3. Şema: 4 Tablo + 1 Migration Tablosu
 
-Şema `backend/database.js` (Node) ve `advanced-gis/app/models.py` (Python) içinde birebir
-aynıdır. İlişkiyi şöyle anlat:
+Şema tek yerde, `backend/database.js` (Node migration zinciri) içinde tanımlıdır.
+İlişkiyi şöyle anlat:
 
 ```
 users (1) ────< reservations >──── (1) facilities        districts (bağımsız referans)
@@ -71,8 +71,10 @@ Anlatacağın kavramlar:
   uygulama kodu unutsa bile.
 - **CHECK**: role kolonuna 'user' ve 'admin' dışında değer yazılamaz. *"Geçersiz durumu
   uygulamada kontrol etmek yerine veritabanında imkânsız kılıyorum."*
-- **Parola güvenliği**: parolalar PBKDF2-HMAC-SHA256 ile 100.000 iterasyon hash'lenir.
-  *"Veritabanı sızsa bile parolalar okunamaz."*
+- **Parola güvenliği**: parolalar PBKDF2-HMAC-SHA256 ile **600.000 iterasyon** ve
+  **kullanıcı başına rastgele salt** ile hash'lenir (PHC formatı: `pbkdf2_sha256$…`).
+  *"Veritabanı sızsa bile parolalar okunamaz; her kullanıcının salt'ı farklı olduğu için
+  rainbow-table ve toplu kırma işe yaramaz."*
 
 ### 3.2 `facilities` — sosyal tesisler
 
@@ -217,8 +219,8 @@ PRAGMA busy_timeout = 5000;   -- kilit çakışmasında 5 sn bekle, hemen hata v
 
 Mentöre anlatım: *"Her onaylanmış yazma önce log dosyasına (app.db-wal) yazılır, sonra ana
 dosyaya taşınır. Süreç tam commit anında çökse bile açılışta log'dan kurtarılır — commit
-edilmiş veri kaybolmaz. Ayrıca WAL'da okuyucular yazıcıyı bloklamaz: Node servisi yazarken
-Python servisi okumaya devam edebilir."*
+edilmiş veri kaybolmaz. Ayrıca WAL'da okuyucular yazıcıyı bloklamaz: bir bağlantı yazarken
+diğer bağlantılar okumaya devam edebilir."*
 
 İnce ama etkileyici detay: *"SQLite'ta FOREIGN KEY zorlaması varsayılan olarak kapalıdır;
 `PRAGMA foreign_keys = ON` demeyi öğrendim — birçok kişinin gözünden kaçan bir tuzak."*
@@ -297,16 +299,18 @@ indeks anlatımının kanıtıdır.
 > güçlü tutarlılık ihtiyacı var (çifte rezervasyon, kapasite aşımı). Şemam belli ve stabil.
 > NoSQL'in esnek şeması burada avantaj değil, kısıtları kaybetme riski olurdu."
 
-**"İki servis aynı dosyaya yazarsa çakışmaz mı?"**
+**"Eşzamanlı yazmalar çakışmaz mı?"**
 > "WAL modunda çok okuyucu + tek yazıcı modeli var; yazma kilidi çakışırsa
 > `busy_timeout = 5000` ile 5 saniye beklenir. Bu iş yükünde (saniyede birkaç yazma bile
 > değil) fazlasıyla yeterli. Yazma hacmi büyürse zaten PostgreSQL'e geçerim — bu da
 > ölçeklendirme sinyallerini bilmek demek."
 
 **"Parolaları nasıl saklıyorsun?"**
-> "Asla düz metin değil. PBKDF2-HMAC-SHA256, 100.000 iterasyon, sabit uygulama salt'ı.
-> Hash tek yönlü: veritabanı sızsa bile parola geri çıkarılamaz. İyileştirme alanı olarak
-> kullanıcı başına rastgele salt'a geçilebileceğini de biliyorum."
+> "Asla düz metin değil. PBKDF2-HMAC-SHA256, **600.000 iterasyon** (OWASP 2023 önerisi) ve
+> **kullanıcı başına rastgele salt** (her hash'te `crypto.randomBytes(16)`), PHC formatında
+> saklanır (`pbkdf2_sha256$iterasyon$salt$hash`). Hash tek yönlü: veritabanı sızsa bile parola
+> geri çıkarılamaz; salt kullanıcı başına farklı olduğu için iki aynı parola bile farklı hash
+> üretir, rainbow-table'lar işe yaramaz."
 
 **"Sunucu çökerse veri gider mi?"**
 > "Commit edilmiş hiçbir şey gitmez — WAL bunu garanti eder. Test de ettim: sunucuyu

@@ -16,8 +16,8 @@
 3. **Karmaşıklığı öne çıkar, saklama.** İsimler niyeti anlatsın; yorum *neden*i açıklasın (*ne*yi değil).
 4. **Para = tam sayı kuruş (`*_minor`), asla float.** Tutarlar sunucuda hesaplanır, istemciye güvenilmez.
    (ADR-001/005)
-5. **Şema değişince Node + Python senkron:** `backend/database.js` MIGRATIONS **ve**
-   `advanced-gis/app/models.py` birlikte; yeni faz = yeni migration versiyonu.
+5. **Şema değişince `backend/database.js` MIGRATIONS güncellenir** (şema tek yerde tanımlıdır);
+   yeni faz = yeni migration versiyonu.
 6. **Her faz bir bütün teslim eder:** kod + **ADR** + testler + (UI ise) açık/koyu tema doğrulaması.
 7. **Yeni dosya/teknoloji = belge güncelle:** `TEKNOLOJI_VE_DOSYA_REHBERI.md` (dosya-dosya katalog +
    değişiklik günlüğü). CDN yok — dış kütüphaneler `docs/vendor/`'a alınır, offline çalışmalı.

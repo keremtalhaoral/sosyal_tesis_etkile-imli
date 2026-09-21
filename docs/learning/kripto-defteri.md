@@ -3,7 +3,7 @@
 > Bu defter, projedeki kripto kararlarının **arkasındaki matematiği** anlatmak için. Amaç:
 > "kütüphane çağırdım" değil, **ne olduğunu bilerek** açıklayabilmek. Her başlıkta önce sezgi,
 > sonra matematik, sonra projedeki kod karşılığı var. Referans: `backend/security.js`,
-> `backend/database.js`, `advanced-gis/security/crypto_signer.py`.
+> `backend/database.js`.
 
 ---
 

@@ -1,10 +1,10 @@
 /**
- * analytics.js - Analitik sorgular + rollup + benchmark (Faz v2-04, ADR-004).
+ * analytics.js - Analitik sorgular + rollup (Faz v2-04, ADR-004).
  *
  * DDIA Böl. 3 (OLTP vs OLAP): işlemsel yazma (rezervasyon) çok/küçük; analitik okuma
- * (dashboard) az/ağır (tüm geçmişi tarayan agregasyonlar). Bu modül önce CANLI sorgularla
- * çalışır; sonra daily_stats ROLLUP'ından aynı sonucu üretir ve ikisini benchmark eder.
- * Rollup türetilmiş veridir: kaynaktan (reservations/orders) yeniden hesaplanır.
+ * (dashboard) az/ağır (tüm geçmişi tarayan agregasyonlar). Bu modül CANLI sorgularla
+ * çalışır; daily_stats ROLLUP'ı ise aynı sonucu türetilmiş veriden üretir (test parity ile
+ * doğrulanır). Rollup türetilmiş veridir: kaynaktan (reservations/orders) yeniden hesaplanır.
  */
 
 const { getDb } = require('./database');
@@ -177,22 +177,6 @@ const revenueFromRollup = (granularity = 'month') => {
   `).all();
 };
 
-// Benchmark: canlı vs rollup (aynı sonuç, farklı süre) — OLAP dersi
-const benchmark = (granularity = 'month') => {
-  const t1 = process.hrtime.bigint(); const live = revenueTimeSeries(granularity);
-  const t2 = process.hrtime.bigint(); const roll = revenueFromRollup(granularity);
-  const t3 = process.hrtime.bigint();
-  const liveMs = Number(t2 - t1) / 1e6, rollMs = Number(t3 - t2) / 1e6;
-  return {
-    granularity,
-    live_ms: Math.round(liveMs * 100) / 100,
-    rollup_ms: Math.round(rollMs * 100) / 100,
-    speedup: rollMs ? Math.round((liveMs / rollMs) * 10) / 10 : null,
-    buckets_live: live.length,
-    buckets_rollup: roll.length
-  };
-};
-
 // Dashboard için tüm bloklar tek payload (granularity ciro/highchair/iptal için)
 const dashboard = (granularity = 'month') => ({
   generated_at: new Date().toISOString(),
@@ -210,5 +194,5 @@ const dashboard = (granularity = 'month') => ({
 module.exports = {
   kpiSummary, revenueTimeSeries, occupancyHeatmap, topFacilities, paymentBreakdown,
   highchairTrend, cancellationRate, categorySales,
-  rebuildDailyStats, revenueFromRollup, benchmark, dashboard
+  rebuildDailyStats, revenueFromRollup, dashboard
 };
