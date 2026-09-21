@@ -111,7 +111,7 @@
     const q = new URLSearchParams(window.location.search);
     if (q.get('demo') || q.get('autologin')) {
       const uName = q.get('user') || 'user';
-      const uPass = q.get('pass') || 'MCT_2jzxds7SC_SV';
+      const uPass = q.get('pass') || 'user1234';
       store.login(uName, uPass).then(u => {
         session = u;
         renderAuthbar();

@@ -144,7 +144,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `dashboard.html` / `dashboard.js` | ~180 / ~235 | Analitik sayfası (Faz v2-04). Çift mod: canlı `/api/analytics/*` → yoksa `data/analytics.json`. Chart.js grafikleri, renkler CSS değişkenlerinden (dataviz paleti), tema değişince yeniden çizim. **Canlı güncelleme (ADR-010):** `EventSource` ile `/api/events` dinlenir; 'değişti' işareti gelince taze veri çekilip chart'lar `destroy()` YERİNE `chart.update()` ile **yerinde** güncellenir (animasyon korunur - sunumda çubuğun büyüdüğü görünür). 400 ms biriktirme; canlı akış çubuğu + son güncelleme saati; elle **↻ Yenile** butonu. |
 | `order.html` / `order.js` | 115 / 209 | Müşteri sipariş sayfası (Faz v2-05). Çift mod. "Yeni Sipariş" ve "Siparişlerim"; durum etiketleri v2-07 yaşam döngüsünden. |
 | `style.css` | 1927 | Tasarım sistemi: açık/koyu tema token'ları, dataviz palet CSS değişkenleri, layout, cam kenar çubuğu, harita/marker, bileşenler. |
-| `adr/ADR-001…010-*.md` | ~1000 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin, İBB açık veri, PostgreSQL+PostGIS, canlı güncelleme (SSE). |
+| `adr/ADR-001…011-*.md` | ~1100 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin, İBB açık veri, PostgreSQL+PostGIS, canlı güncelleme (SSE), veri kökeni ve staj sentezi. |
 | `diagrams/er-v2.md` | 134 | v2 varlık-ilişki diyagramı. |
 | `ogrenme/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
 | `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |

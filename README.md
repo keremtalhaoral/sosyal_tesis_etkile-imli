@@ -13,7 +13,7 @@ Dışarıdan projeyi inceleyenler için en hızlı erişim rehberi:
 | 🍽️ **Sipariş & Rezervasyon** | [`docs/order.html`](docs/order.html) | Menüden sipariş verme, sepet ve saat slotu rezervasyonu |
 | ⚙️ **Backend & PostGIS** | [`backend/`](backend/) & [`schema.sql`](schema.sql) | Node.js Express API ve PostgreSQL 16 + PostGIS mekansal veri tabanı |
 | 🎓 **Staj Sunumları & Görseller** | [`sunumlar/`](sunumlar/) & [`rapor-gorselleri/`](rapor-gorselleri/) | 7 haftanın 16:9 PPTX sunumları ve 1920x1080 ekran görüntüleri |
-| 📚 **Mimari Kararlar & Kitap** | [`docs/adr/`](docs/adr/) & [`docs/ogrenme/`](docs/ogrenme/) | 10 adet ADR kaydı ve Feynman tekniğiyle yazılmış staj öğrenme rehberi |
+| 📚 **Mimari Kararlar & Kitap** | [`docs/adr/`](docs/adr/) & [`docs/ogrenme/`](docs/ogrenme/) | 11 adet ADR kaydı ve Feynman tekniğiyle yazılmış staj öğrenme rehberi |
  
 ## 🚀 Özellikler
 - **Etkileşimli Harita Katmanları:** Altlık haritalar arasında geçiş ve özel sosyal tesis katmanlarının yönetimi.
@@ -64,15 +64,11 @@ en hızlı yol.
 
 | Mod | Nasıl anlarım | Kullanıcı / parola |
 |---|---|---|
-| **Canlı — `public` şeması** (`npm start`) | sayfada "● Canlı veritabanı" rozeti | `admin` ve `user`; parolalar **rastgele üretilir** → `data/dev-credentials.json` (gitignored). Açılış logunda da yazar. |
-| **Canlı — `demo` şeması** (`npm run demo:start`) | sunum modu, 5 tesis / 0 rezervasyon | `demo_admin / DemoAdmin2026`, `ayse / AyseParola26`, `mehmet / MehmetParola26` → `data/demo-users.json` |
-| **Çevrimdışı replika** (backend kapalı ya da GitHub Pages) | sayfada "○ Çevrimdışı replika" rozeti | `admin / admin1234`, `user / user1234`, `demo / demo1234`, `demo-admin / demo1234` |
+| **Canlı — `public` şeması** (`npm start`) | sayfada "● Canlı veritabanı" rozeti | `admin / admin1234` ve `user / user1234` |
+| **Canlı — `demo` şeması** (`npm run demo:start`) | sunum modu, 5 tesis / 0 rezervasyon | `demo_admin / DemoAdmin2026`, `ayse / AyseParola26`, `mehmet / MehmetParola26` |
+| **Çevrimdışı replika** (GitHub Pages / mock) | sayfada "○ Çevrimdışı replika" rozeti | `admin / admin1234`, `user / user1234` |
 
-> **Neden üç ayrı set?** `public` şemasının parolaları ADR-002 gereği rastgele üretilir ve
-> **git'e hiç girmez** — bu yüzden onları ancak yerel dosyadan (ya da açılış logundan)
-> öğrenebilirsiniz. `demo` şemasınınkiler sunumda giriş yapılabilsin diye **kasıtlı olarak
-> sabit ve git'te**. Çevrimdışı replikanınkiler ise gerçek değil, tarayıcı içinde yaşayan
-> taklit hesaplar.
+> **💡 Hızlı Başlangıç:** Canlı veya çevrimdışı fark etmeksizin standart kullanıcı için **`user` / `user1234`**, yönetici işlemleri için **`admin` / `admin1234`** hesaplarını doğrudan kullanabilirsiniz.
 
 > **`429` alıyorsanız** parola yanlış demek değil: 15 dakikada 5 başarısız denemeden sonra
 > hız sınırı devreye giriyor. Bekleyin ya da sunucuyu yeniden başlatın (sayaç bellekte).
@@ -119,4 +115,4 @@ komutlar ve "mentör sorarsa" cevapları var.
 - [`docs/teknoloji-ve-dosya-rehberi.md`](docs/teknoloji-ve-dosya-rehberi.md) — her teknoloji ve dosyanın amacı (yaşayan katalog).
 - [`docs/sorgu-defteri.md`](docs/sorgu-defteri.md) + [`queries.sql`](queries.sql) — her özelliği SQL ile gösterme.
 - [`DATABASE.md`](DATABASE.md) — merkezi veri mimarisi (DDIA tabanlı) ve API tablosu.
-- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-010).
+- [`docs/adr/`](docs/adr/) — mimari karar kayıtları (ADR-001 … ADR-011).

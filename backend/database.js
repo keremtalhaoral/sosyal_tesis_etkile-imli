@@ -144,8 +144,12 @@ const verifyPasswordAsync = async (password, stored) => {
   }
 };
 
-// Güçlü rastgele parola (base64url, ~16 karakter). Seed'de ham parola tutmayız.
-const generatePassword = () => crypto.randomBytes(12).toString('base64url');
+// Standart geliştirici parolaları (sunum ve staj kullanımı için basit ve akılda kalıcı):
+const DEFAULT_PASSWORDS = {
+  admin: 'admin1234',
+  user: 'user1234'
+};
+const generatePassword = (username = '') => DEFAULT_PASSWORDS[username] || 'user1234';
 
 const loadOrCreateCredentials = (users) => {
   let store = { _comment: 'YEREL dev parolaları - git\'e girmez. Silerseniz veritabanını da sıfırlayıp yeniden tohumlayın.', users: {} };
@@ -154,7 +158,7 @@ const loadOrCreateCredentials = (users) => {
   }
   let changed = false;
   for (const u of users) {
-    if (!store.users[u.username]) { store.users[u.username] = generatePassword(); changed = true; }
+    if (!store.users[u.username]) { store.users[u.username] = generatePassword(u.username); changed = true; }
   }
   if (changed) {
     store.generated_at = new Date().toISOString();
