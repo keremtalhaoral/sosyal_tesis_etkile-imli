@@ -665,6 +665,16 @@
   ],
   "demo_users": [
     {
+      "username": "user",
+      "password": "user1234",
+      "role": "user"
+    },
+    {
+      "username": "admin",
+      "password": "admin1234",
+      "role": "admin"
+    },
+    {
       "username": "demo",
       "password": "demo1234",
       "role": "user"

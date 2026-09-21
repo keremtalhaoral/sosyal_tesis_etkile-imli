@@ -1,5 +1,12 @@
 # İBB Sosyal Tesis Takip Sistemi - CBS & Karar Destek Sunum Rehberi
 
+> ⚠️ **Sürüm notu:** Bu rehber projenin **erken sürümünü** (tek Python `server.py` + OSRM rota +
+> istemci-taraflı akış) anlatır. Proje o zamandan beri **merkezi SQLite + Node/Express backend**
+> mimarisine geçti; `advanced-gis/` artık ana backend değil, onu tamamlayan bir Python ikiz
+> servistir. Güncel mimari ve dosya-dosya amaçlar için → [`CLAUDE.md`](CLAUDE.md) ve
+> [`TEKNOLOJI_VE_DOSYA_REHBERI.md`](TEKNOLOJI_VE_DOSYA_REHBERI.md). Aşağıdaki yazılım tasarımı
+> prensipleri (Ousterhout, CBS kavramları) hâlâ geçerli ve sunum için değerlidir.
+
 Bu rehber, staj sunumunda projeyi akademik ve profesyonel standartlarda anlatabilmen, "neyi, neden ve nasıl yaptığını" açıklayabilmen için hazırlanmıştır. Sunum yaparken sadece kodu göstermek yerine, arkasındaki yazılım mühendisliği prensiplerini ve CBS (Coğrafi Bilgi Sistemi) kavramlarını açıklaman staj değerlendirmeni çok daha başarılı kılacaktır.
 
 ---
