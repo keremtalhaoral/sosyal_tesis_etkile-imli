@@ -196,7 +196,7 @@
 
   function connectLive() {
     // EventSource yalnız canlı modda anlamlı: snapshot modunda (Pages) sunucu yok.
-    if (state.mode !== 'live' || typeof EventSource === 'undefined') return;
+    if (state.mode !== 'live' || typeof EventSource === 'undefined' || new URLSearchParams(window.location.search).has('nosse')) return;
 
     const es = new EventSource(`${API_BASE}/api/events`);
 

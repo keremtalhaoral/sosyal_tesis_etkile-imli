@@ -4,7 +4,7 @@
 - **Faz / Dal:** `v2-02-auth-crypto`
 - **Tarih:** 2026-07
 - **Referans:** DDIA (güvenilirlik/maintainability), OWASP Password Storage Cheat Sheet
-- **İlgili:** `docs/learning/kripto-defteri.md` (matematik anlatımı), `ADR-001`
+- **İlgili:** `docs/ogrenme/kripto-defteri.md` (matematik anlatımı), `ADR-001`
 
 ## Bağlam
 

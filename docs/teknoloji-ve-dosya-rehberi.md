@@ -146,7 +146,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `style.css` | 1927 | Tasarım sistemi: açık/koyu tema token'ları, dataviz palet CSS değişkenleri, layout, cam kenar çubuğu, harita/marker, bileşenler. |
 | `adr/ADR-001…010-*.md` | ~1000 (toplam) | Mimari karar kayıtları: veri modeli, auth/kripto, eşzamanlılık, analytics, sipariş, rotalar, admin, İBB açık veri, PostgreSQL+PostGIS, canlı güncelleme (SSE). |
 | `diagrams/er-v2.md` | 134 | v2 varlık-ilişki diyagramı. |
-| `learning/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
+| `ogrenme/kripto-defteri.md` | 173 | Kripto öğrenme defteri (matematik + kod karşılığı). |
 | `sorgu-defteri.md` | ~300 | **Sorgu defteri**: projenin her özelliğini gösteren anlatımlı SQL (amaç/ne gösterir/PostGIS karşılığı + örnek çıktılar). Çıplak hâli kök `queries.sql`. |
 | `data/analytics.json` | 7872 | Analitik fallback snapshot (`dashboard.js`). |
 | `data/seed.json` | 692 | Kanonik seed'in frontend mock kopyası. |

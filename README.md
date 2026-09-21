@@ -1,7 +1,20 @@
 # Sosyal Tesis Etkileşimli Harita Projesi (Web GIS)
 
-Bu proje, sosyal tesislerin coğrafi verilerini harita üzerinde etkileşimli olarak görselleştirmek, sorgulamak ve analiz etmek amacıyla geliştirilmiş modern bir **Web GIS (Coğrafi Bilgi Sistemi)** uygulamasıdır. 
+Bu proje, sosyal tesislerin coğrafi verilerini harita üzerinde etkileşimli olarak görselleştirmek, sorgulamak ve analiz etmek amacıyla geliştirilmiş modern bir **Web GIS (Coğrafi Bilgi Sistemi)** uygulamasıdır.
 
+## 🧭 Proje Haritası (Nereye Bakmalıyım?)
+
+Dışarıdan projeyi inceleyenler için en hızlı erişim rehberi:
+
+| İncelemek İstediğiniz Alan | Dosya / Dizin | Açıklama |
+|---|---|---|
+| 🗺️ **Canlı Harita & Arayüz** | [`docs/index.html`](docs/index.html) | Leaflet Web GIS haritası, katman yöneticisi ve tesis analizleri |
+| 📊 **Analitik Gösterge Paneli** | [`docs/dashboard.html`](docs/dashboard.html) | Canlı SSE bağlantılı ciro, doluluk ısı haritası ve KPI grafikleri |
+| 🍽️ **Sipariş & Rezervasyon** | [`docs/order.html`](docs/order.html) | Menüden sipariş verme, sepet ve saat slotu rezervasyonu |
+| ⚙️ **Backend & PostGIS** | [`backend/`](backend/) & [`schema.sql`](schema.sql) | Node.js Express API ve PostgreSQL 16 + PostGIS mekansal veri tabanı |
+| 🎓 **Staj Sunumları & Görseller** | [`sunumlar/`](sunumlar/) & [`rapor-gorselleri/`](rapor-gorselleri/) | 7 haftanın 16:9 PPTX sunumları ve 1920x1080 ekran görüntüleri |
+| 📚 **Mimari Kararlar & Kitap** | [`docs/adr/`](docs/adr/) & [`docs/ogrenme/`](docs/ogrenme/) | 10 adet ADR kaydı ve Feynman tekniğiyle yazılmış staj öğrenme rehberi |
+ 
 ## 🚀 Özellikler
 - **Etkileşimli Harita Katmanları:** Altlık haritalar arasında geçiş ve özel sosyal tesis katmanlarının yönetimi.
 - **Mekansal Sorgulama:** Harita üzerindeki tesislere tıklandığında dinamik bilgi pencereleri (Popup) ve detay gösterimi.
