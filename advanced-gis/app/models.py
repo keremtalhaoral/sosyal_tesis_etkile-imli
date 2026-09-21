@@ -5,61 +5,76 @@ from app.config import DB_PATH
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    # Merkezi veritabanıyla (data/app.db) aynı garantiler: WAL + FK zorlaması.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 def init_db():
-    # Make sure data folder exists
+    """Merkezi şemayı oluşturur - backend/database.js'teki migration v1 ile birebir aynıdır.
+
+    Hangi servis önce başlarsa başlasın (Node veya Python) aynı şema kurulur;
+    CREATE TABLE IF NOT EXISTS sayesinde ikinci servis mevcut şemayı olduğu gibi kullanır.
+    """
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = get_db_connection()
     cursor = conn.cursor()
-    
-    # 1. Users Table
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'user'
+        role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
     """)
 
-    # 2. Reservations Table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS reservations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        facility_id INTEGER NOT NULL,
-        reserve_date TEXT NOT NULL,
-        reserve_time TEXT NOT NULL,
-        guests INTEGER NOT NULL,
-        crypto_signature TEXT NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users (id)
-    )
-    """)
-
-    # 3. Facilities Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS facilities (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         kod TEXT UNIQUE NOT NULL,
         ad TEXT NOT NULL,
-        lat REAL NOT NULL,
-        lng REAL NOT NULL,
-        capacity INTEGER NOT NULL,
-        occupancy INTEGER NOT NULL,
-        iett_info TEXT NOT NULL,
-        transit_transfer TEXT NOT NULL,
-        route_description TEXT NOT NULL
+        adres TEXT,
+        lat REAL NOT NULL CHECK (lat BETWEEN -90 AND 90),
+        lng REAL NOT NULL CHECK (lng BETWEEN -180 AND 180),
+        capacity INTEGER NOT NULL CHECK (capacity > 0),
+        occupancy INTEGER NOT NULL DEFAULT 0 CHECK (occupancy BETWEEN 0 AND 100),
+        iett_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
+        vapur_info TEXT NOT NULL DEFAULT 'Mevcut Değil',
+        transit_transfer TEXT NOT NULL DEFAULT 'Mevcut Değil',
+        route_description TEXT NOT NULL DEFAULT 'Mevcut Değil',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
     """)
-    
-    # Auto-seed default users if table is empty
-    cursor.execute("SELECT COUNT(*) as count FROM users")
-    if cursor.fetchone()["count"] == 0:
-        from security.crypto_signer import hash_password
-        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ("user", hash_password("user"), "user"))
-        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", ("admin", hash_password("admin"), "admin"))
-    
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS reservations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        facility_id INTEGER NOT NULL REFERENCES facilities(id) ON DELETE CASCADE,
+        reserve_date TEXT NOT NULL,
+        reserve_time TEXT NOT NULL,
+        guests INTEGER NOT NULL CHECK (guests > 0),
+        crypto_signature TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        UNIQUE (user_id, facility_id, reserve_date, reserve_time)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS districts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        population INTEGER NOT NULL CHECK (population >= 0)
+    )
+    """)
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_user ON reservations(user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_reservations_facility_date ON reservations(facility_id, reserve_date)")
+
     conn.commit()
     conn.close()
 

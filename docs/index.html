@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Müfettiş Gelişmiş CBS & Mekansal Karar Destek Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
   
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Leaflet CSS (vendored: CDN erişimi olmayan ağlarda da çalışır) -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   
   <!-- Google Fonts - Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -453,13 +454,13 @@
     </div>
   </div>
 
-  <!-- Turf.js Library (For Buffer Calculations - Service Shadows) -->
-  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Turf.js Library (vendored - For Buffer Calculations - Service Shadows) -->
+  <script src="vendor/turf/turf.min.js"></script>
+  <!-- Leaflet JS (vendored: CDN erişimi olmayan ağlarda da çalışır) -->
+  <script src="vendor/leaflet/leaflet.js"></script>
   <!-- Linear Algebra Matrix Optimization Engine -->
   <script src="matrix.js"></script>
   <!-- Custom Orchestrator logic -->
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>

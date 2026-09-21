@@ -52,12 +52,13 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
                     "id": r["id"],
                     "kod": r["kod"],
                     "ad": r["ad"],
+                    "adres": r["adres"],
                     "koordinatlar": [r["lat"], r["lng"]],
                     "kapasite": r["capacity"],
                     "dolulukOrani": r["occupancy"],
                     "transit": {
                         "otobus": r["iett_info"],
-                        "vapur": "Deniz Hattı" if "sahil" in r["ad"].lower() else None,
+                        "vapur": r["vapur_info"],
                         "aktarma": r["transit_transfer"],
                         "arabayla": r["route_description"]
                     }

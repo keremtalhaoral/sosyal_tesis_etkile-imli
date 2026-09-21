@@ -71,9 +71,63 @@ const getMockItem = (key, defaultVal) => {
   }
 };
 
-// Auto-seed mock storage safely
+// Auto-seed mock storage safely (gömülü minimal veri; merkezi seed birazdan üzerine yazar)
 localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify(getMockItem(MOCK_FACILITIES_KEY, defaultFacilities)));
 localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(getMockItem(MOCK_USERS_KEY, defaultUsers)));
+
+// ==========================================================================
+// MERKEZİ SEED BOOTSTRAP (Tek Gerçek Kaynak: data/seed.json)
+// GitHub Pages sunucu çalıştıramadığı için localStorage, repo kökündeki kanonik
+// data/seed.json'ın TÜRETİLMİŞ çevrimdışı replikası olarak kullanılır (bkz. DATABASE.md).
+// Seed versiyonu yükselince tesis/kullanıcı verisi yeniden tohumlanır; rezervasyonlardan
+// yalnızca hâlâ var olan tesislere ait olanlar korunur. fetch başarısız olursa
+// (örn. file:// ile açma) yukarıdaki gömülü minimal veriyle devam edilir.
+// ==========================================================================
+const SEED_VERSION_KEY = 'mufettis_seed_version';
+
+const seedRowToFacility = (f) => ({
+  id: f.id,
+  kod: f.kod,
+  ad: f.ad,
+  adres: f.adres,
+  koordinatlar: [f.lat, f.lng],
+  kapasite: f.capacity,
+  dolulukOrani: f.occupancy,
+  transit: {
+    otobus: f.iett_info,
+    vapur: f.vapur_info,
+    aktarma: f.transit_transfer,
+    arabayla: f.route_description
+  }
+});
+
+const bootstrapCentralSeed = async () => {
+  try {
+    const res = await fetch('data/seed.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('seed.json HTTP ' + res.status);
+    const seed = await res.json();
+    const storedVersion = parseInt(localStorage.getItem(SEED_VERSION_KEY) || '0', 10);
+    if (storedVersion >= (seed.version || 1)) return; // replika zaten güncel
+
+    localStorage.setItem(MOCK_FACILITIES_KEY, JSON.stringify((seed.facilities || []).map(seedRowToFacility)));
+    localStorage.setItem(MOCK_USERS_KEY, JSON.stringify((seed.users || []).map(u => ({
+      username: u.username,
+      password_hash: u.password_raw + '_mock',
+      role: u.role
+    }))));
+
+    const facilityIds = new Set((seed.facilities || []).map(f => f.id));
+    const reservations = getMockItem(MOCK_RESERVATIONS_KEY, []);
+    localStorage.setItem(MOCK_RESERVATIONS_KEY, JSON.stringify(
+      (Array.isArray(reservations) ? reservations : []).filter(r => facilityIds.has(r.facility_id))
+    ));
+
+    localStorage.setItem(SEED_VERSION_KEY, String(seed.version || 1));
+    console.info(`[seed] Merkezi seed v${seed.version || 1} localStorage replikasına yüklendi (${(seed.facilities || []).length} tesis).`);
+  } catch (err) {
+    console.warn('[seed] data/seed.json yüklenemedi, gömülü minimal veri kullanılıyor:', err.message);
+  }
+};
 
 // Reservations seed
 try {
@@ -351,10 +405,11 @@ const getColorByStatus = (status, currentTheme) => {
 };
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initMap();
   setupUIEvents();
+  await bootstrapCentralSeed(); // veri, merkezi seed'den gelsin (loadData'dan önce)
   loadData();
   Auth.checkSession();
 });

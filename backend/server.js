@@ -13,7 +13,9 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./db');
+const { signJwt, verifyJwt, signReservation } = require('./security');
 const http = require('http');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 8085;
@@ -27,9 +29,130 @@ app.use((req, res, next) => {
   next();
 });
 
-// Endpoint: Retrieve 30 Social Facilities
+// --- Kimlik doğrulama yardımcıları -----------------------------------------
+const getAuthUser = (req) => {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) return null;
+  return verifyJwt(header.slice(7));
+};
+
+const requireAuth = (req, res, next) => {
+  const user = getAuthUser(req);
+  if (!user) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
+  req.user = user;
+  next();
+};
+
+const requireAdmin = (req, res, next) => {
+  const user = getAuthUser(req);
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ error: 'Bu işlem için admin yetkisi gerekiyor.' });
+  }
+  req.user = user;
+  next();
+};
+
+// --- Auth API ---------------------------------------------------------------
+app.post('/api/auth/register', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password || String(password).length < 4) {
+    return res.status(400).json({ error: 'Geçerli bir kullanıcı adı ve en az 4 karakterlik parola gerekli.' });
+  }
+  try {
+    const user = db.createUser(String(username).trim(), password);
+    res.status(201).json({ token: signJwt(user), user });
+  } catch (err) {
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Bu kullanıcı adı zaten alınmış.' });
+    }
+    throw err;
+  }
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const record = username ? db.getUserByUsername(String(username).trim()) : null;
+  const { hashPassword } = require('./database');
+  const candidate = hashPassword(password || '');
+  const valid = record && crypto.timingSafeEqual(Buffer.from(record.password), Buffer.from(candidate));
+  if (!valid) {
+    return res.status(401).json({ error: 'Kullanıcı adı veya parola hatalı.' });
+  }
+  const user = { id: record.id, username: record.username, role: record.role };
+  res.json({ token: signJwt(user), user });
+});
+
+// --- Facilities API ----------------------------------------------------------
+// Endpoint: Retrieve Social Facilities (from central SQLite database)
 app.get('/api/facilities', (req, res) => {
   res.json(db.getFacilities());
+});
+
+// Endpoint: Add a new facility (admin) - yeni veri merkezi veritabanına kalıcı yazılır
+app.post('/api/facilities', requireAdmin, (req, res) => {
+  const { kod, ad, lat, lng, capacity } = req.body || {};
+  if (!kod || !ad || typeof lat !== 'number' || typeof lng !== 'number' || !Number.isInteger(capacity)) {
+    return res.status(400).json({ error: 'kod, ad, lat, lng (sayı) ve capacity (tamsayı) alanları zorunludur.' });
+  }
+  try {
+    res.status(201).json(db.createFacility(req.body));
+  } catch (err) {
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: `'${kod}' kodlu tesis zaten mevcut.` });
+    }
+    if (String(err.message).includes('CHECK')) {
+      return res.status(400).json({ error: 'Geçersiz değer: kapasite > 0, doluluk 0-100, koordinatlar geçerli aralıkta olmalı.' });
+    }
+    throw err;
+  }
+});
+
+// Endpoint: Update facility occupancy (admin)
+app.patch('/api/facilities/:id', requireAdmin, (req, res) => {
+  const { occupancy } = req.body || {};
+  if (!Number.isInteger(occupancy) || occupancy < 0 || occupancy > 100) {
+    return res.status(400).json({ error: 'occupancy 0-100 arası tamsayı olmalıdır.' });
+  }
+  const updated = db.updateFacilityOccupancy(Number(req.params.id), occupancy);
+  if (!updated) return res.status(404).json({ error: 'Tesis bulunamadı.' });
+  res.json(updated);
+});
+
+// Endpoint: Delete facility (admin) - rezervasyonları FK cascade ile temizlenir
+app.delete('/api/facilities/:id', requireAdmin, (req, res) => {
+  if (!db.deleteFacility(Number(req.params.id))) {
+    return res.status(404).json({ error: 'Tesis bulunamadı.' });
+  }
+  res.status(204).end();
+});
+
+// --- Reservations API ---------------------------------------------------------
+app.post('/api/reservations', requireAuth, (req, res) => {
+  const { facilityId, reserveDate, reserveTime, guests } = req.body || {};
+  if (!Number.isInteger(facilityId) || !reserveDate || !reserveTime || !Number.isInteger(guests) || guests <= 0) {
+    return res.status(400).json({ error: 'facilityId, reserveDate, reserveTime ve guests (pozitif tamsayı) zorunludur.' });
+  }
+  try {
+    const signature = signReservation(req.user.id, facilityId, reserveDate, reserveTime, guests);
+    const result = db.createReservation({
+      userId: req.user.id,
+      facilityId,
+      reserveDate,
+      reserveTime,
+      guests,
+      cryptoSignature: signature
+    });
+    res.status(201).json({ id: result.id, newOccupancy: result.newOccupancy, signature });
+  } catch (err) {
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Aynı tesis, tarih ve saat için zaten rezervasyonunuz var.' });
+    }
+    res.status(err.statusCode || 500).json({ error: err.message });
+  }
+});
+
+app.get('/api/reservations', requireAuth, (req, res) => {
+  res.json(db.getReservationsByUserId(req.user.id));
 });
 
 // Endpoint: Retrieve District boundaries with demographics and RED alarms
