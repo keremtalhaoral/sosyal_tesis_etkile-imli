@@ -99,7 +99,9 @@ Uygulanışı (`docs/app.js -> bootstrapCentralSeed`):
   artırılmalıdır: `cp data/seed.json docs/data/seed.json`
 - Leaflet ve Turf.js kütüphaneleri CDN yerine `docs/vendor/` altına alındı: site,
   unpkg/jsdelivr erişimi olmayan ağlarda da (kurum ağı, çevrimdışı demo) çalışır.
-  Varsayılan Pages girişleri: `admin/adminpassword`, `user/userpassword`.
+  Varsayılan Pages girişleri (`data/seed.json` -> `demo_users`, gerçek backend parolalarından
+  BAĞIMSIZ - statik siteye gerçek hash asla gönderilmez, ADR-002): `demo/demo1234` (user),
+  `demo-admin/demo1234` (admin).
 
 ## PostgreSQL + PostGIS'e Geçiş Yolu
 1. Şema birebir taşınır (tipler zaten uyumlu; `TEXT` tarihler `date`/`time` olur).
@@ -129,8 +131,14 @@ node backend/test-db.js
 | POST | `/api/auth/login` | - | Giriş; token döner |
 | GET | `/api/reservations` | Bearer | Kullanıcının rezervasyonları |
 | POST | `/api/reservations` | Bearer | Rezervasyon (atomik; çifte kayıt 409) |
-| POST | `/api/facilities` | admin | Yeni tesis (kalıcı) |
+| POST | `/api/facilities` | admin | Yeni tesis (kalıcı; opsiyonel İSPARK kapasitesi) |
 | PATCH | `/api/facilities/:id` | admin | Doluluk güncelle |
 | DELETE | `/api/facilities/:id` | admin | Tesis sil (cascade) |
+| PATCH | `/api/orders/:id/status` | admin | Sipariş durumu ilerlet (submitted→served→paid; ADR-007) |
+| GET | `/api/admin/reservations` | admin | Tüm rezervasyonlar (sahiplik filtresiz gözetim) |
+| GET | `/api/admin/orders` | admin | Tüm siparişler (sahiplik filtresiz gözetim) |
+| GET | `/api/admin/audit-log` | admin | Son admin işlemleri (append-only) |
 
-Varsayılan kullanıcılar (`data/seed.json`): `admin/adminpassword`, `user/userpassword`.
+Varsayılan kullanıcılar (`admin`, `user`): parolalar **rastgele üretilir**, `data/dev-
+credentials.json`'a yazılır (gitignored; ADR-002). Bkz. yukarıdaki `demo_users` notu (Pages
+girişleri bundan bağımsız, sabit parolalıdır).

@@ -1,0 +1,6 @@
+route_id,route_short_name,route_long_name,route_type
+R1,39D,Eyüpsultan - Mecidiyeköy,3
+R2,34,Metrobüs Zincirlikuyu - Avcılar,3
+R3,M7,Mahmutbey - Mecidiyeköy Metro,1
+R4,VP1,Haliç Hattı,4
+R5,55,Taksim - Sarıyer,3

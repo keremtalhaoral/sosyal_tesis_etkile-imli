@@ -12,7 +12,7 @@ sys.path.append(BASE_DIR)
 
 from app.config import PORT
 from app.models import init_db, get_facilities, get_facility_by_id, add_facility, get_user_by_username, create_user, create_reservation, get_reservations_by_user_id, delete_facility
-from security.crypto_signer import hash_password, sign_jwt, verify_jwt, sign_reservation
+from security.crypto_signer import hash_password, verify_password, sign_jwt, verify_jwt, sign_reservation
 from services.scraper import scrape_menu
 from services.weather import get_live_weather
 from observability.tracer import log_request
@@ -185,7 +185,8 @@ class GISRequestHandler(http.server.BaseHTTPRequestHandler):
             password = body.get('password')
 
             user = get_user_by_username(username)
-            if user and user["password"] == hash_password(password):
+            # Sabit-zamanli dogrulama (per-user salt sonrasi esitlik karsilastirmasi calismaz).
+            if user and verify_password(password or '', user["password"]):
                 user_payload = {"id": user["id"], "username": user["username"], "role": user["role"]}
                 token = sign_jwt(user_payload)
                 

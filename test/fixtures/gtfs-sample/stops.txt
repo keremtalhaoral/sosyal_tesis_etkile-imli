@@ -1,0 +1,5 @@
+stop_id,stop_name,stop_lat,stop_lon
+ST1,Eyüpsultan Merkez,41.0575,28.9460
+ST2,Feshane,41.0400,28.9500
+ST3,Mecidiyeköy,41.0670,28.9870
+ST4,Arnavutköy İskele,41.0672,29.0440
