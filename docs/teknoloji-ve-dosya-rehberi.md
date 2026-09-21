@@ -99,6 +99,7 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
 | `docs/` | GitHub Pages statik frontend + ADR'ler + öğrenme notları + veri snapshot'ları + vendored kütüphaneler. |
 | `scripts/` | Yardımcı Node scriptleri (dummy veri, analytics snapshot, GTFS→GeoJSON). |
 | `data/` | Kanonik `seed.json` (git'te) + `ibb-cache/` ham İBB yanıtları (gitignored, ADR-008). Çalışma zamanı verisi artık PostgreSQL'de. |
+| `sunumlar/` | Staj sunum slaytları (Hafta 1-7, 7 adet 16:9 kurumsal PPTX sunumu). |
 | `test/fixtures/` | Testler için sentetik veri (GTFS örneği). |
 | `.github/` | CI/CD (Pages deploy). |
 
@@ -336,3 +337,5 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   güncelleme). Yeni: `backend/test-events.js` (15 test, gerçek HTTP akışı),
   `docs/ogrenme/12-canli-guncelleme.md`, `docs/ogrenme/teknoloji/sse.md`,
   `docs/adr/ADR-010-canli-guncelleme.md`, DBeaver senaryosuna Adım 4b.
+
+- **2026-07-27 — Staj sunum setleri (Hafta 1-7 PPTX).** 30 iş gününü ve 7 haftayı kapsayan, Netcad kurumsal kimliğine ve DDIA/APoSD mühendislik ilkelerine uygun 7 adet bağımsız PowerPoint sunumu (`sunumlar/Hafta_01..07_*.pptx`) oluşturuldu. Her sunum; haftalık odak, gün gün kazanımlar, teknik mimari/veri akışı ve mentör savunma notlarını içerir.
