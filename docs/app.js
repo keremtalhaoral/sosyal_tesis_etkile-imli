@@ -723,6 +723,16 @@ const initMap = () => {
 
   L.control.zoom({ position: 'bottomright' }).addTo(state.map);
 
+  // Dedicated Panes (Tesis ve İSPARK işaretçilerinin poligon ve tamponların altında kalmasını önler)
+  if (!state.map.getPane('facilityMarkersPane')) {
+    state.map.createPane('facilityMarkersPane');
+    state.map.getPane('facilityMarkersPane').style.zIndex = '620';
+  }
+  if (!state.map.getPane('isparkMarkersPane')) {
+    state.map.createPane('isparkMarkersPane');
+    state.map.getPane('isparkMarkersPane').style.zIndex = '610';
+  }
+
   const config = TILE_LAYERS[state.theme];
   state.activeTileLayer = makeTileLayer(config).addTo(state.map);
 };
@@ -777,6 +787,16 @@ const setupUIEvents = () => {
     TransitRoutes.clear();
     clearShiftMarkers();
   });
+
+  const isparkBackBtn = document.getElementById('ispark-back-btn');
+  if (isparkBackBtn) {
+    isparkBackBtn.addEventListener('click', () => {
+      switchSidebarView('list-view');
+      Routing.clear();
+      TransitRoutes.clear();
+      clearShiftMarkers();
+    });
+  }
 
   document.getElementById('admin-back-btn').addEventListener('click', () => {
     switchSidebarView('list-view');
@@ -1042,7 +1062,7 @@ const renderFacilityList = () => {
         <span class="status-pill ${statusClass}">${statusLabel}</span>
       </div>
       <div class="facility-item-detail">
-        <span>Kapasite: ${f.kapasite}</span> | <span>Doluluk: %${f.dolulukOrani}</span>
+        <span>📍 ${escapeHtml(f.ilce || 'İstanbul')}</span> • <span>Kapasite: ${f.kapasite}</span> • <span>Doluluk: %${f.dolulukOrani}</span>
       </div>
     `;
 
@@ -1060,7 +1080,11 @@ const filterFacilities = (query, filter) => {
     const f = state.facilities.find(fac => fac.id == id);
     if (!f) return;
 
-    const matchesSearch = f.ad.toLowerCase().includes(query) || f.kod.toLowerCase().includes(query);
+    const q = (query || '').toLowerCase().trim();
+    const matchesSearch = !q ||
+      f.ad.toLowerCase().includes(q) ||
+      f.kod.toLowerCase().includes(q) ||
+      (f.ilce && f.ilce.toLowerCase().includes(q));
     let matchesFilter = true;
     if (filter === 'high') matchesFilter = f.dolulukOrani > 80;
     if (filter === 'low') matchesFilter = f.dolulukOrani < 60;
@@ -1193,33 +1217,48 @@ const renderFacilityMarkers = () => {
     const color = getColorByStatus(status, state.theme);
 
     const marker = L.circleMarker(f.koordinatlar, {
-      radius: 10,
+      pane: 'facilityMarkersPane',
+      radius: 11,
       fillColor: color,
       color: '#ffffff',
-      weight: 2,
+      weight: 2.5,
       opacity: 1,
-      fillOpacity: 0.85
+      fillOpacity: 0.9
     }).addTo(state.map);
 
-    // Hover Tooltip actions
-    marker.bindTooltip(`<strong>${escapeHtml(f.ad)}</strong><br/>Kapasite Doluluk: %${f.dolulukOrani}`, {
+    const statusBadgeClass = status === 'high' ? 'bg-danger' : status === 'moderate' ? 'bg-warning' : 'bg-success';
+    const statusLabel = status === 'high' ? 'Kritik Dolu' : status === 'moderate' ? 'Orta Dolu' : 'Sakin';
+
+    // Rich Hover Tooltip with sticky tracking (immediatley visible on hover)
+    marker.bindTooltip(`
+      <div class="facility-tooltip-inner">
+        <div class="facility-tooltip-title">📍 ${escapeHtml(f.ad)}</div>
+        <div class="facility-tooltip-meta">
+          <span class="tooltip-badge ${statusBadgeClass}">%${f.dolulukOrani} ${statusLabel}</span>
+          <span class="tooltip-cap">${f.kapasite} Kişilik</span>
+        </div>
+        <div class="facility-tooltip-sub">Sol panelde detayları açmak için tıklayın</div>
+      </div>
+    `, {
+      sticky: true,
       direction: 'top',
-      offset: [0, -10]
+      offset: [0, -12],
+      className: 'facility-hover-card'
     });
 
     // Hover Scaling effect
     marker.on('mouseover', () => {
       if (!state.selectedFacility || state.selectedFacility.id !== f.id) {
-        marker.setStyle({ radius: 13, weight: 2.5 });
+        marker.setStyle({ radius: 14, weight: 3 });
       }
     });
     marker.on('mouseout', () => {
       if (!state.selectedFacility || state.selectedFacility.id !== f.id) {
-        marker.setStyle({ radius: 10, weight: 2 });
+        marker.setStyle({ radius: 11, weight: 2.5 });
       }
     });
 
-    // Click displays details
+    // Click displays details in left sidebar
     marker.on('click', (e) => {
       L.DomEvent.stopPropagation(e);
       selectFacility(f);
@@ -1229,14 +1268,106 @@ const renderFacilityMarkers = () => {
   });
 };
 
-// İSPARK doluluğu — DETERMİNİSTİK demo değeri. Gerçek canlı bir İBB İSPARK feed'i
-// yok; eski kod her render'da Math.random() ile UYDURUYORDU (tıklayınca değişiyordu).
-// Bunun yerine otoparkın konumundan türetilen, her seferinde AYNI kalan bir yüzde
-// üretiriz (35-84% arası). Dürüstçe "demo" olarak etiketlenir.
+// İSPARK doluluğu — DETERMİNİSTİK demo değeri.
 const isparkOccupancy = (p) => {
   const [lat, lng] = p.koordinatlar;
   const frac = Math.abs(Math.sin(lat * 91.7 + lng * 57.3)) % 1;
   return 35 + Math.floor(frac * 50);
+};
+
+// Selected İSPARK display (Sol panel detay görünümü)
+const selectIspark = (p, emptySpots, occupiedPercent) => {
+  state.selectedIspark = p;
+
+  // Haritayı otoparka odakla
+  state.map.flyTo(p.koordinatlar, 15, { animate: true, duration: 1.0 });
+
+  // Sidebar kapalıysa otomatik aç
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+    const expandBtn = document.getElementById('sidebar-expand-btn');
+    if (expandBtn) expandBtn.classList.add('hidden');
+    if (state.map) state.map.invalidateSize();
+  }
+
+  // En yakın sosyal tesisi bul
+  let nearestFac = null;
+  let minDistanceKm = Infinity;
+  if (state.facilities && state.facilities.length > 0) {
+    state.facilities.forEach(f => {
+      const d = Routing.haversineKm(p.koordinatlar, f.koordinatlar);
+      if (d < minDistanceKm) {
+        minDistanceKm = d;
+        nearestFac = f;
+      }
+    });
+  }
+
+  // Kullanıcı konumuna olan mesafe
+  let userDistKm = null;
+  if (state.userLocation && state.userLocation.lat) {
+    userDistKm = Routing.haversineKm([state.userLocation.lat, state.userLocation.lng], p.koordinatlar);
+  }
+
+  // Sol panel alanlarını doldur
+  const titleEl = document.getElementById('ispark-panel-title');
+  if (titleEl) titleEl.textContent = p.ad;
+
+  const districtEl = document.getElementById('ispark-panel-district');
+  if (districtEl) {
+    districtEl.textContent = nearestFac && nearestFac.ilce ? `📍 ${nearestFac.ilce}` : '📍 İstanbul';
+  }
+
+  const distEl = document.getElementById('ispark-panel-distance');
+  if (distEl) {
+    distEl.textContent = userDistKm ? `🚗 Konuma: ${userDistKm.toFixed(1)} km` : '🚗 Konum alınıyor...';
+  }
+
+  const capEl = document.getElementById('ispark-panel-capacity');
+  if (capEl) capEl.textContent = `${p.kapasite} Araç`;
+
+  const emptyEl = document.getElementById('ispark-panel-empty');
+  if (emptyEl) emptyEl.textContent = `${emptySpots} Boş Araç`;
+
+  const prog = document.getElementById('ispark-panel-progress');
+  if (prog) {
+    prog.style.width = `${occupiedPercent}%`;
+    prog.className = `progress-bar-fill ${occupiedPercent > 85 ? 'bg-danger' : occupiedPercent > 65 ? 'bg-warning' : 'bg-success'}`;
+  }
+
+  const statusText = document.getElementById('ispark-panel-status-text');
+  if (statusText) {
+    statusText.textContent = `Doluluk Oranı: %${occupiedPercent} (${emptySpots} boş yer mevcut)`;
+    statusText.className = `occupancy-status-text ${occupiedPercent > 85 ? 'bg-danger' : occupiedPercent > 65 ? 'bg-warning' : 'bg-success'}`;
+  }
+
+  const nearestFacEl = document.getElementById('ispark-panel-nearest-facility');
+  const nearestDistEl = document.getElementById('ispark-panel-nearest-dist');
+  const goFacBtn = document.getElementById('ispark-go-facility-btn');
+
+  if (nearestFac) {
+    const distStr = minDistanceKm < 1 ? `${Math.round(minDistanceKm * 1000)} metre` : `${minDistanceKm.toFixed(2)} km`;
+    if (nearestFacEl) nearestFacEl.textContent = nearestFac.ad;
+    if (nearestDistEl) nearestDistEl.textContent = `Mesafe: ${distStr} (Bu tesise hizmet vermektedir)`;
+    if (goFacBtn) {
+      goFacBtn.onclick = () => selectFacility(nearestFac);
+      goFacBtn.style.display = 'block';
+    }
+  } else {
+    if (nearestFacEl) nearestFacEl.textContent = 'Sosyal Tesis Yakınında';
+    if (nearestDistEl) nearestDistEl.textContent = '-';
+    if (goFacBtn) goFacBtn.style.display = 'none';
+  }
+
+  const routeBtn = document.getElementById('ispark-route-btn');
+  if (routeBtn) {
+    routeBtn.onclick = () => {
+      Routing.draw([state.userLocation.lat, state.userLocation.lng], p.koordinatlar);
+    };
+  }
+
+  switchSidebarView('ispark-detail-view');
 };
 
 // Render İSPARK markers
@@ -1247,29 +1378,41 @@ const renderIsparkMarkers = () => {
   ISPARK_LOCATIONS.forEach(p => {
     const color = getColorByStatus('ispark', state.theme);
     const marker = L.circleMarker(p.koordinatlar, {
-      radius: 6,
+      pane: 'isparkMarkersPane',
+      radius: 8,
       fillColor: color,
       color: '#ffffff',
-      weight: 1.5,
+      weight: 2,
       opacity: 1,
-      fillOpacity: 0.8
+      fillOpacity: 0.9
     }).addTo(state.map);
 
     const occupiedPercent = isparkOccupancy(p);
     const emptySpots = Math.floor(p.kapasite * (1 - occupiedPercent / 100));
 
-    // Custom Click popup representation
-    marker.bindPopup(`
-      <div class="ispark-popup">
-        <strong>${p.ad}</strong><br/>
-        Kapasite: ${p.kapasite} araç<br/>
-        Boş Yer: <strong style="color: #8b5cf6;">${emptySpots}</strong> araç (%${(100 - occupiedPercent).toFixed(0)} boş)<br/>
-        <small style="font-size: 8px; opacity: 0.75; display: block; margin-top: 4px;">Örnek doluluk (demo verisi)</small>
+    // Rich Hover Tooltip with sticky tracking
+    marker.bindTooltip(`
+      <div class="ispark-tooltip-inner">
+        <div class="ispark-tooltip-title">🅿️ ${escapeHtml(p.ad)}</div>
+        <div class="ispark-tooltip-meta">
+          <span class="tooltip-badge ispark">Boş: ${emptySpots} / ${p.kapasite} Araç</span>
+        </div>
+        <div class="facility-tooltip-sub">Sol panelde incelemek için tıklayın</div>
       </div>
-    `);
+    `, {
+      sticky: true,
+      direction: 'top',
+      offset: [0, -10],
+      className: 'ispark-hover-card'
+    });
 
-    marker.on('click', () => {
-      state.map.flyTo(p.koordinatlar, 15, { animate: true, duration: 1.0 });
+    marker.on('mouseover', () => marker.setStyle({ radius: 10, weight: 2.5 }));
+    marker.on('mouseout', () => marker.setStyle({ radius: 8, weight: 2 }));
+
+    // Click displays details in left sidebar
+    marker.on('click', (e) => {
+      L.DomEvent.stopPropagation(e);
+      selectIspark(p, emptySpots, occupiedPercent);
     });
 
     state.isparkMarkers.push(marker);
@@ -1365,12 +1508,45 @@ const selectFacility = (facility) => {
     });
   }
 
+  // Sidebar kapalıysa otomatik aç
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('collapsed')) {
+    sidebar.classList.remove('collapsed');
+    const expandBtn = document.getElementById('sidebar-expand-btn');
+    if (expandBtn) expandBtn.classList.add('hidden');
+    if (state.map) setTimeout(() => state.map.invalidateSize(), 300);
+  }
+
   // Sidebar changes
   document.getElementById('detail-code').textContent = facility.kod;
   document.getElementById('detail-name').textContent = facility.ad;
   document.getElementById('detail-capacity').textContent = facility.kapasite;
   document.getElementById('detail-occupancy-percent').textContent = `%${facility.dolulukOrani}`;
   
+  // İlçe ve Mesafe Rozetleri (HUD)
+  const districtBadge = document.getElementById('detail-district-badge');
+  if (districtBadge) {
+    districtBadge.textContent = `📍 ${facility.ilce || 'İstanbul'}`;
+  }
+
+  const distanceBadge = document.getElementById('detail-distance-badge');
+  if (distanceBadge) {
+    if (state.userLocation && state.userLocation.lat && Routing.haversineKm) {
+      const dist = Routing.haversineKm([state.userLocation.lat, state.userLocation.lng], facility.koordinatlar);
+      const estMinutes = Math.max(3, Math.round((dist / 35) * 60)); // ~35 km/s şehir içi ortalama
+      distanceBadge.textContent = `🚗 ${dist.toFixed(1)} km (~${estMinutes} dk)`;
+    } else {
+      distanceBadge.textContent = `🚗 Konuma Rota Hazır`;
+    }
+  }
+
+  // Hızlı Sipariş / Rezervasyon CTA Butonu (facilityId ile önseçimli)
+  const quickOrderBtn = document.getElementById('btn-quick-order');
+  if (quickOrderBtn) {
+    quickOrderBtn.href = `order.html?facilityId=${facility.id}`;
+    quickOrderBtn.innerHTML = `🍽️ <strong>${escapeHtml(facility.ad)}</strong> İçin Sipariş / Masa Rezerve Et →`;
+  }
+
   const progressFill = document.getElementById('detail-progress-fill');
   const status = facility.dolulukOrani > 80 ? 'high' : facility.dolulukOrani > 60 ? 'moderate' : 'low';
   const statusClass = status === 'high' ? 'bg-danger' : status === 'moderate' ? 'bg-warning' : 'bg-success';
@@ -1827,7 +2003,7 @@ const Routing = (() => {
     }).addTo(activeRouteGroup);
   };
 
-  return { draw, drawTransitRoute, clear };
+  return { draw, drawTransitRoute, clear, haversineKm };
 })();
 
 // ==========================================

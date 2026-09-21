@@ -2059,3 +2059,165 @@ body {
 }
 [data-theme="dark"] .mode-badge--live    { color: #4ee0a6; }
 [data-theme="dark"] .mode-badge--offline { color: #b6b3ad; }
+
+/* =============================================================================
+   Mekansal HUD, Zengin Tooltip'ler ve İSPARK Detay Kartı Stilleri
+   ============================================================================= */
+
+.facility-meta-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 14px 0;
+}
+
+.hud-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.hud-pill.highlight {
+  background: rgba(14, 165, 233, 0.15);
+  color: var(--primary);
+  border-color: rgba(14, 165, 233, 0.4);
+}
+
+.hud-pill.ispark {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+.quick-order-cta {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3);
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.quick-order-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+}
+
+.ispark-badge {
+  background: rgba(139, 92, 246, 0.2) !important;
+  color: #a78bfa !important;
+  border: 1px solid #8b5cf6 !important;
+  font-weight: 700 !important;
+}
+
+/* Global Leaflet Tooltip Upgrade */
+.leaflet-tooltip {
+  background: var(--bg-sidebar) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.4) !important;
+  color: var(--text-primary) !important;
+  font-family: inherit !important;
+  border-radius: 12px !important;
+  padding: 0 !important;
+  pointer-events: none;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: var(--border-color) !important;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: var(--border-color) !important;
+}
+
+/* Rich Facility & İSPARK Hover Tooltips */
+.facility-hover-card, .ispark-hover-card {
+  padding: 0 !important;
+}
+
+.facility-tooltip-inner, .ispark-tooltip-inner {
+  padding: 9px 13px;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.facility-tooltip-title, .ispark-tooltip-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+
+.facility-tooltip-meta, .ispark-tooltip-meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.tooltip-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.tooltip-badge.bg-success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.tooltip-badge.bg-warning {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.tooltip-badge.bg-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.tooltip-badge.ispark {
+  background: rgba(139, 92, 246, 0.2);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.tooltip-cap {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.facility-tooltip-sub {
+  font-size: 10px;
+  color: var(--primary);
+  opacity: 0.95;
+  font-weight: 600;
+  margin-top: 5px;
+}
+

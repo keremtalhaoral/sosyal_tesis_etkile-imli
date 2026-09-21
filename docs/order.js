@@ -124,6 +124,13 @@
     $('banner').textContent = mode === 'live' ? '🟢 Canlı backend' : '📦 Çevrimdışı (Pages) mock modu';
     const facs = await store.facilities();
     $('f-facility').innerHTML = facs.map(f => `<option value="${f.id}">${f.ad}</option>`).join('');
+
+    const q = new URLSearchParams(window.location.search);
+    const preselectedFid = q.get('facilityId');
+    if (preselectedFid && facs.some(f => f.id == preselectedFid)) {
+      $('f-facility').value = preselectedFid;
+    }
+
     $('f-slot').innerHTML = (seed.slots || ['19:00']).map(s => `<option>${s}</option>`).join('');
     const d = new Date(Date.now() + 86400000); $('f-date').value = d.toISOString().slice(0, 10);
     $('f-date').min = new Date().toISOString().slice(0, 10);

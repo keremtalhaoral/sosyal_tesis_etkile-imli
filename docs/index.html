@@ -116,6 +116,15 @@
           </div>
           
           <h2 class="detail-title" id="detail-name">Tesis Seçilmedi</h2>
+
+          <div class="facility-meta-hud" id="detail-meta-hud">
+            <span class="hud-pill" id="detail-district-badge">📍 İlçe: -</span>
+            <span class="hud-pill highlight" id="detail-distance-badge">🚗 Konuma: - km</span>
+          </div>
+
+          <a id="btn-quick-order" href="order.html" class="btn btn-primary btn-block quick-order-cta" target="_blank">
+            🍽️ Bu Tesis İçin Masa Rezerve Et & Sipariş Ver →
+          </a>
           
           <div class="detail-card">
             <div class="detail-metric-row">
@@ -281,6 +290,58 @@
             <div class="facility-list mini" id="district-facility-list">
               <!-- District facilities generated dynamically -->
             </div>
+          </div>
+        </div>
+ 
+        <!-- İSPARK Otopark Özel Detay Görünümü -->
+        <div class="content-view" id="ispark-detail-view">
+          <div class="detail-header-row">
+            <button class="back-btn" id="ispark-back-btn" aria-label="Listeye Dön">
+              ← Listeye Dön
+            </button>
+            <span class="facility-badge ispark-badge">🅿️ İSPARK OTOPARK</span>
+          </div>
+          
+          <h2 class="detail-title" id="ispark-panel-title">İSPARK Otoparkı</h2>
+          <div class="facility-meta-hud">
+            <span class="hud-pill ispark" id="ispark-panel-district">📍 İstanbul</span>
+            <span class="hud-pill highlight" id="ispark-panel-distance">🚗 Konuma: - km</span>
+          </div>
+
+          <div class="detail-card">
+            <div class="detail-metric-row">
+              <div class="metric">
+                <span class="metric-label">Toplam Kapasite</span>
+                <span class="metric-value" id="ispark-panel-capacity">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Anlık Boş Yer</span>
+                <span class="metric-value text-success" id="ispark-panel-empty">-</span>
+              </div>
+            </div>
+            
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="ispark-panel-progress" style="width: 50%"></div>
+            </div>
+            <div class="occupancy-status-text" id="ispark-panel-status-text">-</div>
+            <small class="provenance-label">Kaynak: İBB İSPARK Açık Veri Portalı</small>
+          </div>
+
+          <!-- En Yakın Sosyal Tesis İlişkisi (Mekansal GIS Analizi) -->
+          <div class="detail-card" style="margin-top: 14px;">
+            <h4 class="card-subtitle">📍 En Yakın Sosyal Tesis</h4>
+            <div id="ispark-panel-nearest-facility" style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Hesaplanıyor...</div>
+            <div id="ispark-panel-nearest-dist" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Mesafe: -</div>
+            <button class="btn btn-secondary btn-sm" id="ispark-go-facility-btn" style="width: 100%;">Tesis Detayını Aç & Haritada Göster</button>
+          </div>
+
+          <!-- Otoparka Navigasyon & Rota -->
+          <div class="detail-card" style="margin-top: 14px;">
+            <h4 class="card-subtitle">🧭 Ulaşım & Yol Tarifi</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 12px 0;">
+              Mevcut konumunuzdan bu otoparka sürüş rotası oluşturun.
+            </p>
+            <button class="btn btn-primary btn-sm" id="ispark-route-btn" style="width: 100%;">🚗 Otoparka Rota Çiz</button>
           </div>
         </div>
 

@@ -339,3 +339,11 @@ Her teknoloji için: **ne**, **neden seçildi**, **nerede**, **alternatifi**.
   `docs/adr/ADR-010-canli-guncelleme.md`, DBeaver senaryosuna Adım 4b.
 
 - **2026-07-27 — Staj sunum setleri (Hafta 1-7 PPTX).** 30 iş gününü ve 7 haftayı kapsayan, Netcad kurumsal kimliğine ve DDIA/APoSD mühendislik ilkelerine uygun 7 adet bağımsız PowerPoint sunumu (`sunumlar/Hafta_01..07_*.pptx`) oluşturuldu. Her sunum; haftalık odak, gün gün kazanımlar, teknik mimari/veri akışı ve mentör savunma notlarını içerir.
+
+- **2026-07-28 — Web GIS UI/UX & Etkileşim İyileştirmeleri (Hover Tooltips, İSPARK Paneli, Mekansal HUD).**
+  - Tesisler ve İSPARK otoparkları için modern Leaflet sticky hover tooltip'leri (`.facility-hover-card`, `.ispark-hover-card`): imleç nokta üzerine geldiğinde anında ad, kapasite ve doluluk durumu görünür kılındı.
+  - Bağımsız İSPARK Detay Paneli (`#ispark-detail-view`): Haritadaki herhangi bir otoparka tıklandığında sol panelde otopark adı, kapasite, anlık boş yer sayısı, doluluk çubuğu, en yakın sosyal tesis ilişkisi (`Routing.haversineKm`) ve doğrudan rota çizme aksiyonu eklendi.
+  - Tesis detay paneline Mekansal HUD rozetleri (`#detail-district-badge`, `#detail-distance-badge`) ve kullanıcı lokasyonuna göre mesafe + tahmini sürüş süresi eklendi.
+  - Hızlı Rezervasyon / Sipariş Köprüsü (`#btn-quick-order`): Tesis seçildiğinde tek tıkla ilgili tesisi önseçimli olarak açan `order.html?facilityId=X` entegrasyonu sağlandı.
+  - Tesis arama ve filtreleme mekanizmasına ilçe adı desteği (`f.ilce`) entegre edilerek akıllı mekansal arama deneyimi sağlandı.
+
