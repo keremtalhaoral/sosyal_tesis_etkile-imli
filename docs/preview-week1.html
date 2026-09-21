@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>1. Hafta: CBS Altyapısı, SQL Şeması ve PostGIS Mekansal Modelleme</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      box-sizing: border-box;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 18px;
+      margin-bottom: 28px;
+    }
+    .preview-title h1 {
+      margin: 0 0 6px 0;
+      font-size: 24px;
+      color: #38bdf8;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .preview-title p {
+      margin: 0;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .preview-badge {
+      background: rgba(14, 165, 233, 0.15);
+      border: 1px solid #0284c7;
+      color: #38bdf8;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      font-size: 16px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      padding-bottom: 10px;
+    }
+    .code-block {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      color: #7dd3fc;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .code-keyword { color: #f43f5e; font-weight: 600; }
+    .code-type { color: #38bdf8; }
+    .code-string { color: #a3e635; }
+    .code-comment { color: #64748b; font-style: italic; }
+    .table-custom {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 10px;
+    }
+    .table-custom th {
+      background: #090d16;
+      color: #94a3b8;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid #334155;
+      font-weight: 600;
+    }
+    .table-custom td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+    }
+    .stat-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-pill {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid #334155;
+      padding: 14px 18px;
+      border-radius: 10px;
+    }
+    .stat-pill .val {
+      font-size: 22px;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+    .stat-pill .lbl {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-header">
+    <div class="preview-title">
+      <h1>Müfettiş GIS · 1. Hafta Çıktısı: CBS Altyapısı & PostGIS Şeması</h1>
+      <p>Netcad Teknoloji Çözümleri — 15 - 19 Haziran 2026 Çalışma Günleri Özeti</p>
+    </div>
+    <div class="preview-badge">1. HAFTA RAPOR ÇIKTISI</div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-pill">
+      <div class="val">PostgreSQL 16</div>
+      <div class="lbl">Veritabanı Motoru</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">PostGIS 3.4</div>
+      <div class="lbl">Mekansal Uzantı (Spatial)</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">EPSG:4326</div>
+      <div class="lbl">WGS84 Koordinat Referansı</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">39 İlçe / 30 Tesis</div>
+      <div class="lbl">İBB Temizlenmiş ETL Verisi</div>
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <div class="card">
+      <h3>🏛️ PostGIS Mekansal Tablo Tanımı (DDL)</h3>
+      <div class="code-block">
+<span class="code-keyword">CREATE EXTENSION IF NOT EXISTS</span> postgis;
+
+<span class="code-comment">-- Tesisler Tablosu: Koordinat ve PostGIS geometry(Point, 4326)</span>
+<span class="code-keyword">CREATE TABLE</span> <span class="code-type">facilities</span> (
+    id <span class="code-type">INTEGER PRIMARY KEY</span>,
+    kod <span class="code-type">VARCHAR(16) UNIQUE NOT NULL</span>,
+    ad <span class="code-type">VARCHAR(128) NOT NULL</span>,
+    lat <span class="code-type">DOUBLE PRECISION NOT NULL</span>,
+    lng <span class="code-type">DOUBLE PRECISION NOT NULL</span>,
+    capacity <span class="code-type">INTEGER NOT NULL CHECK</span> (capacity > 0),
+    geom <span class="code-type">geometry(Point, 4326)</span> <span class="code-keyword">GENERATED ALWAYS AS</span> (
+        <span class="code-keyword">ST_SetSRID</span>(<span class="code-keyword">ST_MakePoint</span>(lng, lat), 4326)
+    ) <span class="code-keyword">STORED</span>
+);
+
+<span class="code-comment">-- Mekansal GiST İndeksi: KNN ve Mekansal Aramaları O(log N) yapar</span>
+<span class="code-keyword">CREATE INDEX</span> idx_facilities_geom <span class="code-keyword">ON</span> facilities <span class="code-keyword">USING GIST</span> (geom);
+<span class="code-keyword">CREATE INDEX</span> idx_facilities_geog <span class="code-keyword">ON</span> facilities <span class="code-keyword">USING GIST</span> ((geom::geography));
+      </div>
+
+      <h3 style="margin-top: 20px;">📐 Mekansal Join Sorgusu (Point-in-Polygon)</h3>
+      <div class="code-block">
+<span class="code-comment">-- Tesisin hangi ilçe poligonu içinde olduğunu PostGIS ile bulma</span>
+<span class="code-keyword">SELECT</span> f.ad <span class="code-keyword">AS</span> tesis_adi, d.name <span class="code-keyword">AS</span> ilce_adi
+<span class="code-keyword">FROM</span> facilities f
+<span class="code-keyword">JOIN</span> districts d <span class="code-keyword">ON ST_Contains</span>(d.geom, f.geom)
+<span class="code-keyword">LIMIT</span> 5;
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 İBB Tesis ETL Örnek Veri Seti (QGIS & PostGIS)</h3>
+      <table class="table-custom">
+        <thead>
+          <tr>
+            <th>Kod</th>
+            <th>Tesis Adı</th>
+            <th>Enlem (Lat)</th>
+            <th>Boylam (Lng)</th>
+            <th>Kapasite</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code style="color:#38bdf8;">ALTY-01</code></td>
+            <td>Altınboynuz Sosyal Tesisi</td>
+            <td>41.0428</td>
+            <td>28.9489</td>
+            <td>120</td>
+          </tr>
+          <tr>
+            <td><code style="color:#38bdf8;">ARNV-01</code></td>
+            <td>Arnavutköy Sosyal Tesisi</td>
+            <td>41.1858</td>
+            <td>28.7656</td>
+            <td>150</td>
+          </tr>
+          <tr>
+            <td><code style="color:#38bdf8;">AVCL-01</code></td>
+            <td>Avcılar Sosyal Tesisi</td>
+            <td>40.9782</td>
+            <td>28.7231</td>
+            <td>200</td>
+          </tr>
+          <tr>
+            <td><code style="color:#38bdf8;">BYKZ-01</code></td>
+            <td>Beykoz Koru Sosyal Tesisi</td>
+            <td>41.1278</td>
+            <td>29.0983</td>
+            <td>250</td>
+          </tr>
+          <tr>
+            <td><code style="color:#38bdf8;">BEYK-01</code></td>
+            <td>Beylikdüzü Sosyal Tesisi</td>
+            <td>40.9842</td>
+            <td>28.6472</td>
+            <td>180</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 24px;">💡 1. Hafta Kazanım Özeti</h3>
+      <ul style="font-size: 13px; color: #94a3b8; line-height: 1.8; margin: 0; padding-left: 20px;">
+        <li><strong style="color:#f8fafc;">Normalizasyon (1NF - 3NF):</strong> İlişkisel veri modelleme ve yabancı anahtar kısıtları (FK Cascade) kurgulandı.</li>
+        <li><strong style="color:#f8fafc;">Spatial ETL:</strong> Ham İBB verisindeki koordinat hataları düzeltilerek WGS84 formatına dönüştürüldü.</li>
+        <li><strong style="color:#f8fafc;">QGIS & PostGIS:</strong> Overpass Turbo ile aktarılan 39 ilçe poligonu ile tesis noktaları çakıştırıldı.</li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+</html>

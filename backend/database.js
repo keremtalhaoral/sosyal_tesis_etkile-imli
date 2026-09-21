@@ -530,7 +530,7 @@ const seedDatabase = async (conn) => {
     const credentials = loadOrCreateCredentials(seedUsers);
     for (const u of seedUsers) {
       await tx.run(
-        'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO NOTHING',
+        'INSERT INTO users (username, password, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET password = EXCLUDED.password, role = EXCLUDED.role',
         [u.username, hashPassword(credentials[u.username]), u.role]
       );
     }

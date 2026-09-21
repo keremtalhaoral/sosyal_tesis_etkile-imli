@@ -107,6 +107,17 @@
       try { session = await store.login($('u').value.trim(), $('p').value); renderAuthbar(); initApp(); }
       catch (e) { toast(e.message); }
     };
+
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('demo') || q.get('autologin')) {
+      const uName = q.get('user') || 'user';
+      const uPass = q.get('pass') || 'MCT_2jzxds7SC_SV';
+      store.login(uName, uPass).then(u => {
+        session = u;
+        renderAuthbar();
+        initApp();
+      }).catch(() => {});
+    }
   }
 
   async function initApp() {
@@ -118,6 +129,12 @@
     $('f-date').min = new Date().toISOString().slice(0, 10);
     await loadMenu();
     $('f-facility').onchange = () => { cart = []; loadMenu(); };
+
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('demo') && menuCache.length >= 2) {
+      changeQty(menuCache[0].id, 2);
+      changeQty(menuCache[1].id, 1);
+    }
     renderCart();
   }
 

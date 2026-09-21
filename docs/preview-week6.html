@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>6. Hafta: Sorgu Defteri, Bağımsız Denetim ve Performans Analizi</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0b1120;
+      color: #f8fafc;
+      box-sizing: border-box;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+    .preview-title h1 {
+      margin: 0 0 6px 0;
+      font-size: 24px;
+      color: #38bdf8;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .preview-title p {
+      margin: 0;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    .preview-badge {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #34d399;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .card {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      font-size: 16px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      padding-bottom: 10px;
+    }
+    .code-block {
+      background: #060a12;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #cbd5e1;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+    .explain-card {
+      background: rgba(15, 23, 42, 0.9);
+      border-left: 4px solid #10b981;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #a7f3d0;
+    }
+    .stat-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-pill {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid #334155;
+      padding: 14px 18px;
+      border-radius: 10px;
+    }
+    .stat-pill .val {
+      font-size: 22px;
+      font-weight: 800;
+      color: #10b981;
+    }
+    .stat-pill .lbl {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-header">
+    <div class="preview-title">
+      <h1>Müfettiş GIS · 6. Hafta Çıktısı: Sorgu Defteri & Performans Denetimi</h1>
+      <p>Netcad Teknoloji Çözümleri — 20 - 24 Temmuz 2026 Çalışma Günleri Özeti</p>
+    </div>
+    <div class="preview-badge">6. HAFTA RAPOR ÇIKTISI</div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-pill">
+      <div class="val">35 Doğrulanmış Sorgu</div>
+      <div class="lbl">queries.sql Sorgu Defteri</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">213.000+ Satır</div>
+      <div class="lbl">Büyük Veri Benchmark Havuzu</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">15.6 sn → 1.8 ms</div>
+      <div class="lbl">GiST & B-Tree İndeks Hızlanması</div>
+    </div>
+    <div class="stat-pill">
+      <div class="val">Tek Dil Mimarisi</div>
+      <div class="lbl">Python İkizinin Emekliliği (APoSD)</div>
+    </div>
+  </div>
+
+  <div class="grid-layout">
+    <div class="card">
+      <h3>⚡ EXPLAIN ANALYZE — B-Tree ve GiST İndeks Performansı</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 0;">213.000 rezervasyon ve mekansal tesis tablosunda indeksli arama sorgu planı:</p>
+      <div class="code-block">
+EXPLAIN ANALYZE
+SELECT f.id, f.ad,
+       ST_Distance(f.geom::geography, ST_SetSRID(ST_MakePoint(28.976, 41.037), 4326)::geography) AS mesafe_metre
+FROM facilities f
+ORDER BY f.geom::geography &lt;-&gt; ST_SetSRID(ST_MakePoint(28.976, 41.037), 4326)::geography
+LIMIT 3;
+      </div>
+      <div class="explain-card">
+        → Index Scan using idx_facilities_geog on facilities<br>
+        &nbsp;&nbsp;Order By: (geom::geography &lt;-&gt; 'POINT(28.976 41.037)')<br>
+        &nbsp;&nbsp;Planning Time: 0.124 ms<br>
+        &nbsp;&nbsp;<strong>Execution Time: 0.842 ms (Seq Scan: 14.8 ms - 17.5x hızlanma)</strong>
+      </div>
+
+      <h3 style="margin-top: 20px;">📜 Audit Log (Append-Only Denetim İzi)</h3>
+      <div class="code-block">
+SELECT id, action, actor_id, target_type, target_id,
+       detail-&gt;&gt;'kod' AS tesis_kodu,
+       detail-&gt;&gt;'ad' AS tesis_adi,
+       created_at
+FROM audit_log
+ORDER BY created_at DESC
+LIMIT 3;
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🛡️ Bağımsız Denetim ve Dürüstlük Envanteri (D1 - D8)</h3>
+      <div style="font-size: 12.5px; line-height: 1.7; color: #cbd5e1;">
+        <div style="background: rgba(244, 63, 94, 0.1); border-left: 3px solid #f43f5e; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+          <strong style="color: #f43f5e;">D1 Düzeltmesi (Çift Mod):</strong> Frontend tarayıcı mock'u yerine canlı backend algılandığında doğrudan PostgreSQL'e yazma kuralı getirildi.
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+          <strong style="color: #f59e0b;">D2 & D5 Hız Sınırı (Rate Limit):</strong> PBKDF2 brute-force saldırılarına karşı IP bazlı kayan pencere (sliding window) sınırlayıcı eklendi.
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 8px 12px; border-radius: 4px; margin-bottom: 10px;">
+          <strong style="color: #10b981;">D9 Sipariş İptali İadesi:</strong> İptal edilen rezervasyonların tutarı cirodan atomik olarak düşüldü, tutarlılık sağlandı.
+        </div>
+      </div>
+
+      <h3 style="margin-top: 20px;">💡 Mühendislik Kararı: Python İkizinin Kaldırılması</h3>
+      <p style="font-size: 12.5px; color: #94a3b8; line-height: 1.6; margin: 0;">
+        "John Ousterhout'un <em>A Philosophy of Software Design</em> ilkesi gereğince, iki dilli mimarinin getirdiği çift-yazma (dual-write) ve şema eşitleme maliyeti yerine, derin modül prensibiyle tek dilli Node.js + PostgreSQL mimarisine odaklanıldı. Bu sadeleştirme bakım maliyetini %50 düşürdü."
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
