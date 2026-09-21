@@ -24,6 +24,9 @@
  *    Bedeli: 'pg' dış bağımlılığı ve çalışan bir sunucu. Bilinçli takas (ADR-009).
  */
 
+const { loadEnv } = require('./env');
+loadEnv();
+
 const { Pool, types } = require('pg');
 const fs = require('fs');
 const path = require('path');
