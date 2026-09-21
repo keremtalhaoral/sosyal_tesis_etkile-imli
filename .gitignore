@@ -1,0 +1,20 @@
+# Bağımlılıklar / Kütüphaneler
+node_modules/
+jspm_packages/
+
+# Ortam Değişkenleri ve Gizli Anahtarlar (Veritabanı şifreleri vb.)
+.env
+.env.local
+.env.development.local
+
+# Derleme Çıktıları
+dist/
+build/
+.out/
+
+# Sistem ve Log Dosyaları
+*.log
+.DS_Store
+.idea/
+.vscode/
+.antigravity/
