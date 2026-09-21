@@ -412,13 +412,48 @@
           </button>
         </div>
 
-        <div class="map-legend">
-          <h4>Mekansal Katmanlar</h4>
-          <div class="legend-item"><span class="legend-color high"></span> Sosyal Tesis (Kritik %80+)</div>
-          <div class="legend-item"><span class="legend-color moderate"></span> Sosyal Tesis (Orta %60-%80)</div>
-          <div class="legend-item"><span class="legend-color low"></span> Sosyal Tesis (Sakin <%60)</div>
-          <div class="legend-item"><span class="legend-color-circle ispark"></span> İSPARK Otoparkı (Tıklanabilir)</div>
-          <div class="legend-item"><span class="legend-color-buffer"></span> Hizmet Dışı Gölgeler (>2km)</div>
+        <div class="map-legend layer-manager" id="map-layer-manager">
+          <div class="legend-header">
+            <h4>Mekansal Katmanlar</h4>
+            <span class="legend-badge" id="visible-layers-count">6 Aktif</span>
+          </div>
+          <div class="layer-list">
+            <label class="legend-layer-item" title="Doluluk oranı %80 üzeri kritik tesisleri göster/gizle">
+              <input type="checkbox" id="layer-chk-high" checked data-layer="high">
+              <span class="legend-color high"></span>
+              <span class="layer-title">Tesis (Kritik %80+)</span>
+            </label>
+            <label class="legend-layer-item" title="Doluluk oranı %60-80 arası orta yoğunluklu tesisleri göster/gizle">
+              <input type="checkbox" id="layer-chk-moderate" checked data-layer="moderate">
+              <span class="legend-color moderate"></span>
+              <span class="layer-title">Tesis (Orta %60-80)</span>
+            </label>
+            <label class="legend-layer-item" title="Doluluk oranı %60 altı sakin tesisleri göster/gizle">
+              <input type="checkbox" id="layer-chk-low" checked data-layer="low">
+              <span class="legend-color low"></span>
+              <span class="layer-title">Tesis (Sakin &lt;%60)</span>
+            </label>
+            <label class="legend-layer-item" title="39 İstanbul ilçe poligonunu göster/gizle">
+              <input type="checkbox" id="layer-chk-districts" checked data-layer="districts">
+              <span class="legend-color-districts"></span>
+              <span class="layer-title">İlçe Sınırları (39 İlçe)</span>
+            </label>
+            <label class="legend-layer-item" title="İSPARK açık otopark noktalarını göster/gizle">
+              <input type="checkbox" id="layer-chk-ispark" checked data-layer="ispark">
+              <span class="legend-color-circle ispark"></span>
+              <span class="layer-title">İSPARK Otoparkları</span>
+            </label>
+            <label class="legend-layer-item" title="Sosyal tesislerin 2 km hizmet tamponlarını göster/gizle">
+              <input type="checkbox" id="layer-chk-shadows" checked data-layer="shadows">
+              <span class="legend-color-buffer"></span>
+              <span class="layer-title">Kapsama Gölgeleri (&gt;2km)</span>
+            </label>
+            <label class="legend-layer-item" title="Metro ve İETT toplu taşıma hatlarını haritada çiz">
+              <input type="checkbox" id="layer-chk-transit" data-layer="transit">
+              <span class="legend-color-transit"></span>
+              <span class="layer-title">Toplu Taşıma Hatları</span>
+            </label>
+          </div>
         </div>
       </div>
     </main>

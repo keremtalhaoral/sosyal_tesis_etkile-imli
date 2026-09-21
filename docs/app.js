@@ -18,6 +18,15 @@ const state = {
   activeTileLayer: null,
   shadowsLayer: null,
   showShadows: true,
+  visibleLayers: {
+    high: true,
+    moderate: true,
+    low: true,
+    districts: true,
+    ispark: true,
+    shadows: true,
+    transit: false
+  },
   userLocation: {
     lat: 41.037007, // Default: Taksim Square
     lng: 28.976273,
@@ -556,15 +565,22 @@ window.fetch = async function (url, options) {
   return originalFetch.apply(this, arguments);
 };
 
-// Map Altlık Katmanları (Tile Layers)
+// Map Altlık Katmanları (Tile Layers - API anahtarı istemeyen, filigransız açık kaynak ve kurumsal CBS altlıkları)
 const TILE_LAYERS = {
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    options: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' }
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    options: {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }
   },
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    options: { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' }
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    options: {
+      maxZoom: 19,
+      maxNativeZoom: 16,
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
+    }
   }
 };
 
@@ -800,12 +816,21 @@ const setupUIEvents = () => {
   });
 
   document.getElementById('btn-toggle-shadows').addEventListener('click', (e) => {
-    state.showShadows = !state.showShadows;
-    e.target.classList.toggle('active', state.showShadows);
-    if (state.showShadows) {
-      if (state.shadowsLayer) state.shadowsLayer.addTo(state.map);
-    } else {
-      if (state.shadowsLayer) state.map.removeLayer(state.shadowsLayer);
+    state.visibleLayers.shadows = !state.visibleLayers.shadows;
+    const chk = document.getElementById('layer-chk-shadows');
+    if (chk) chk.checked = state.visibleLayers.shadows;
+    updateLayerVisibility();
+  });
+
+  // Mekansal Katman Yöneticisi (Layer Manager) Checkbox Dinleyicileri
+  ['high', 'moderate', 'low', 'districts', 'ispark', 'shadows', 'transit'].forEach(key => {
+    const chk = document.getElementById(`layer-chk-${key}`);
+    if (chk) {
+      chk.checked = !!state.visibleLayers[key];
+      chk.addEventListener('change', (e) => {
+        state.visibleLayers[key] = e.target.checked;
+        updateLayerVisibility();
+      });
     }
   });
 
@@ -1071,7 +1096,10 @@ const renderDistrictsLayer = () => {
         selectDistrict(feature, layer);
       });
     }
-  }).addTo(state.map);
+  });
+  if (state.visibleLayers && state.visibleLayers.districts) {
+    state.districtsLayer.addTo(state.map);
+  }
 };
 
 const getChoroplethColor = (count) => {
@@ -1246,6 +1274,77 @@ const renderIsparkMarkers = () => {
 
     state.isparkMarkers.push(marker);
   });
+  updateLayerVisibility();
+};
+
+// Mekansal Katman Yöneticisi: Checkbox seçimlerine göre katmanları açıp/kapatır
+const updateLayerVisibility = () => {
+  if (!state.map) return;
+
+  // 1. Tesis Marker'ları (Doluluk durumuna göre: kritik, orta, sakin)
+  state.facilities.forEach(f => {
+    const marker = state.markers[f.id];
+    if (!marker) return;
+    const status = f.dolulukOrani > 80 ? 'high' : f.dolulukOrani > 60 ? 'moderate' : 'low';
+    const isVisible = state.visibleLayers && !!state.visibleLayers[status];
+    if (isVisible) {
+      if (!state.map.hasLayer(marker)) marker.addTo(state.map);
+    } else {
+      if (state.map.hasLayer(marker)) state.map.removeLayer(marker);
+    }
+  });
+
+  // 2. İlçe Sınırları Poligonu
+  if (state.districtsLayer) {
+    if (state.visibleLayers && state.visibleLayers.districts) {
+      if (!state.map.hasLayer(state.districtsLayer)) state.districtsLayer.addTo(state.map);
+    } else {
+      if (state.map.hasLayer(state.districtsLayer)) state.map.removeLayer(state.districtsLayer);
+    }
+  }
+
+  // 3. İSPARK Otoparkları
+  state.isparkMarkers.forEach(m => {
+    if (state.visibleLayers && state.visibleLayers.ispark) {
+      if (!state.map.hasLayer(m)) m.addTo(state.map);
+    } else {
+      if (state.map.hasLayer(m)) state.map.removeLayer(m);
+    }
+  });
+
+  // 4. Kapsama Gölgeleri (>2km)
+  if (state.shadowsLayer) {
+    if (state.visibleLayers && state.visibleLayers.shadows) {
+      if (!state.map.hasLayer(state.shadowsLayer)) state.shadowsLayer.addTo(state.map);
+    } else {
+      if (state.map.hasLayer(state.shadowsLayer)) state.map.removeLayer(state.shadowsLayer);
+    }
+    state.showShadows = state.visibleLayers ? state.visibleLayers.shadows : true;
+    const shadowBtn = document.getElementById('btn-toggle-shadows');
+    if (shadowBtn) shadowBtn.classList.toggle('active', state.showShadows);
+  }
+
+  // 5. Toplu Taşıma Hatları
+  if (state.visibleLayers && state.visibleLayers.transit) {
+    if (typeof TransitRoutes !== 'undefined' && TransitRoutes.showAllRoutes) {
+      TransitRoutes.showAllRoutes();
+    }
+  } else {
+    if (typeof TransitRoutes !== 'undefined') {
+      if (state.selectedFacility) {
+        TransitRoutes.showForFacility(state.selectedFacility);
+      } else {
+        TransitRoutes.clear();
+      }
+    }
+  }
+
+  // Aktif katman sayısını rozette göster
+  if (state.visibleLayers) {
+    const activeCount = Object.values(state.visibleLayers).filter(Boolean).length;
+    const countBadge = document.getElementById('visible-layers-count');
+    if (countBadge) countBadge.textContent = `${activeCount} Aktif`;
+  }
 };
 
 // Selected Facility display
@@ -1858,7 +1957,33 @@ const TransitRoutes = (() => {
     if (bounds.length > 1) state.map.fitBounds(bounds, { padding: [60, 60], maxZoom: 15 });
   };
 
-  return { load, showForFacility, linesForFacility, clear };
+  // Tüm toplu taşıma hatlarını haritada çiz (Katman Yöneticisi için)
+  const showAllRoutes = () => {
+    clear();
+    if (!state.transitRoutes || !state.transitRoutes.features) return;
+    group = L.layerGroup().addTo(state.map);
+    const lines = state.transitRoutes.features.filter(f => f.properties.kind === 'line');
+    const modes = new Set();
+    lines.forEach(f => {
+      const mode = f.properties.mode;
+      modes.add(mode);
+      const latlngs = f.geometry.coordinates.map(c => [c[1], c[0]]);
+      const approx = f.properties.geometry_kind === 'station-chain';
+      const tooltip = `<strong>${MODE_LABEL[mode] || mode} ${escapeHtml(f.properties.ref)}</strong>`
+        + (f.properties.source ? `<br><small>${escapeHtml(SOURCE_LABEL[f.properties.source] || f.properties.source)}</small>` : '')
+        + (approx ? '<br><small>⚠ yaklaşık çizim</small>' : '');
+      L.polyline(latlngs, {
+        color: f.properties.color || MODE_COLOR[mode] || '#3b82f6',
+        weight: MODE_WEIGHT[mode] || 3.5,
+        opacity: approx ? 0.65 : 0.85,
+        lineJoin: 'round',
+        ...(approx ? { dashArray: '10, 6' } : {})
+      }).bindTooltip(tooltip, { sticky: true }).addTo(group);
+    });
+    renderLegend([...modes], 'İstanbul genel toplu taşıma hatları (GTFS)');
+  };
+
+  return { load, showForFacility, showAllRoutes, linesForFacility, clear };
 })();
 
 // Geolocation
